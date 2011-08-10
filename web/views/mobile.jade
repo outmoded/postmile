@@ -1,0 +1,81 @@
+!!! 5
+
+html(lang: 'en')
+
+  head
+    title Sled
+    meta(http-equiv: 'Content-Language', content: 'en-us')
+    meta(http-equiv: 'Content-Type', content: 'text/html; charset=utf-8')
+    link(rel: 'shortcut icon', href: '/favicon.ico', type: 'image/x-icon')
+    script(language: 'javascript', type: 'text/javascript') var env = !{JSON.stringify(env)};
+    style(type: 'text/css', media: 'screen')
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background:url('/images/mobile/bg.png') no-repeat;
+        background-size: 100% 100%;
+      }
+
+      #logo {
+        background:url('/images/mobile/logo.png') no-repeat;
+        width: 320px;
+        height: 192px;
+        margin-top: 50px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #box {
+        background:url('/images/mobile/box.png') no-repeat;
+        width: 586px;
+        height: 416px;
+        margin-top: 178px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 50px 0;
+      }
+
+      ul.social-connects {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      ul.social-connects li {
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 24px;
+        width: 504px;
+        height: 88px;
+      }
+
+      ul.social-connects li a.connect {
+        display: block;
+        width: 504px;
+        height: 88px;
+        text-indent: -9999px;
+      }
+
+      ul.social-connects li a.facebook {
+        background:url('/images/mobile/button_facebook.png') no-repeat;
+      }
+
+      .twitter {
+        background:url('/images/mobile/button_twitter.png') no-repeat;
+      }
+
+      .yahoo {
+        background:url('/images/mobile/button_yahoo.png') no-repeat;
+      }
+
+  body
+    #logo
+    #box
+      != body
+
+    script
+      var mainBox = document.getElementById('box');
+      mainBox.style.marginBottom = Math.max(0, window.innerHeight - 420 - parseInt(mainBox.offsetHeight, 10)) + 'px';

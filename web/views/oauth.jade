@@ -1,0 +1,27 @@
+#two-columns
+  .left
+    ul.login-nav
+      li.active
+        a(href: '/about') Authorize Access
+
+    a#bottom.blue(href: '/') &larr; Back to Sled
+
+  .right
+    h3 Application Authorization Request
+
+    #text-box
+      - if (warning)
+        #warning
+
+      p An application is asking for your permission to access your Sled account. If you approve, it will have full access to your sleds, items, and other information stored on the site.
+
+      - if (warning)
+        p.warning This application is untrusted and cannot be verified - do not authorize access unless you are sure you know what you are doing!
+
+      form(method: 'post', action: '/oauth/authorize')
+        input(type: 'hidden', name: 'crumb', value: crumb)
+        button.blue-button Authorize
+
+      button.blue-button(onclick: 'window.location = "/";') Cancel
+
+  .clearfix

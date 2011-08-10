@@ -1,0 +1,27 @@
+/*
+* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* See LICENSE file included with this code project for license terms.
+*/
+
+// Email token
+
+exports.emailToken = {
+
+    aes256Key: ''
+};
+
+
+// OAuth token
+
+exports.oauthToken = {
+
+    aes256Key: ''
+};
+
+
+// OAuth refresh token
+
+exports.oauthRefresh = {
+
+    aes256Key: ''
+};

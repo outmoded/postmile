@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Postmile</title>
+	<meta charset="utf-8" />
+
+	<link type="text/css" rel="stylesheet" href="css/styles.css" />
+
+    <!-- Utility scripts -->
+
+	<script type="text/javascript" src="/config.js"></script>
+	<script type="text/javascript" src="js/mac.js"></script>
+    <script type="text/javascript" src="js/authentication.js"></script>
+    <script type="text/javascript" src="js/socket.io.min.js"></script>
+
+    <!-- Application scripts -->
+
+	<script type="text/javascript" src="js/network.js"></script>
+	<script type="text/javascript" src="js/loadsled.js"></script>
+
+	<script type="text/javascript"> 
+		// debug = getQueryVariable( 'debug' ) ;	// debug off by default - easier for prod/deployment
+		debug = !getQueryVariable( 'nodebug' ) ;	// debug on by default - make it eay for deveopers
+		preBody();
+	</script>
+	
+	<script type="text/javascript" src="https://sec.yimg.com/combo?yui-ssl/3.3.0/build/yui/yui-min.js"></script>
+	<script type="text/javascript"> postYUI(); </script>
+</head>
+
+<body>
+
+    <div id="background"></div>
+
+	<div id="top-bar">
+		<a id="logo" href="/">Postmile</a>
+		<a href="#" class="feedback">Give Feedback</a>
+		
+		<!-- Account menu -->
+
+		<div id="account" class="menu sled-loading"> 
+			<a href="#account-menu" class="menu-label menu-toggle">
+                <div class="account-icon"></div>
+                <div id="name"></div>
+                <div class="menu-arrow"></div>
+            </a>
+
+			<div id="account-menu" class="menu">
+                <div class="icon-tab"></div>
+				<div class="menu-box menu-content">
+                    <ul>
+						<li id="guidedtour" class="menuitem">
+							<a class="menuitem-content">Guided Tour</a>
+						</li> 
+                    </ul>
+					<ul class="break">
+						<li id="mysettings" class="menuitem ">
+							<a class="menuitem-content"><em>Preferences</em></a>
+						</li>
+                        <li>
+							<ul id="settings"></ul>
+                        </li>
+                    </ul>
+                    <ul class="break">
+						<li id="accountsettings" class="menuitem">
+							<a class="menuitem-content">Account</a>
+						</li> 
+						<li id="logout" class="menuitem">
+							<a class="menuitem-content">Log Out</a>
+						</li> 
+					</ul>	
+				</div> 
+			</div>
+		</div> 
+	</div>
+
+	<div id="main-box" class="clearfix">
+		
+		<!-- Sled details bar -->
+
+		<div id="sled-details-bar" class="hidden">
+	
+	        <!-- Sled title -->
+            
+            <div class="sled-title-box">
+			    <a id="sled-title"></a>
+            </div>
+            <div id="sled-title-menu-box"></div>
+
+	        <div id="sled-title-input-overlay" class="yui3-overlay-loading">
+      	        <input id='sled-title-input' />
+	        </div>
+			
+            <!-- Sleds menu -->
+
+			<span id="sleds-list" class="menu sled-loading">
+				<a href="#sleds-menu" class="menu-label menu-toggle">
+                    <div class="menu-arrow">
+                        <div class="menu-arrow-inner">
+                        </div>
+                    </div>
+                </a> 
+
+				<div id="sleds-menu" class="menu sled-loading">
+                    <div class="white-filler"></div>
+                    <div class="icon-tab"></div>
+					<div class="menu-content">
+						<ul>
+							<li>
+								<ul id="sleds"></ul>
+							</li>
+						</ul>
+						<ul class="break">
+							<li id="newsled" class="menuitem">
+								<a class="menuitem-content">Create New Sled</a>
+							</li> 
+							<li id="join-sled" class="menuitem">
+                            	<a class="menuitem-content">Accept Invitation</a>
+							</li> 
+							<li class="menuitem sled-loading leave-sled-menu-item">
+								<a class="leave-sled menuitem-content">Leave Current Sled</a>
+							</li> 
+							<li id="delete-sled" class="menuitem">
+								<a class="menuitem-content">Delete Current Sled</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</span>
+					
+			<!-- sled details (time, place) -->
+
+			<div id="sled-details">
+				<input id="date" class="date" type="text" placeholder="Date?" /> 
+				<input class="time" type="text" placeholder="Time?" />
+    			<input class="place" type="text" placeholder="Where?" />
+            </div>
+				
+            <!-- Sled participants menu -->
+
+			<span id="sled-participants" class="menu sled-loading"> 
+			    <a href="#sled-participants-menu" class="menu-label menu-toggle">
+                    <div class="participants-icon"></div>
+                    <div class="name">Participants</div>
+                    <div class="menu-arrow"></div>
+                    <div id="participants-count"></div>
+                </a>
+
+				<div id="sled-participants-menu" class="menu sled-loading"> 
+                    <div class="icon-tab"></div>
+					<div class="menu-box menu-content"> 
+						<ul id="participants"> 
+						</ul>
+						<ul class="break">
+							<li class="menuitem sled-loading launch-manage-menu-item">
+								<a class="launch-manage menuitem-content">
+									Manage Participants
+								</a>
+							</li> 
+							<li class="menuitem">
+								<a class="launch-invite menuitem-content">
+									Invite Participants
+								</a>
+							</li> 
+						</ul>	
+					</div> 
+				</div> 
+			</span>
+        </div>
+			
+		<!-- Tasks list -->
+
+		<div id="bluebox">
+            <div id="bluebox-loading"></div>
+			<ul id="tasks"></ul>
+
+	        <!-- Task participants menu -->
+
+	        <div id="task-participants" class="sled-loading">
+                <div class="icon-tab"></div>
+                <div class="menu-box yui3-overlay-loading">
+	                <div class="yui3-widget-bd">
+		                <ul id="task-participant-list">
+		                </ul>
+		            </div>
+                </div>
+	        </div>
+		</div>
+			
+		<!-- Side panel -->
+
+		<div id="side-panel">
+			<h2>Suggestions</h2>
+			<div id="suggestions-loading"></div>
+			<div class="suggestion-box sledlist sled-loading" id="suggestionpane">
+				
+				<!-- Suggestions -->
+
+				<ul id="suggestions" ></ul>
+					
+				<!-- Tips -->
+
+				<div class="tips" id="tips" >
+					<span id="tiptext"></span>
+					<p class="show-me">
+						<a href="#">Show me</a>
+					</p> 
+					<div class="nav">
+						<span>
+							<a id="showtip">Show me</a>
+							<a id="nexttip">Next</a>
+							<a id="closetip">Close</a>
+						</span>
+					</div>
+				</div>
+	
+				<!-- Toggle tips (show/hide) -->
+
+				<div class="tips" id="showtips" >
+					<div class="nav">
+						<span>
+							<a id="showtip">Show Tips</a>
+						</span>
+					</div>
+				</div>
+
+				<div class="clearfix"></div>
+			</div>
+								
+		</div>
+		<div class="clearfix"></div>
+
+        <!-- Tour guide -->
+
+        <div id="tour-guide-alignment" class="hide">
+            <div id="tour-guide"></div>
+
+	        <div id="tour-narative" class="confirm overlay">
+		        <div></div>
+		        <span class="dialog orange">
+			        <span class="closex">
+	    		        <a id="tour-close">x</a>
+	                </span>
+			        <div class="title"></div>
+                    <div class="text"></div>
+    		        <a class="blue-button" id="tour-prev">Previous</a>
+			        <a class="blue-button right" id="tour-next">Next</a>
+   			        <a class="blue-button right hide" id="tour-end">Close</a>
+                    <div class="counter"></div>
+		        </span>
+	        </div>
+        </div>
+	</div>
+
+    <!-- Footer -->
+
+    <div id="footer" class="clearfix">
+        <div id="footer-bar">
+            <ul class="links-left">
+                <li><a href="/about">About</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="/developer">Developer</a></li>
+                <li><a href="#">Terms</a></li>
+                <li><a href="#">Privacy</a></li>
+            </ul>
+            <div class="copyright">
+                <p></p>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        <div id="footer-background"></div>
+    </div>
+	
+	<!-- Invite participants dialog -->
+
+	<div id="invite-overlay" class="yui3-overlay-loading sled-loading">
+	    <div class="participant-overlay-header yui3-widget-hd">
+            Invite participants
+			<span class="closex">
+	    		<a id="invite-close">x</a>
+	        </span>
+	    </div>
+	
+	    <div class="yui3-widget-bd">
+			<ul class="invite-participants-list" >
+				<li class="participants-pane">
+                    Past participants
+                </li>
+				<li class="participants-pane">
+					<ul class="participants-list"></ul>
+				</li>
+                <br />
+				<li>
+					Invite via email <span class='invite-label'>Use commas to separate emails</span>
+				</li>
+				<li>
+					<textarea id='invite-emails'></textarea>
+				</li>
+			</ul>
+			<ul class="invite-participants-list yui3-widget-bd">
+				<li>
+					Message <span class='invite-label' id="invite-message-label">Tell your friends what this sled is about</span>
+				</li>
+				<li>
+					<textarea id='invite-message'></textarea>
+				</li>
+				<li>
+					<div class="yui3-widget-ft">
+						<span class="blue-button" >
+							<a class="invite-button" id="invite-invite">Invite</a>
+						</span>
+		                <span class="blue-button" >
+			                <a class="invite-button" id="invite-cancel">Cancel</a>
+		                </span>
+						<div class='clearfix'></div>
+				    </div>
+				</li>				
+			</ul>
+	    </div>
+	</div>
+	
+	<!-- Manage participants dialog -->
+
+	<div id="manage-overlay" class="yui3-overlay-loading sled-loading">
+	    <div class="participant-overlay-header yui3-widget-hd">
+            Manage Participants
+			<span class="closex">
+	    		<a id="manage-close">x</a>
+	        </span>
+	    </div>
+	    <div class="yui3-widget-bd">
+			<ul class="invite-participants-list" >
+				<li class="participants-pane">
+					<ul class="participants-list"></ul>
+				</li>
+			</ul>
+	    </div>
+	    <div class="yui3-widget-ft">
+		    <span class="blue-button" >
+			    <a class="invite-button" id="manage-remove">Remove</a>
+		    </span>
+		    <span class="blue-button" >
+			    <a class="invite-button" id="manage-cancel">Cancel</a>
+		    </span>
+		    <div class='clearfix'></div>
+	    </div>
+	</div>
+
+	<!-- Overlay -->
+	
+	<div id="overlay" class="hide"></div>
+
+	<!-- point to node by animating highlight (tip show me, etc) -->
+	
+	<div id="pointTo" class="pointTo sled-loading"></div>
+
+	<!-- Status bar (center-top) -->
+
+	<div id="status" class="hide">
+		<span class="middleStatus">
+			<h1></h1>
+		</span>
+	</div>
+
+	<!-- Confirmation dialog -->
+
+	<div id="confirm-underlay" class="confirm underlay hide"></div>
+	<div id="confirm-overlay" class="confirm overlay hide">
+		<div></div>
+		<span class="dialog">
+			<span class="closex">
+	    		<a id="confirm-close">x</a>
+	        </span>
+			<div class="title" id="confirm-title"></div>
+            <div class="text" id="confirm-text"></div>
+			<a class="blue-button right" id="confirm-cancel">Cancel</a>
+    		<a class="blue-button right" id="confirm-ok">Ok</a>
+		</span>
+	</div>
+
+   	<!-- Initialization scripts -->
+
+	<script type="text/javascript"> postBody(); </script>
+</body>
+</html>

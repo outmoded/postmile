@@ -1,0 +1,2281 @@
+/*
+ * Reset styles
+ * ----------------------------------------------------------------------------
+ */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend, table, caption,
+tbody, tfoot, thead, tr, th, td {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-size: 100%;
+	vertical-align: baseline;
+	background: transparent;
+}
+
+body {
+	line-height: 1;
+}
+
+ol,
+ul {
+	list-style: none;
+}
+
+blockquote,
+q {
+	quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+	content: '';
+	content: none;
+}
+
+:focus {
+	outline: 0;
+}
+
+ins {
+	text-decoration: none;
+}
+
+del {
+	text-decoration: line-through;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+a,
+a:visited,
+a:hover,
+a:active {
+    outline: none;
+}
+
+input {
+    background-color: transparent;
+    border: none;
+}
+textarea {
+    background-color: transparent;
+    border: none;
+	display: block ;
+	/* vertical-align: center ; */
+	resize: none ;
+}
+
+
+/*
+ * Global settings
+ * ----------------------------------------------------------------------------
+ */
+
+.remove {
+    display: none !important;
+}
+
+.hidden {
+	visibility: hidden;
+}
+
+.sled-loading {
+	display: none;
+	visibility: hidden;
+}
+
+.clearfix {
+    clear: both;
+}
+
+.blue-button {
+    float: left;
+	border-radius: 7px;
+	background: -moz-linear-gradient(top, #7fbbd8 0%, #328dc1 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7fbbd8), color-stop(100%,#328dc1)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #7fbbd8 0%,#328dc1 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #7fbbd8 0%,#328dc1 100%); /* W3C */
+	font-weight: bold;
+	font-size: 16px;
+	padding: 4px 10px;
+	color: #ffffff;
+	cursor: default;
+	border: 1px solid #2a7098;
+	margin: 10px 5px;
+    text-shadow: 0 1px 0px rgba(0,0,0,.55);
+}
+
+.blue-button:hover {
+	background: -moz-linear-gradient(top, #78cfe4 0%, #41afd3 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#78cfe4), color-stop(100%,#41afd3)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #78cfe4 0%,#41afd3 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #78cfe4 0%,#41afd3 100%); /* W3C */
+	border: 1px solid #3c9bb7;
+}
+
+.orange .blue-button {
+	background: -moz-linear-gradient(top, #ff6600 0%, #fd8739 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff6600), color-stop(100%,#fd8739)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ff6600 0%,#fd8739 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #ff6600 0%,#fd8739 100%); /* W3C */
+	border: 1px solid #d95700;
+}
+
+.orange .blue-button:hover {
+	background: -moz-linear-gradient(top, #ff8e00 0%, #ffb247 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff8e00), color-stop(100%,#ffb247)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ff8e00 0%,#ffb247 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #ff8e00 0%,#ffb247 100%); /* W3C */
+	border: 1px solid #ff7a00;
+}
+
+.closex {
+    font-size: 18px;
+    font-weight: bold;
+    float: right;
+    color: #999999;
+    cursor: pointer;
+    position: relative;
+    top: -6px;
+}
+
+.closex a:hover {
+    color: #ff6600
+}
+
+.right {
+    float: right;
+}
+
+.menu-box {
+	background: -moz-linear-gradient(top, #dddddd 0%, #f5f5f5 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dddddd), color-stop(100%,#f5f5f5)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #dddddd 0%,#f5f5f5 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #dddddd 0%,#f5f5f5 100%); /* W3C */
+	border: 1px solid #dddddd;
+	color: #2a2a2a;
+	font-size: 12px;
+	line-height: 20px;
+}
+
+.above .menu-box {
+	background: -moz-linear-gradient(top, #f5f5f5 0%, #dddddd 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f5f5f5), color-stop(100%,#dddddd)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #f5f5f5 0%,#dddddd 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #f5f5f5 0%,#dddddd 100%); /* W3C */
+}
+
+.menu-box li:hover {
+	background-color: #b3b3b3;
+}
+
+.menu-box ul.break {
+	border-top: solid 1px #b6b6b6;
+	padding-top: 6px;
+	margin-top: 6px;
+}
+
+body {
+    background-color: #c6e7f1;
+}
+
+#background {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: url('../images/background.png') no-repeat #c6e7f1; 
+    background-size: 100% 100%;
+    background-position: right bottom;
+    z-index: -1;
+}
+
+* {
+    font-family: Arial, Verdana, sans-serif;
+}
+
+
+/*
+ * Sled menu
+ * ----------------------------------------------------------------------------
+ */
+
+.menu .menu-label {
+    position: absolute;
+	z-index: 2;
+}
+ 
+.menu .menu {
+    position: absolute;
+    z-index: 1;
+}
+
+.menu-hidden {
+	visibility: hidden;
+	display: none ;	/* can't be in flow otherwise will get drag over events */
+}
+
+.menu li {
+    list-style-type: none;    
+}
+
+.menu-label,
+.menuitem-content {
+    text-align: left;
+    white-space: nowrap;
+    display: block;
+}
+
+
+/*
+ * Top Bar
+ * ----------------------------------------------------------------------------
+ */
+ 
+#top-bar {
+    margin: 0 auto;
+    padding: 0;
+    height: 45px;
+    position: relative;
+}
+
+#top-bar a#logo {
+	display: block;
+	width: 79px;
+	height: 49px;
+	background: url('../images/colage.png') 0 0 no-repeat;
+	text-indent: -9999px;
+	overflow: hidden;
+	position: absolute;
+	top: 5px;
+	left: 30px;
+}
+
+#top-bar span.logo {
+	float: left;
+	width: 30%;
+	margin-bottom: 10px;
+}
+
+#top-bar span.logo h1 {
+	margin: 0;
+	padding: 0;
+}
+
+#top-bar a.feedback {
+	color: #6e6e6e;
+	font-size: 12px;
+	text-decoration: underline;
+	float: right;
+	position: relative;
+	top: 6px;
+	right: 20px;
+} 
+
+#top-bar a.feedback:hover {
+	color: #ff6600;
+}
+
+
+/*
+ * Account menu
+ * ----------------------------------------------------------------------------
+ */
+
+#account .menu-label {
+    right: 10px;
+    top: 40px;
+	color: #3373a0;
+	font-size: 12px;
+	padding-left: 26px;
+	text-decoration: none;
+}
+
+#account .menu-label .account-icon {
+    display: inline-block;
+    width: 20px;
+	height: 18px;
+    background: url('../images/colage.png') 0 -216px no-repeat;
+}
+
+#account .menu-label:hover .account-icon {
+    background: url('../images/colage.png') 0 -198px no-repeat;
+}
+
+#account .menu-label #name {
+    display: inline-block;
+    font-weight: bold;
+    margin: 0 10px;
+    position: relative;
+    top: -3px;
+}
+
+#account .menu-label:hover #name {
+	color: #ff6600;
+}
+
+#account .menu-label .menu-arrow {
+    display: inline-block;
+    width: 20px;
+	height: 14px;
+    background: url('../images/colage.png') 0 -491px no-repeat;
+}
+
+#account .menu-label:hover .menu-arrow {
+    background: url('../images/colage.png') 0 -503px no-repeat;
+}
+
+#account-menu {
+    right: 11px;
+    top: 40px;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+}
+
+#account-menu .icon-tab {
+    float: right;
+    display: block;
+    height: 20px;
+    width: 24px;
+	background-color: #dddddd;
+}
+
+#account-menu .menu-content {
+    clear: right;
+	padding: 10px 0;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+	width: 148px;
+}
+
+#account-menu ul {
+	list-style-type: none;
+}
+
+#account-menu li {
+	cursor: default;
+	padding: 0 10px 0 20px;
+}
+
+#account-menu .enabled { 
+	font-weight: bold;
+}
+
+
+/*
+ * Main white round box
+ * ----------------------------------------------------------------------------
+ */
+
+#main-box {
+    margin: 20px auto 0 auto;
+    padding: 15px;
+    background: #f8f8f8;
+    border-radius: 10px;
+    box-shadow: 0 0 5px #888888;
+    -moz-box-shadow: 0 0 5px #888888;
+    -webkit-box-shadow: 0 0 5px #888888;
+}
+
+
+/*
+ * Sled details bar
+ * ----------------------------------------------------------------------------
+ */
+ 
+#sled-details-bar {
+    margin-left: 10px;
+    position: relative;
+    height: 75px;
+}
+
+
+/*
+ * Sleds menu
+ * ----------------------------------------------------------------------------
+ */
+
+.sled-title-box {
+    display: inline-block;
+    position: absolute;
+	width: 410px;
+	height: 28px;
+	border: 2px solid #cccccc;
+	border-right: none;
+    border-radius: 6px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	background-color: #ffffff;
+}
+
+#sled-title {
+    position: relative;
+    top: 5px;
+	padding: 6px 10px;
+    font-weight: bold;
+	color: #3373a0;
+	z-index: 5;
+	width: 390px;
+}
+
+#sled-title-input {
+    position: relative;
+    top: 1px;
+    left: 3px;
+	padding: 4px 10px 4px 6px;
+    font-weight: bold;
+    font-size: 16px;
+	color: #3373a0;
+	background: #ffffff;
+	width: 390px;
+}
+
+#sled-title-menu-box {
+    display: inline-block;
+	position: absolute;
+    left: 412px;
+	background-color: #ffffff;
+	border: 2px solid #cccccc;
+	border-left: 1px solid #cccccc;
+    border-radius: 6px;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	width: 26px;
+	height: 28px;
+}
+
+#sleds-list {
+    position: relative;
+    display: inline-block;
+}
+
+#sleds-list .menu-label {
+    top: -61px;
+    left: 413px;
+    display: inline-block;
+    width: 14px;
+	height: 14px;
+    background: url('../images/colage.png') 0 -491px no-repeat;
+	background-color: #ffffff;
+	border: 6px solid #ffffff;
+	border-top: 7px solid #ffffff;
+	border-bottom: 5px solid #ffffff;
+    border-radius: 6px;
+}
+
+#sleds-list .menu-label:hover {
+    background: url('../images/colage.png') 0 -503px no-repeat;
+	background-color: #ffffff;
+}
+
+#sleds-menu {
+	position: absolute;
+	top: -64px;
+	left: 0px;
+    border-radius: 6px;
+	border: 2px solid #cccccc;
+	background-color: #ffffff;
+	background: -moz-linear-gradient(top, #ffffff 0%, #f0f0f0 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#f0f0f0)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#f0f0f0 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(top, #ffffff 0%,#f0f0f0 100%); /* W3C */
+	width: 437px;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+}
+
+#sleds-menu .icon-tab {
+    float: right;
+    display: inline-block;
+    width: 6px;
+	height: 16px;
+	padding: 6px 10px;
+	border-left: 1px solid #cccccc;
+	border-top-right-radius: 6px;
+}
+
+#sleds-menu .menu-content {
+    clear: both;
+	padding: 5px 0 0 0;
+	color: #3373a0;
+	font-size: 14px;
+	line-height: 26px;
+	border-bottom-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+	border-top: 1px solid #cccccc;
+}
+
+#sleds-menu .menuitem a {
+	padding: 0 10px;
+}
+
+#sleds-menu .menuitem a:hover {
+	background-color: #e3e3e3;
+	cursor: default;
+}
+
+#sleds-menu ul.break {
+	border-top: solid 1px #b6b6b6;
+	padding-top: 6px;
+	margin-top: 6px;
+}
+
+#sleds-menu #sleds a {
+    font-weight: bold;
+}
+
+
+/*
+ * Sled details
+ * ----------------------------------------------------------------------------
+ */
+
+#sled-details {
+    display: inline-block;
+    height: 15px;
+    margin: 50px 0 10px 0;
+}
+ 
+#sled-details input {
+    font-size: 12px;
+    font-weight: bold;
+    color: #6e6e6e;
+    position: relative;
+    top: -3px;
+	cursor: default;
+    padding: 0 0 0 20px;
+}
+
+#sled-details .date {
+	background: url('../images/colage.png') 0 -339px no-repeat;
+	width: 80px;
+    height: 15px;
+}
+
+#sled-details .date:hover,
+#sled-details .date:focus {
+	background: url('../images/colage.png') 0 -354px no-repeat;
+}
+
+#sled-details .time {
+	background: url('../images/colage.png') 0 -369px no-repeat;
+	width: 60px;
+    height: 15px;
+}
+
+#sled-details .time:hover {
+	background: url('../images/colage.png') 0 -384px no-repeat;
+}
+
+#sled-details .place {
+	background: url('../images/colage.png') 0 -399px no-repeat;
+	width: 320px;
+    height: 15px;
+	margin: 0 20px;
+}
+
+#sled-details .place:hover,
+#sled-details .place:focus {
+	background: url('../images/colage.png') 0 -414px no-repeat;
+}
+
+/*
+ * Sled participants menu
+ * ----------------------------------------------------------------------------
+ */
+
+#sled-participants {
+    position: relative;
+}
+
+#sled-participants .menu-label {
+    display: inline-block;
+    top: -5px;
+    left: 0px;
+	color: #3373a0;
+	font-size: 12px;
+	text-decoration: none;
+}
+
+#sled-participants .menu-label .participants-icon {
+    display: inline-block;
+    width: 25px;
+	height: 20px;
+    background: url('../images/colage.png') 0 -234px no-repeat;
+}
+
+#sled-participants .menu-label:hover .participants-icon {
+    background: url('../images/colage.png') 0 -124px no-repeat;
+}
+
+#sled-participants.multi-participants .menu-label .participants-icon {
+    background: url('../images/colage.png') 0 -599px no-repeat;
+}
+
+#sled-participants.multi-participants .menu-label:hover .participants-icon {
+    background: url('../images/colage.png') 0 -619px no-repeat;
+}
+
+#participants-count {
+    display: inline-block;
+    position: relative;
+    top: -11px;
+    left: -122px;
+    color: #ffffff;
+    font-size: 10px;
+}
+
+#participants-count.two-digits {
+    left: -123px;
+    font-size: 8px;
+}
+
+#sled-participants .menu-label .name {
+    display: inline-block;
+    color: #3474a1;
+    font-weight: bold;
+    margin: 0 10px 0 5px;
+    position: relative;
+    top: -3px;
+}
+
+#sled-participants .menu-label:hover .name {
+	color: #ff6600;
+}
+
+#sled-participants .menu-label .menu-arrow {
+    display: inline-block;
+    width: 20px;
+	height: 14px;
+    background: url('../images/colage.png') 0 -491px no-repeat;
+}
+
+#sled-participants .menu-label:hover .menu-arrow {
+    background: url('../images/colage.png') 0 -503px no-repeat;
+}
+
+#sled-participants-menu {
+    right: -134px;
+    top: -3px;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+	width: 250px;
+}
+
+#sled-participants-menu .icon-tab {
+    float: right;
+    display: block;
+    height: 20px;
+    width: 24px;
+	background-color: #dddddd;
+}
+
+#sled-participants-menu .menu-content {
+	clear: right;
+	padding: 10px 0;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+	width: 248px;
+	display: inline-block;
+}
+
+#sled-participants-menu li {
+	cursor: default;
+	padding: 0 10px 0 20px;
+}
+
+#sled-participants-menu li a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: inherit;
+}
+
+#sled-participants-menu #participants li:hover {
+	background-color: transparent;
+}
+
+#sled-participants-menu  #participants li a {
+	padding-left: 20px;
+	background: url('../images/colage.png') 0 -579px no-repeat;
+}
+
+
+/*
+ * Blue box background for task list
+ * ----------------------------------------------------------------------------
+ */
+
+#bluebox {
+	clear: both;
+	float: left;
+	margin: 0;
+	background: #71b8d0;
+	border: 4px solid #d4d4d4;
+	border-radius: 10px;
+}
+
+#bluebox-loading {
+    display: none;
+    height: 64px;
+    width: 64px;
+    background: url('../images/tasks-loading.gif') top left no-repeat;
+    text-indent: -99999em;
+    position: relative;
+}
+
+
+/*
+ * Drag and drop
+ * ----------------------------------------------------------------------------
+ */
+
+div.yui3-dd-proxy {
+	border: none !important;
+	background-color: transparent !important;
+	cursor: move ;
+}
+
+div.yui3-dd-proxy li,
+div.yui3-dd-proxy li.task,
+div.yui3-dd-proxy li.suggestion {
+	margin: 0 !important;
+	cursor: move ;
+}
+
+div.yui3-dd-proxy span {
+	cursor: move ;
+}
+
+
+/*
+ * Task list area
+ * ----------------------------------------------------------------------------
+ */
+ 
+#tasks {
+	list-style-type: none;
+	padding-top: 15px;
+	padding-bottom: 20px;
+}
+
+#tasks li,
+div.yui3-dd-proxy li.task {
+	position: relative;
+	margin: 7px 20px 0 20px;
+	padding: 2px 2px 2px 40px;
+	display: block;
+	height: 30px;
+	background-color: #ffffff;
+	border: 3px solid transparent;
+	border-radius: 10px;
+	box-shadow: 1px 1px 2px #666666;
+	-moz-box-shadow: 1px 1px 2px #666666;
+	-webkit-box-shadow: 1px 1px 2px #666666;
+}
+
+#tasks li.active,
+div.yui3-dd-proxy li.task.active {
+	border: 3px solid #666;
+	box-shadow: 0 0 0 #666666;
+	-moz-box-shadow: 0 0 0 #666666;
+	-webkit-box-shadow: 0 0 0 #666666;
+}
+
+#tasks li .titlearea,
+div.yui3-dd-proxy li.task .titlearea {
+	display: inline-block;
+	width: 100%;	/* 100% of 80% */
+	/* max-width: 85%;	/* if showing updatedAgo w ellipses: 80%; */
+}
+
+#tasks li .titletext,
+div.yui3-dd-proxy li.task .titletext {
+	display: inline-block;
+	max-width: 100%;
+	/*
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	*/
+	overflow: hidden;
+}
+
+#tasks li a,
+#tasks li a:visited,
+#tasks li a:hover,
+#tasks li a:active,
+div.yui3-dd-proxy li.task a,
+div.yui3-dd-proxy li.task a:visited,
+div.yui3-dd-proxy li.task a:hover,
+div.yui3-dd-proxy li.task a:active
+{
+	margin: 0;
+	padding: 0;
+	font-size: 14px;
+	line-height: 30px;
+	font-weight: normal;
+	color: #ff6600;
+	font-style: italic;
+}
+
+#tasks li h3,
+div.yui3-dd-proxy li.task h3 {
+	margin: 5px 0;
+	padding: 0;
+	font-size: 11px;
+	font-weight: normal;
+	color: #999999;
+}
+
+/* #tasks li.editing a, */
+#tasks li.editing .titletext,
+/* div.yui3-dd-proxy li.task.editing a, */
+div.yui3-dd-proxy li.task.editing .titletext {
+	width: 100%;
+}
+
+#tasks li .edited-by,
+div.yui3-dd-proxy li.task .edited-by {
+	font-size: 10px;
+	font-weight: normal;
+	color: #7c7c7c;
+	display: none;
+	margin-bottom: 10px;
+}
+
+#tasks li.open .edited-by,
+div.yui3-dd-proxy li.task.open .edited-by {
+	display: block;
+}
+
+#tasks li .updatedAgo,
+div.yui3-dd-proxy li.task .updatedAgo {
+	position: absolute;
+	bottom: 10px;
+	padding-left: 5px;
+	font-size: 50%;
+}
+#tasks li.long-title .updatedAgo,
+div.yui3-dd-proxy .updatedAgo {
+	display: none ;
+}
+
+#tasks li.updatedago-would-wrap .updatedAgo,
+#tasks li.editing .updatedAgo,
+#tasks li.open .updatedAgo {
+	display: none;
+}
+
+#tasks li .updatedAgo:hover,
+div.yui3-dd-proxy li.task .updatedAgo:hover {
+	display: none;
+}
+
+#tasks li.long-title .ellipses {
+	position: relative ;
+	bottom: 8px ;
+}
+
+#tasks li.short-title .ellipses,
+#tasks li.editing .ellipses,
+#tasks li.open .ellipses,
+div.yui3-dd-proxy .ellipses {
+	display: none;
+}
+
+#tasks li .iconsright .deleteTask,
+div.yui3-dd-proxy li.task .iconsright .deleteTask {
+	display: inline-block;
+	height: 10px;
+	width: 10px;
+	margin-left: 5px;
+	margin-right: 2px;
+	background-repeat: no-repeat;
+	position: relative;
+	top: -3px;
+}
+	
+#tasks li:hover .iconsright .deleteTask,
+#tasks li.participantsMenu .iconsright .deleteTask,
+div.yui3-dd-proxy li.task:hover .iconsright .deleteTask {
+	background: url('../images/colage.png') 0 -471px no-repeat;
+}
+
+#tasks li .iconsright .deleteTask:hover,
+div.yui3-dd-proxy li.task .iconsright .deleteTask:hover {
+	background: url('../images/colage.png') 0 -481px no-repeat;
+}
+
+#tasks li.open .iconsright .deleteTask,
+div.yui3-dd-proxy li.task.open .iconsright .deleteTask {
+	background-image: none;
+}
+
+#tasks li.open,
+div.yui3-dd-proxy li.task.open {
+    height: auto;
+}
+
+#tasks li.completed,
+div.yui3-dd-proxy li.task.completed {
+    background-color: #e6e6e6;
+}
+
+#tasks li.open .tab,
+div.yui3-dd-proxy li.task.open .tab {
+	display: block;
+	width: 23px;
+	height: 22px;
+	background: url('../images/colage.png') 0 -555px no-repeat;
+	position: absolute;
+	top: -3px;
+	right: -3px;
+}
+
+#tasks li .check-boxes,
+div.yui3-dd-proxy li.task .check-boxes {
+	display: block;
+	width: 18px;
+	height: 18px;
+	text-indent: -9999px;
+	overflow: hidden;
+	position: absolute;
+	top: 8px;
+	left: 7px;
+}
+
+#tasks li .in-progress,
+div.yui3-dd-proxy li.task .in-progress {
+    background: url('../images/colage.png') 0 -67px no-repeat;
+}
+
+#tasks li .completed,
+div.yui3-dd-proxy li.task .completed {
+    background: url('../images/colage.png') 0 -85px no-repeat;
+    top: 5px;
+	height: 21px;
+}
+
+#tasks li .default,
+div.yui3-dd-proxy li.task .default {
+    background: url('../images/colage.png') 0 -49px no-repeat;
+}
+
+#tasks li a.addTaskDetail,
+div.yui3-dd-proxy li.task a.addTaskDetail {
+	display: none;
+}
+
+#tasks li.open a.addTaskDetail,
+div.yui3-dd-proxy li.task.open a.addTaskDetail {
+	display: inline-block;
+	padding-left: 12px;
+	margin: 0;
+	font-size: 12px;
+	color: #7f7f7f;
+	text-decoration: underline;
+	font-style: normal;
+	position: relative;
+	top: -2px;
+	cursor: pointer;
+}
+
+#tasks li.open a.addTaskDetail:hover,
+div.yui3-dd-proxy li.task.open a.addTaskDetail:hover {
+	display: inline-block;
+	padding-left: 12px;
+	margin: 0;
+	font-size: 12px;
+    color: #ff6600;
+	text-decoration: underline;
+	font-style: normal;
+}
+
+.iconsright { 
+	float: right;
+	margin-top: 5px;
+	margin-right: 10px;
+}
+
+.iconsright img { 
+	width: 16px;
+	border: none;
+	visibility: hidden;
+}
+
+.active .iconsright img { 
+	visibility: visible;
+}
+
+.participantcountparent { 
+	position: relative;
+}
+
+.participantcount { 
+	position: absolute;
+	right: 25%;
+	font-size: 0.5em;
+}
+
+.taskicon { 
+	width: 12px;
+}
+	
+.taskdetails {
+	width: 96%;
+}
+
+#tasks span.notes,
+div.yui3-dd-proxy span.notes { 
+	display: block; 
+	width: 16px; 
+	height: 17px; 
+	position: absolute;
+	top: 8px;
+	left: 36px;
+}
+
+#tasks span.notes.noteEmpty,
+div.yui3-dd-proxy span.notes.noteEmpty { 
+	background: url('../images/colage.png') 0 -254px no-repeat; 
+}
+
+#tasks span.notes.noteEmpty:hover,
+#tasks li.completed span.notes.noteEmpty:hover,
+div.yui3-dd-proxy span.notes.noteEmpty:hover,
+div.yui3-dd-proxy li.task.completed span.notes.noteEmpty:hover { 
+	background: url('../images/colage.png') 0 -271px no-repeat; 
+}
+
+#tasks span.notes.noteContent,
+div.yui3-dd-proxy span.notes.noteContent { 
+	background: url('../images/colage.png') 0 -288px no-repeat; 
+}
+
+#tasks span.notes.noteNew:hover,
+#tasks span.notes.noteContent:hover,
+div.yui3-dd-proxy span.notes.noteNew:hover,
+div.yui3-dd-proxy span.notes.noteContent:hover { 
+	background: url('../images/colage.png') 0 -305px no-repeat; 
+}
+
+#tasks span.notes.noteNew,
+div.yui3-dd-proxy span.notes.noteNew { 
+	background: url('../images/colage.png') 0 -322px no-repeat; 
+}
+
+#tasks li span.iamaparticipant, 
+div.yui3-dd-proxy li.task span.iamaparticipant { 
+	visibility: hidden;
+	display: inline-block;
+	background: url('../images/colage.png') 0 -106px no-repeat; 
+	width: 32px;
+	height: 18px;
+}
+
+#tasks li.me span.iamaparticipant, 
+div.yui3-dd-proxy li.task.me span.iamaparticipant { 
+	visibility: visible;
+	display: inline-block;
+}
+
+#tasks li span.participants,
+div.yui3-dd-proxy li.task span.participants { 
+	visibility: hidden;
+	display: inline-block;
+	width: 25px;
+	height: 18px;
+}
+
+#tasks li.single span.participants,
+#tasks li.multiple span.participants,
+div.yui3-dd-proxy li.task.single span.participants,
+div.yui3-dd-proxy li.task.multiple span.participants { 
+	visibility: visible;
+}
+
+#tasks li.active span.participants,
+div.yui3-dd-proxy li.task.active span.participants { 
+	visibility: visible;
+	background: url('../images/colage.png') 0 -180px no-repeat;
+}
+
+#tasks li.single span.participants,
+div.yui3-dd-proxy li.task.single span.participants { 
+	background: url('../images/colage.png') 0 -162px no-repeat;
+}
+
+#tasks li.single span.participants:hover,
+div.yui3-dd-proxy li.task.single span.participants:hover { 
+	background: url('../images/colage.png') 0 -198px no-repeat;
+}
+
+#tasks li.multiple span.participants,
+div.yui3-dd-proxy li.task.multiple span.participants { 
+	background:url('../images/colage.png') 0 -144px no-repeat;
+}
+
+#tasks li.multiple span.participants:hover,
+div.yui3-dd-proxy li.task.multiple span.participants:hover { 
+	background: url('../images/colage.png') 0 -126px no-repeat;
+}
+
+#tasks li span.participants:hover, 
+#tasks li.none span.participants:hover,
+div.yui3-dd-proxy li.task span.participants:hover, 
+div.yui3-dd-proxy li.task.none span.participants:hover { 
+	visibility: visible;
+	display: inline-block;
+	background: url('../images/colage.png') 0 -198px no-repeat;
+}
+
+#tasks li .titletext,
+div.yui3-dd-proxy li.task .titletext {
+	margin: 0 0 0 22px;
+	padding: 0 0 0 0px;
+	font-size: 18px;
+	line-height:30px;
+	font-weight: normal;
+	color: #4c4c4c;
+}
+
+#tasks li.noteNew .titletext,
+div.yui3-dd-proxy li.task.noteNew .titletext {
+	font-weight: bold;
+}
+
+#tasks li.completed .titletext,
+div.yui3-dd-proxy li.task.completed .titletext {
+    color: #999999;
+}
+
+#tasks li .titletext .time,
+div.yui3-dd-proxy li.task .titletext .time {
+    font-size: 11px;
+    color: #999999;
+}
+
+#tasks li .message,
+div.yui3-dd-proxy li.task .message {
+	width: 96%;
+	border-radius: 10px;
+	margin: 5px 0 0 0;
+	padding: 5px 10px 5px 10px;
+	float: left;
+	display: none;
+	clear: both;
+}
+
+#tasks li .message.odd,
+div.yui3-dd-proxy li.task .message.odd {
+	background-color: #f3f3f3;
+}
+
+#tasks li .message.even,
+div.yui3-dd-proxy li.task .message.even {
+	background-color: #d8d8d8;
+}
+
+#tasks li.open .message,
+div.yui3-dd-proxy li.task.open .message {
+	display: inline;
+}
+
+#tasks li .message p.details-meta,
+div.yui3-dd-proxy li.task .message p.details-meta {
+	font-size: 10px;
+	font-weight: normal;
+	color: #7c7c7c;
+	margin-top: 2px;
+	margin-bottom: 10px;
+}
+
+#tasks li .taskdetails em,
+div.yui3-dd-proxy li.task .taskdetails em {
+    font-size: 11px;
+	font-weight: bolder;
+	font-style: normal;
+}
+
+#tasks li .taskdetails,
+div.yui3-dd-proxy li.task .taskdetails {
+    font-size: 14px;
+	font-style: normal;
+	overflow: hidden ;
+	height: auto ;
+	resize: none;
+}
+
+#tasks li .message p.details-content,
+div.yui3-dd-proxy li.task .message p.details-content {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 16px;
+	color: #4c4c4c;
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+#tasks li .message p.details-content .break,
+div.yui3-dd-proxy li.task .message p.details-content .break {
+    display: block;
+    height: 10px;
+}
+
+#tasks li .bottom-links,
+div.yui3-dd-proxy li.task .bottom-links {
+	display: none;
+	clear: both;
+	position: relative;
+	bottom: 0;
+	left: 0;
+}
+
+#tasks li.open .bottom-links,
+div.yui3-dd-proxy li.task.open .bottom-links {
+	display: block;
+}
+
+#tasks li .bottom-links a,
+#tasks li .bottom-links a:visited,
+#tasks li .bottom-links a:active,
+div.yui3-dd-proxy li.task .bottom-links a,
+div.yui3-dd-proxy li.task .bottom-links a:visited,
+div.yui3-dd-proxy li.task .bottom-links a:active {
+	margin: 0;
+	padding: 0 20px 0 0;
+	font-size: 12px;
+	color: #7f7f7f;
+	text-decoration: underline;
+	font-style: normal;
+	cursor: pointer;
+}
+
+#tasks li .bottom-links a:hover,
+div.yui3-dd-proxy li.task .bottom-links a:hover {
+    color: #ff6600
+}
+
+#tasks li .bottom-links a.deleteTask,
+div.yui3-dd-proxy li.task .bottom-links a.deleteTask {
+    float: right;
+    width: auto;
+    display: inline;
+    margin-right: 60px;
+}
+
+#tasks input.tasktitle,
+div.yui3-dd-proxy input.tasktitle,
+#tasks textarea.tasktitle,
+div.yui3-dd-proxy textarea.tasktitle {
+	width: 88%;
+	position: relative;
+	left: -1px;
+	font-size: 18px;
+}
+
+#tasks input.measureText,
+#tasks textarea.measureText {
+	width: 0 ;
+	visibility: hidden ;
+	position: absolute ; /* just get it out of the flow - who cares where it ends up since it's not visible */
+	font-size: 18px;
+}
+
+#tasks li.noteNew .measureText {
+	font-weight: bold;
+}
+
+div.yui3-dd-proxy .measureText {
+	display: none ;
+}
+
+#tasks li.addnewtask input {
+	width: 80%;
+}
+
+#tasks li.noteNew input.tasktitle,
+div.yui3-dd-proxy li.noteNew input.tasktitle,
+#tasks li.noteNew textarea.tasktitle,
+div.yui3-dd-proxy li.noteNew textarea.tasktitle {
+    font-weight: bold;
+}
+
+.taskdetails input,
+.taskdetails textarea {
+	display: none;
+	width: 92%;
+}
+
+li.open .taskdetails input,
+li.open .taskdetails textarea {
+	display: inline-block;
+}
+
+input.taskdetails,
+textarea.taskdetails {
+	margin-top: 20px;
+	border:1px solid #666;
+	padding: 5px;
+	border-radius:5px;
+}
+
+
+/*
+ * Task list participants menu
+ * ----------------------------------------------------------------------------
+ */
+
+#task-participants {
+	width: 250px;
+	position: relative;
+	right: -3px;
+	top: -25px;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+}
+
+#task-participants .icon-tab {
+    float: right;
+    display: block;
+    height: 19px;
+    width: 30px;
+	background: url('../images/colage.png') 4px -162px no-repeat;
+	background-color: #dddddd;
+	border: 2px solid #dddddd;
+	border-top: 7px solid #dddddd;
+}
+
+#task-participants.multiple .icon-tab {
+	background: url('../images/colage.png') 4px -144px no-repeat;
+	background-color: #dddddd;
+}
+
+#task-participants .menu-box {
+    clear: both;
+	padding: 3px 0;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+}
+
+#task-participants.above {
+	top: -10px;
+	right: -3px;
+	border-top-right-radius: 10px;
+}
+
+#task-participants.above .icon-tab {
+	border: 2px solid #dddddd;
+	border-bottom: 8px solid #dddddd;
+	border-top: 12px solid #dddddd;
+	position: absolute;
+	bottom: -37px;
+	right: 0;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+	margin-left: 220px;
+}
+
+#task-participants.above .menu-box {
+    clear: both;
+	border-radius: 10px;
+	border-bottom-right-radius: 0;
+}
+
+#task-participants ul {
+	margin: 0;
+	padding-left: 0;
+	list-style-type: none;
+}
+
+#task-participants li {
+	padding: 4px;
+}
+
+#task-participants li label {
+	padding-left: 20px;
+	background: url('../images/colage.png') 5px -577px no-repeat;
+	position: relative;
+	top: -2px;
+}
+
+#task-participants label {
+	padding: 2px 4px;
+}
+
+
+/*
+ * Side panel (suggestions and tips)
+ * ----------------------------------------------------------------------------
+ */
+ 
+#suggestions-loading {
+    display: none;
+    height: 64px;
+    width: 64px;
+    background: url('../images/suggestions-loading.gif') top left no-repeat;
+    text-indent: -99999em;
+    position: relative;
+    top: 30px;
+    left: 80px;
+}
+
+#side-panel {
+	margin: 5px 0 0 20px;
+	width: 225px;
+	float: left;
+	display: inline;
+}
+
+#side-panel h2 {
+	margin: 5px 0;
+	padding: 0;
+	font-size: 18px;
+	font-weight: normal;
+	color: #3474a1;
+}
+
+#side-panel .suggestion-box {
+	margin: 10px 0 0 0;
+	padding: 5px;
+	width: 215px;
+	background: #f3f3f3;
+	border: 4px solid #d4d4d4;
+	border-radius: 10px;
+}
+
+#side-panel #suggestions a {
+    cursor: default;
+}
+
+#side-panel .suggestion-box ul {
+    margin: 0;
+    padding: 0;
+}
+
+#side-panel .suggestion-box ul li,
+div.yui3-dd-proxy li.suggestion {
+	margin: 10px 0;
+	padding: 5px 5px 5px 40px;
+	display: block;
+	width: 166px;
+	height: 30px;
+	background: url('../images/line.png') 30px 0 repeat-y #e6e6e6;
+	border-radius: 10px;
+	box-shadow: 1px 1px 2px #888;
+	-moz-box-shadow: 1px 1px 2px #888;
+	-webkit-box-shadow: 1px 1px 2px #888;
+	position: relative;
+}
+
+#side-panel .suggestion-box ul li:hover {
+    background: url('../images/line.png') 30px 0 repeat-y #ffffff;
+}
+
+#side-panel .suggestion-box ul li .arrow,
+div.yui3-dd-proxy li.suggestion .arrow {
+	display: block;
+	width: 14px;
+	height: 14px;
+	text-indent: -9999px;
+	overflow: hidden;
+	position: absolute;
+	top: 12px;
+	left: 9px;
+	background: url('../images/colage.png') 0 -429px no-repeat;
+}
+
+#side-panel .suggestion-box ul li .clickableArrow {
+	display: block;
+	width: 30px;
+	height: 40px;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: transparent;
+	cursor: pointer;
+}
+
+#side-panel .suggestion-box ul li a.add,
+div.yui3-dd-proxy li.suggestion a.add {
+	font-size: 15px;
+	display: block;
+	width: 150px;
+	height: 30px;
+	line-height: 30px;
+	float: left;
+	text-decoration: none;
+}
+
+#side-panel .suggestion-box ul li a.removeSuggestion,
+#side-panel .suggestion-box ul li a.removeSuggestion:visited,
+div.yui3-dd-proxy li.suggestion a.removeSuggestion,
+div.yui3-dd-proxy li.suggestion a.removeSuggestion:visited {
+	display: block;
+	width: 14px;
+	height: 14px;
+	line-height: 30px;
+	background: url('../images/colage.png') 0 -443px no-repeat;
+	text-indent: -9999px;
+	overflow: hidden;
+	float: left;
+	position: relative;
+	top: 9px;
+}
+
+#side-panel .suggestion-box ul li a.removeSuggestion:hover {
+    background: url('../images/colage.png') 0 -457px no-repeat;
+}
+
+#side-panel .suggestion-box p {
+	margin: 5px 0;
+	padding: 0;
+	font-size: 12px;
+	line-height: 14px;
+}
+
+#side-panel .suggestion-box p.right {
+    float: right;
+    width: auto;
+    display: inline;
+    margin-right: 10px;
+}
+
+#side-panel div.tips a,
+#side-panel div.tips a:visited {
+	margin: 0;
+	padding: 0;
+	font-size: 12px;
+	text-decoration: underline;
+}
+
+#side-panel div.tips a:hover,
+#side-panel div.tips a:active {
+    color: #ff6600
+}
+
+#side-panel div.tips div.nav a,
+#side-panel div.tips div.nav a:visited {
+	margin: 0 0 0 5px;
+	padding: 0;
+	font-size: 12px;
+	text-decoration: underline;
+}
+
+#side-panel div.tips div.nav a:hover,
+#side-panel div.tips div.nav a:active {
+    color: #ff6600
+}
+
+#side-panel div.tips p.show-me {
+    display: none;
+}
+
+#side-panel div.tips p.show-me-showable {
+    display: block;
+}
+
+.tips.hr {
+	padding-top: 3px;
+}
+
+.tips {
+	color:#4c4c4c;
+	margin-left: 5px;
+	margin-top: 10px;
+}
+
+.tips .nav {
+	float: right;
+	margin: 5px;
+    cursor: pointer;
+}
+
+#showtips {
+	display: none;
+}
+
+/*
+ * Tips highlighting
+ * ----------------------------------------------------------------------------
+ */
+
+.pointTo {
+	background: transparent ;
+    border: 5px solid #ff6600;
+	border-radius: 10px;
+}
+
+
+/*
+ * Footer
+ * ----------------------------------------------------------------------------
+ */
+ 
+#footer {
+    position: fixed;
+    bottom: 0;
+	width: 100%;
+	height: 80px;
+}
+
+#footer-background {
+    position: relative;
+    top: -70px;
+    width: 100%;
+    height: 100%;
+	background: url('../images/mountains.png') bottom center no-repeat;
+    z-index: -1;
+}
+
+#footer-bar {
+    padding-top: 69px;
+    margin-left: auto;
+    margin-right: auto;
+	width: 875px;
+}
+
+#footer ul.links-left li {
+	float: left;
+	display: block;	
+}
+
+#footer ul.links-left li a {
+	margin: 0 10px;
+	font-size: 12px;
+	color: #8d8d8d;
+	font-weight: bold;
+	text-decoration: none;
+	float: left;
+}
+
+#footer ul.links-left li a.facebook-footer {
+	margin: 0 5px;
+	width: 18px;
+	height: 17px;
+	background: url('../images/colage.png') 0 -538px no-repeat;
+	text-indent: -9999px;
+	position: relative;
+	top: -2px;
+}
+
+#footer ul.links-left li a.twitter-footer {
+	width: 18px;
+	height: 18px;
+	background: url('../images/colage.png') 0 -520px no-repeat;
+	text-indent: -9999px;
+	position: relative;
+	top: -2px;
+}
+
+#footer .copyright {
+	text-align: right;
+	margin-left: 300px;
+	font-size: 10px;
+	color: #8d8d8d;
+}
+
+
+/*
+ * System Status Bar (top center)
+ * ----------------------------------------------------------------------------
+ */
+ 
+#status {
+	z-index: 10000;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	text-align:center;
+    -webkit-transition: all 100ms ease-in-out;
+    -moz-transition: all;
+    -moz-transition-duration: 100ms;
+    -moz-transition-timing-function: ease-in-out;
+}
+
+#status.show {
+    opacity: 0.5;
+}
+
+#status.hide {
+    opacity: 0;
+	height: 0;
+}
+
+#status.remove {
+    display: none;
+}
+
+#status .middleStatus {
+	display: inline-block;	/* just to get backgruond color */
+	background-color: #ec5320;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+	width: 40%;
+	padding: 5px;
+}
+
+#status h1 {
+    opacity: 1.0
+	color: #000000;
+}
+
+
+/*
+ * System Confirmation Dialog (center center)
+ * ----------------------------------------------------------------------------
+ */
+ 
+.confirm {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+    -webkit-transition: opacity 100ms ease-in-out;
+    -moz-transition: opacity;
+    -moz-transition-duration: 100ms;
+    -moz-transition-timing-function: ease-in-out;
+}
+
+.confirm .dialog {
+	display: inline-block;
+	background: #f3f3f3;
+	border: 5px solid #cbcbcb;
+	padding: 10px;
+	border-radius: 10px;
+	width: 260px;
+}
+
+.confirm .title {
+	font-size: 18px;
+	line-height: 1.3em;
+    font-weight: bold;
+    color: #777777;
+    margin-left: 5px;
+    text-align: left;
+}
+
+.confirm .text {
+	background: #e6e6e6;
+	color: #5c5c5c;
+	padding: 20px;
+	border-radius: 10px;
+	margin: 10px 0;
+	font-weight: normal;
+	font-size: 16px;
+	line-height: 1.3em;
+	width: auto;
+	text-align: left;
+}
+
+.confirm.underlay {
+	z-index: 9999;
+	background-color: #000000;
+}
+
+.confirm.underlay.hide {
+	left: -9999px;
+	opacity: 0;
+}
+
+.confirm.underlay.show {
+	left: 0;
+	opacity: 0.35;
+}
+
+.confirm.overlay {
+	z-index: 10000;
+}
+
+.confirm.overlay.hide {
+	left: -9999px;
+	opacity: 0;
+}
+
+.confirm.overlay.show {
+	left: 0;
+	opacity: 1.0;
+}
+
+.confirm div {
+	width: 100%;
+	height: 33%;
+}
+
+.confirm #confirm-cancel.hide {
+    display: none;
+}
+
+.confirm .dialog.orange {
+    border-color: #ded6cc;
+}
+
+
+/*
+ * Task title tooltip
+ * ----------------------------------------------------------------------------
+ */
+
+.yui3-tooltip {
+    position: absolute;
+}
+
+.yui3-tooltip-hidden {
+    visibility: hidden;
+}
+ 
+.yui3-tooltip-content {
+    background-color: #eeeeee;
+	font-size: 18px;
+	line-height:30px;
+	font-weight: normal;
+	color: #4c4c4c;
+	position: relative;
+	border-radius: 10px;
+	border-bottom-left-radius: 0;
+	border-top-left-radius: 0;
+}
+
+
+/*
+ * Common participants list (invite and manage)
+ * ----------------------------------------------------------------------------
+ */
+
+.participant-overlay-header {
+	color: #7b7b7b;
+	font-weight: bold;
+	font-size:1.1em;
+	padding-bottom: 10px;
+}
+
+.invite-participants-list,
+.participants-list {
+	padding-left: 0;
+	list-style-type: none;
+}
+
+.participants-row {
+	padding: 0;
+	list-style-type: none;
+}
+
+ul.participants-list span.participant {
+	color: #000000;
+}
+
+.invite-participants-list li {
+	padding: 5px 0 0 5px;
+	color: #3373a0;
+}
+
+.invite-participants-list li.participants-pane .participants-list {
+	padding: 0;
+}
+
+.participant .person {
+	display: inline-block;
+    background: url('../images/colage.png') 0 -216px no-repeat;
+	border: none;
+	border-right: 1px solid grey;
+	width: 21px;
+	height: 18px;
+	margin: 0 4px -6px 0;
+	padding-right: 5px;
+	position: relative;
+	top: -5px;
+	right: 10px;
+}
+
+span.participant {
+	float: left;
+	padding: 10px;
+	margin: 0 18px 10px 0;
+	display: inline-block;
+	width: 180px;
+	border-radius: 10px;
+	-moz-box-shadow: 2px 2px 0 #aaaaaa;
+	-webkit-box-shadow: 2px 2px 0 #aaaaaa;
+	box-shadow: 2px 2px 0 #aaaaaa;
+	border: 2px solid #ffffff;
+	background-color: #ffffff;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	cursor: default;
+}
+
+span.participant:hover {
+	background-color: #d3d3d3;
+	border-radius: 10px;
+	-moz-box-shadow: 2px 2px 0 #aaaaaa;
+	-webkit-box-shadow: 2px 2px 0 #aaaaaa;
+	box-shadow: 1px 1px 0 #aaaaaa;
+	border: 2px solid #a9a9a9;
+}
+
+.invite-participants-list {
+	background: #e6e6e6;
+	padding: 3px;
+	border: 2px solid #e6e6e6;
+	border-radius: 10px;
+	margin-bottom: 10px;
+}
+
+
+/*
+ * Participants Invite
+ * ----------------------------------------------------------------------------
+ */
+
+#invite-overlay {
+	background-color: #f5f5f5;
+	border:5px solid #cbcbcb;
+	padding: 10px;
+	width: 500px;
+	border-radius: 10px;
+	position: relative;
+	z-index: 6;
+}
+
+#invite-overlay .invite-label {
+	font-size: 75%;
+	padding-left: 5px;
+	color: #a9a9a9;
+}
+
+#invite-overlay input,
+#invite-overlay textarea {
+	border:1px solid grey;
+	width: 85%;
+	height: 40px;
+	resize: none;
+	margin-left: 5%;
+}
+
+#invite-message {
+	height: 60px;
+}
+
+#invite-overlay span.participant.selected {
+	background-color: #ffffff;
+	border-radius: 10px;
+	-moz-box-shadow: 2px 2px 0 #aaaaaa;
+	-webkit-box-shadow: 2px 2px 0 #aaaaaa;
+	box-shadow: 2px 2px 0 #aaaaaa;
+	border: 2px solid #3373a0;
+}
+
+#invite-overlay ul.participants-list {
+	width: 480px;
+	height: 155px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	
+}
+
+#invite-emails,
+#invite-message {
+	margin:10px 0;
+	border-radius: 10px;
+	-moz-box-shadow: -1px -1px 0 #aaaaaa;
+	-webkit-box-shadow: -1px -1px 0 #aaaaaa;
+	box-shadow: -1px -1px 0 #aaaaaa;
+	border:none;
+	padding: 5px 10px;
+}
+
+#invite-overlay span.participant.selected {
+	border-color: #3373a0;
+	background-color: #d3d3d3;
+}
+
+
+/*
+ * Manage participants dialog
+ * ----------------------------------------------------------------------------
+ */
+
+#manage-overlay {
+	background-color: #f5f5f5;
+	border:5px solid #cbcbcb;
+	padding: 10px;
+	width: 260px;
+	border-radius: 10px;
+	position: relative;
+	z-index: 6;
+}
+
+#manage-overlay span.participant.selected {
+	border-color: #b22222;
+	background-color: #d3d3d3;
+}
+
+#manage-overlay span.person .selected {
+	background-color: #ffffff;
+	border-radius: 10px;
+	-moz-box-shadow: 2px 2px 0 #aaaaaa;
+	-webkit-box-shadow: 2px 2px 0 #aaaaaa;
+	box-shadow: 2px 2px 0 #aaaaaa;
+	border: 2px solid #FF464D;
+}
+
+#manage-overlay ul.invite-participants-list {
+	width: 250px;
+	height: 280px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+
+/*
+ * Tour guide
+ * ----------------------------------------------------------------------------
+ */
+
+#tour-guide-alignment {
+    position: absolute;
+    top: 20px;
+    margin-left: -15px;
+    margin-top: 16px;
+	z-index: 10000;
+}
+
+#tour-guide-alignment.hide {
+    display: none;
+}
+
+#tour-guide-alignment .hide {
+    visibility: hidden;
+}
+
+#tour-guide {
+    position: relative;
+    border: 5px solid #ff6600;
+    border-radius: 10px;
+    top: 32px;
+    left: 10px;
+    height: 0;
+    width: 0;
+}
+
+#tour-narative .dialog {
+    width: 350px;
+	-moz-box-shadow: 3px 3px 2px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 2px #aaaaaa;
+	box-shadow: 3px 3px 2px #aaaaaa;
+}
+
+#tour-narative .text {
+    height: 180px;
+    padding-top: 10px;
+}
+
+#tour-narative .image {
+    display: block;
+    width: 200px;
+    height: 140px;
+    margin: 10px auto;
+}
+
+#tour-narative .image.assign {
+    background: url('../images/tour-assign.png') 0 0 no-repeat;
+}
+
+#tour-narative .image.assigned {
+    background: url('../images/tour-assigned.png') 0 0 no-repeat;
+}
+
+#tour-narative .image.comments {
+    background: url('../images/tour-comments.png') 0 0 no-repeat;
+}
+
+#tour-narative .image.checkbox {
+    background: url('../images/tour-checkbox.png') 0 0 no-repeat;
+}
+
+#tour-narative .mini {
+    font-size: 12px;
+    width: 70%;
+    text-align: center;
+    position: relative;
+    top: 92px;
+    left: 10px;
+}
+
+#tour-narative .counter {
+    text-align: right;
+    position: relative;
+    top: -35px;
+    left: 125px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #9a9a9a;
+}
+
+#tour-end {
+    position: relative;
+    left: 70px;
+}
+
+
+/*
+ * Misc
+ * ----------------------------------------------------------------------------
+ */
+
+.diminishedtextitem { 
+	color: grey !important;
+}
+
+.disabledtextitem { 
+	color: #d3d3d3 !important;
+}
+
+.addnewitem {
+	/* width: 100%; */
+	margin:0;
+	padding:0 0 0 0;
+	line-height:30px;
+	font-weight:500 !important;
+	font-size: 16px !important;
+	color: #F60 !important;
+	font-style: italic;
+}
+
+
+/*
+ * Calendar
+ * ----------------------------------------------------------------------------
+ */
+ 
+.calendar {
+    background: white;
+    border: 1px solid #82c2d5;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: Tahoma;
+	-moz-box-shadow: 3px 3px 5px #aaaaaa;
+	-webkit-box-shadow: 3px 3px 5px #aaaaaa;
+	box-shadow: 3px 3px 5px #aaaaaa;
+    float: left;
+    position: relative;
+}
+
+.calendar a,
+.calendar a:hover {
+    cursor: default;
+    text-decoration: none;
+}
+
+.calendar .header {
+    width: 190px;
+    height: 24px;
+    background-color: #82c2d5;
+    position: relative;
+}
+
+.calendar .header .title {
+    color: #ffffff;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    width: 90px;
+    top: 5px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.calendar .header a {
+    position: absolute;
+    top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.calendar .header .prev {
+    left: 3px;
+}
+
+.calendar .header .next {
+    right: 3px;
+}
+
+.calendar .days {
+    width: 190px;
+}
+
+.calendar .days .weekdays {
+    height: 19px;
+    background-color: #a1d7e7;
+    padding-left: 2px;
+    width: 189px;
+    font-size: 10px;
+}
+
+.calendar .days .weekdays span {
+    float: left;
+    width: 26px;
+    text-align: center;
+    line-height: 19px;
+}
+
+.calendar .days .row {
+    background-color: #ffffff;
+    padding-left: 3px;
+    width: 189px;
+}
+
+.calendar .days .row a {
+    color: #6c6c6c;
+    float: left;
+    width: 26px;
+    text-align: center;
+    line-height: 22px;
+    border-radius: 3px;
+}
+
+.calendar .days .row a:hover {
+    background-color: #cccccc;
+}
+
+.calendar .days .row .hide {
+    visibility: hidden;
+}
+
+.calendar .days .row .today {
+    color: #ff6600;
+    font-weight: bolder;
+}
+    
+.calendar .days .row .selected {
+    background-color: #ffbd7a;
+}
+

@@ -1,0 +1,24 @@
+#two-columns
+  .left
+    ul.login-nav
+      li.active
+        a(href: '/tos') Sled Invitation
+
+    a#bottom.blue(href: '/') &larr; Back to Sled
+
+  .right
+    h3 You've Been Invited to Participate in a Sled
+
+    #text-box #{inviter} invited you to collaborate on '#{title}'. Would you like to accept the invitation and add the sled to your account?
+
+      form(method: 'post', action: '/signup/invite/claim')
+        input(type: 'hidden', name: 'crumb', value: crumb)
+        button.blue-button Yes, add to this account
+
+      form(method: 'get', action: '/signup/invite/other')
+        button.blue-button No, I want to use another account
+
+  .clearfix
+
+
+
