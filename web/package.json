@@ -1,6 +1,6 @@
 {
-  "name": "sled.com",
-  "description": "Sled Web Server",
+  "name": "postmie.web",
+  "description": "Postmile Web Server",
   "version": "0.1.0",
   "author": "Eran Hammer-Lahav <eran@hammer-lahav.net>",
   "private": true,

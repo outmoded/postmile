@@ -6,16 +6,7 @@
 // Load modules
 
 var Email = require('./email');
-
-
-// Declare internals
-
-var internals = {
-
-    domain: 'sled.com',
-    scheme: 'https',
-    feedbackEmail: 'team@sled.com'
-};
+var Config = require('./config');
 
 
 // Welcome page
@@ -81,7 +72,7 @@ exports.feedback = function (req, res, next) {
     else {
 
         var feedback = 'From: ' + (req.body.username ? req.body.username : req.body.name + ' <' + req.body.email + '>') + '\n\n' + req.body.message;
-        Email.send(internals.feedbackEmail, 'Posmile site feedback', feedback);
+        Email.send(Config.email.feedback, 'Posmile site feedback', feedback);
 
         res.api.view = { template: 'feedback', locals: { env: { message: 'Your feedback has been received!'}} };
         next();
@@ -93,7 +84,7 @@ exports.feedback = function (req, res, next) {
 
 exports.config = function (req, res, next) {
 
-    res.api.result = 'var postmile = { domain: \'' + internals.domain + '\', scheme: \'' + internals.scheme + '\' };';
+    res.api.result = 'var postmile = { domain: \'' + Config.host.web.domain + '\', scheme: \'' + Config.host.web.scheme + '\' };';
     res.api.isAPI = true;
     next();
 };

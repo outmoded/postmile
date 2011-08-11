@@ -19,21 +19,17 @@ var Log = require('./log');
 var Session = require('./session');
 var Vault = require('./vault');
 var Email = require('./email');
+var Config = require('./config');
 
 
 // Declare internals
 
-var internals = {
-
-    // Globals
-
-    adminEmail: 'team@sled.com'
-};
+var internals = {};
 
 
 // Send startup email
 
-Email.send(internals.adminEmail, 'NOTICE: sled.com started', 'Started on ' + Os.hostname());
+Email.send(Config.email.admin, 'NOTICE: Web server started', 'Started on ' + Os.hostname());
 
 
 // Listen to uncaught exceptions
@@ -42,7 +38,7 @@ process.on('uncaughtException', function (err) {
 
     Log.err('Uncaught exception: ' + err.stack);
 
-    Email.send(internals.adminEmail, 'ERROR: Exception on sled.com', err.stack, '', function (err) {
+    Email.send(Config.email.admin, 'ERROR: Exception on web server', err.stack, '', function (err) {
 
         process.exit(1);
     });
@@ -59,7 +55,7 @@ exports.create = function (paths) {
                    { short: 'p', long: 'port', description: 'The port to connect to', value: true },
                    { short: 'u', long: 'user', description: 'User id to run as', value: true },
                    { short: 'c', long: 'cert', description: 'TLS certificate chain', value: true },
-                   { short: 'k', long: 'key', description: 'TLS certificate key', value: true}];
+                   { short: 'k', long: 'key', description: 'TLS certificate key', value: true }];
 
     Opts.parse(options, true);
 
@@ -71,8 +67,8 @@ exports.create = function (paths) {
 
     var tls = {
 
-        key: Fs.readFileSync(Opts.get('key') || 'cert/sled.com.key'),
-        cert: Fs.readFileSync(Opts.get('cert') || 'cert/sled.com.crt')
+        key: Fs.readFileSync(Opts.get('key') || 'cert/' + Config.host.web.domain + '.key'),
+        cert: Fs.readFileSync(Opts.get('cert') || 'cert/' + Config.host.web.domain + '.crt')
     };
 
     var server = Express.createServer(tls);
@@ -111,7 +107,7 @@ exports.create = function (paths) {
     var bouncer = Express.createServer();
     bouncer.all(/.+/, function (req, res, next) {
 
-        res.send('You are being redirected...', { 'Location': 'https://sled.com' + req.url }, 307);
+        res.send('You are being redirected...', { 'Location': Config.host.uri('web') + req.url }, 307);
     });
 
     bouncer.listen(80, host);
@@ -427,6 +423,7 @@ internals.finalizeResponse = function (req, res) {
 
         var locals = res.api.view.locals || {};
         locals.env = locals.env || {};
+        locals.host = Config.host;
         locals.profile = req.api.profile;
 
         // Add crumb
@@ -458,7 +455,7 @@ internals.finalizeResponse = function (req, res) {
 
         if (res.api.redirect) {
 
-            var location = ((res.api.redirect.indexOf('http') !== 0 && res.api.redirect.indexOf('sled://') !== 0) ? 'https://sled.com' + res.api.redirect : res.api.redirect);
+            var location = ((res.api.redirect.indexOf('http') !== 0 && res.api.redirect.indexOf('sled://') !== 0) ? Config.host.uri('web') + res.api.redirect : res.api.redirect);
             res.send(res.api.result || 'You are being redirected...', { 'Location': location }, (req.method === 'GET' || location.indexOf('http') !== 0 ? 307 : 303));
         }
         else {
@@ -515,7 +512,8 @@ internals.errorPage = function (code, req, res, message, isAPI) {
             error: message,
             code: code === 404 ? 404 : 500,
             message: (code === 404 ? 'the page you were looking for was not found' : 'something went wrong...'),
-            env: {}
+            env: {},
+            host: Config.host
         };
 
         res.render('error', locals);

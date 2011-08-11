@@ -79,7 +79,7 @@ exports.register = function (req, res, next) {
 
                     var tokenRequest = {
 
-                        grant_type: 'http://ns.sled.com/' + signup.network,
+                        grant_type: 'http://ns.postmile.net/' + signup.network,
                         x_user_id: signup.id
                     };
 
@@ -242,7 +242,7 @@ exports.inviteRegister = function (req, res, next) {
 
                 var tokenRequest = {
 
-                    grant_type: 'http://ns.sled.com/sled',
+                    grant_type: 'http://ns.postmile.net/sled',
                     x_user_id: result.id
                 };
 

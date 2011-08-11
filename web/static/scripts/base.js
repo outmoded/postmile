@@ -228,7 +228,7 @@ function lookupValueRequest(name) {
         }
     };
 
-    var uri = 'http://api.sled.com/user/lookup/' + name + '/' + value;
+    var uri = apiURI + '/user/lookup/' + name + '/' + value;
 
     request.open('GET', uri);
     request.send();
@@ -338,7 +338,7 @@ function reminder() {
             }
         };
 
-        var uri = 'https://sled.com/account/reminder';
+        var uri = apiURI + '/account/reminder';
         var body = '{ "account":' + JSON.stringify(document.getElementById('lookup-account').value) + ' }';
 
         request.open('POST', uri);
@@ -513,7 +513,7 @@ function register() {
         }
     };
 
-    var uri = 'http://api.sled.com/invite/' + code;
+    var uri = apiURI + '/invite/' + code;
 
     request.open('GET', uri);
     request.send();

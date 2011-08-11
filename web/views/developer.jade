@@ -114,9 +114,9 @@
 
     #text-box
 
-      .part Sled v1.0 API (beta)
+      .part Service API v1.0
 
-        .text The following documentation describes the Sled v1.0 API. This is the same API powering our Sled web and mobile clients and is available to third-party developers. The API is currently available for experimentation and we will post the full terms of service shortly.
+        .text The following documentation describes the v1.0 API. This is the same API powering our web and mobile clients and is available to third-party developers. The API is currently available for experimentation and we will post the full terms of service shortly.
 
       a(name: 'test')
       .part API Test Utility
@@ -141,7 +141,7 @@
 
           pre
             | GET /sleds HTTP/1.1
-            | Host: api.sled.com
+            | Host: #{host.authority('api')}
             | Authorization: MAC id="c577a77d8ef1",
             |                    nonce="32123:NqBXXpvO",
             |                    mac="0pWn5izWGqLZEggfeKVrVoegQ3o="
@@ -179,14 +179,14 @@
 
             pre
               | PUT /sled HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
 
             .text The server responds with:
 
             pre
               | HTTP/1.1 201 Created
               | Date: Sun, 06 Feb 2011 20:43:31 GMT
-              | Location: http://api.sled.com/sled/eff4d99750
+              | Location: #{host.uri('api')}/sled/eff4d99750
               | 
               | { "status": "ok",
               |   "id": "f4d9975080" }
@@ -313,7 +313,7 @@
 
             pre
               | POST /profile HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "name": "John Doe",
               |   "username": "john.doe" }
@@ -329,7 +329,7 @@
 
             pre
               | POST /profile/email HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "address": "john.doe1@example.com",
               |   "action": "add" }
@@ -418,7 +418,7 @@
 
             pre
               | PUT /sled HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "title": "New Sled" }
 
@@ -427,7 +427,7 @@
             pre
               | HTTP/1.1 201 Created
               | Date: Sun, 06 Feb 2011 20:43:31 GMT
-              | Location: http://api.sled.com/sled/eff4d99750
+              | Location: #{host.uri('api')}/sled/eff4d99750
               | 
               | { "status": "ok",
               |   "id": "eff4d99750" }
@@ -480,7 +480,7 @@
 
             pre
               | POST /sled/55cf687663 HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "place": "San Francisco, CA" }
 
@@ -495,7 +495,7 @@
 
             pre
               | POST /sled/55cf687663?position=0 HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
 
             .text Notes:
               ul
@@ -556,7 +556,7 @@
 
             pre
               | POST /sled/55cf687663/participants?message=Hi HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "participants": ["steve@example.com", "c2727e7b75"],
               |   "names": ["Clown"] }
@@ -613,7 +613,7 @@
 
             pre
               | DELETE /sled/55cf687663/participants HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "participants": ["pid:4deff4e9eb", "c2727e7b75", "pid:dh38hd8hs8"] }
 
@@ -717,7 +717,7 @@
 
             pre
               | PUT /sled/55cf687663/task HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "title": "Setup tables" }
 
@@ -726,7 +726,7 @@
             pre
               | HTTP/1.1 201 Created
               | Date: Sun, 06 Feb 2011 20:43:31 GMT
-              | Location: http://api.sled.com/task/29d400ffc5
+              | Location: #{host.uri('api')}/task/29d400ffc5
               | 
               | { "status": "ok",
               |   "id": "29d400ffc5" }
@@ -745,14 +745,14 @@
 
             pre
               | PUT /sled/55cf687663/task?suggestion=ce8002f6d HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
 
             .text Response:
             
             pre
               | HTTP/1.1 201 Created
               | Date: Sun, 06 Feb 2011 20:43:31 GMT
-              | Location: http://api.sled.com/task/29d40101b3
+              | Location: #{host.uri('api')}/task/29d40101b3
               | 
               | { "status": "ok",
               |   "id": "29d40101b3" }
@@ -791,7 +791,7 @@
 
             pre
               | POST /task/2e4ed30d96 HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "title": "Buy Big Cake" }
 
@@ -810,7 +810,7 @@
 
             pre
               | POST /task/2e4ed30d96?position=0 HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
 
             .text Notes:
               ul
@@ -875,7 +875,7 @@
 
             pre
               | POST /task/2e4ed30d96/detail HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "type": "text",
               |   "content": "This is very interesting" }
@@ -917,7 +917,7 @@
 
             pre
               | POST /storage/key HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "value":"example_value" }
 
@@ -944,7 +944,7 @@
 
             pre
               | POST /batch HTTP/1.1
-              | Host: api.sled.com
+              | Host: #{host.authority('api')}
               | 
               | { "get": [ "/profile",
               |            "/storage/activesled",
@@ -1007,12 +1007,12 @@
         .text To connect, include the socket.io script:
 
         pre
-          | <script src="http://api.sled.com/socket.io/socket.io.js"></script>
+          | <script src="#{host.uri('api')}/socket.io/socket.io.js"></script>
 
         .text and initialize the connection:
 
         pre
-          | var socket = new io.Socket('api.sled.com', { port: 80, rememberTransport: false });
+          | var socket = new io.Socket('#{host.authority('api')}', { port: 80, rememberTransport: false });
           | 
           | socket.on('message', function (message) {
           |     if (message.type == 'connect') {

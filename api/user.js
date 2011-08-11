@@ -94,18 +94,12 @@ internals.forbiddenUsernames = {
     script: true,
     search: true,
     signup: true,
-    sled: true,
     support: true,
     terms: true,
     test: true,
     tos: true,
     view: true,
-    welcome: true,
-    yahoo: true,
-
-    josh: true,
-    joshua: true,
-    zoe: true
+    welcome: true
 };
 
 

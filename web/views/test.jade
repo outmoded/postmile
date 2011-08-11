@@ -1,5 +1,5 @@
 script(src: '/scripts/mac.js')
-script(src: 'http://api.sled.com/socket.io/socket.io.js')
+script(src: host.uri('api') + '/socket.io/socket.io.js')
 script
     var credentials;
 
@@ -28,7 +28,7 @@ script
 
                     // Socket.io
 
-                    var socket = new io.Socket('api.sled.com', { port: 80, rememberTransport: false });
+                    var socket = new io.Socket(#{host.api.domain}, { port: #{host.api.port}, rememberTransport: false });
 
                     socket.on('connect', function () {
 
@@ -70,7 +70,7 @@ script
             }
         };
 
-        request.open('GET', 'https://sled.com/oauth/issue');
+        request.open('GET', '#{host.uri('web')}/oauth/issue');
         request.send();
     }
 
@@ -113,7 +113,7 @@ script
 
 #test-form
   label URI: 
-    input#uri(size: '90', type: 'text', value: 'http://api.sled.com/sleds')
+    input#uri(size: '90', type: 'text', value: host.uri('api') + '/sleds')
   select#httpMethod
     option(selected: 'selected') GET
     option POST

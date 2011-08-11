@@ -12,6 +12,7 @@ var Err = require('./error');
 var Log = require('./log');
 var Vault = require('./vault');
 var User = require('./user');
+var Config = require('./config');
 
 
 // Generate email ticket
@@ -271,10 +272,10 @@ exports.sendReminder = function (user, callback) {
 
             if (ticket) {
 
-                var subject = 'Help signing into Sled.com';
+                var subject = 'Help signing into ' + Config.product.name;
                 var text = 'Hey ' + (user.name || user.username || user.emails[0].address) + ',\n\n' +
-                       'Use this link to sign into Sled: \n\n' +
-                       '    https://sled.com/t/' + ticket;
+                       'Use this link to sign into ' + Config.product.name + ': \n\n' +
+                       '    ' + Config.host.uri('web') + '/t/' + ticket;
 
                 exports.send(user.emails[0].address, subject, text);
                 callback(null);
@@ -303,10 +304,10 @@ exports.sendValidation = function (user, address, callback) {
 
             if (ticket) {
 
-                var subject = 'Verify your email addess with Sled.com';
+                var subject = 'Verify your email addess with ' + Config.product.name;
                 var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
                        'Use this link to verify your email address: \n\n' +
-                       '    https://sled.com/t/' + ticket;
+                       '    ' + Config.host.uri('web') + '/t/' + ticket;
 
                 exports.send(address, subject, text);
                 callback(null);
@@ -335,7 +336,7 @@ exports.sendWelcome = function (user, callback) {
 
         var options = null;
         var address = user.emails[0].address;
-        var subject = 'Welcome to Sled.com';
+        var subject = 'Welcome to ' + Config.product.name;
         var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
                    'We are excited to have you!\n\n';
 
@@ -349,7 +350,7 @@ exports.sendWelcome = function (user, callback) {
                 if (ticket) {
 
                     text += 'Use this link to verify your email address: \n\n';
-                    text += '    https://sled.com/t/' + ticket + '\n\n';
+                    text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
                     exports.send(address, subject, text);
                     callback(null);
@@ -366,8 +367,8 @@ exports.sendWelcome = function (user, callback) {
 
             // Plain link
 
-            text += 'Use this link to sign-into Sled: \n\n';
-            text += '    https://sled.com/\n\n';
+            text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
+            text += '    ' + Config.host.uri('web') + '/\n\n';
 
             exports.send(address, subject, text);
             callback(null);
@@ -381,8 +382,8 @@ exports.sendWelcome = function (user, callback) {
 
                 if (ticket) {
 
-                    text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into Sled: \n\n';
-                    text += '    https://sled.com/t/' + ticket + '\n\n';
+                    text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
+                    text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
                     exports.send(address, subject, text);
                     callback(null);
@@ -428,7 +429,7 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
 
                 subject = 'Invitation to participate in ' + sled.title;
                 link = 'Use this link to join: \n\n' +
-                       '    https://sled.com/view/#sled=' + sled._id;
+                       '    ' + Config.host.uri('web') + '/view/#sled=' + sled._id;
 
                 exports.send(users[i].emails[0].address,
                              subject,
@@ -444,10 +445,10 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
 
             if (pid.email) {
 
-                subject = 'Invitation to join Sled.com and participate in ' + sled.title;
+                subject = 'Invitation to join ' + Config.product.name + ' and participate in ' + sled.title;
                 var invite = 'sled:' + sled._id + ':' + pid.pid + ':' + pid.code;
                 link = 'Use this link to join: \n\n' +
-                       '    https://sled.com/i/' + invite;
+                       '    ' + Config.host.uri('web') + '/i/' + invite;
 
                 exports.send(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
 
@@ -476,7 +477,7 @@ exports.send = function (to, subject, text, html, callback) {
 
     var headers = {
 
-        from: 'Sled.com <no-reply@sled.com>',
+        from: Config.email.fromName + ' <' + Config.email.replyTo + '>',
         to: to,
         subject: subject,
         text: text
@@ -489,7 +490,7 @@ exports.send = function (to, subject, text, html, callback) {
         message.attach_alternative(html);
     }
 
-    var mailer = Email.server.connect({ host: 'localhost' });
+    var mailer = Email.server.connect(Config.email.server);
     mailer.send(message, function (err, message) {
 
         if (err === null ||

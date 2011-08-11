@@ -9,17 +9,12 @@ var Http = require('http');
 var MAC = require('mac');
 var Utils = require('./utils');
 var Err = require('./error');
+var Config = require('./config');
 
 
 // Declare internals
 
-var internals = {
-
-    // API settings
-
-    apiHost: 'api.sled.com',
-    apiPort: 80
-};
+var internals = {};
 
 
 // Type definition
@@ -233,7 +228,7 @@ internals.call = function (method, path, content, arg1, arg2) {   // session, ca
 
     if (session) {
 
-        authorization = MAC.getAuthorizationHeader(method, path, internals.apiHost, internals.apiPort, session, body);
+        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session, body);
 
         if (authorization === null ||
             authorization === '') {
@@ -242,7 +237,7 @@ internals.call = function (method, path, content, arg1, arg2) {   // session, ca
         }
     }
 
-    var hreq = Http.request({ host: internals.apiHost, port: internals.apiPort, path: path, method: method }, function (hres) {
+    var hreq = Http.request({ host: Config.host.api.domain, port: Config.host.api.port, path: path, method: method }, function (hres) {
 
         if (hres) {
 

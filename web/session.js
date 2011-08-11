@@ -328,7 +328,7 @@ exports.oauth = function (req, res, next) {
 
                 client_id: req.api.jar.oauth.client.name,
                 client_secret: '',
-                grant_type: 'http://ns.sled.com/sled',
+                grant_type: 'http://ns.postmile.net/sled',
                 x_user_id: req.api.profile.id
             };
 

@@ -16,6 +16,7 @@ var Db = require('./db');
 var Log = require('./log');
 var Stream = require('./stream');
 var Email = require('./email');
+var Config = require('./config');
 
 
 // Declare internals
@@ -24,14 +25,13 @@ var internals = {
 
     // Globals
 
-    minimumTOS: '20110623',
-    adminEmail: 'team@sled.com'
+    minimumTOS: '20110623'
 };
 
 
 // Send startup email
 
-Email.send(internals.adminEmail, 'NOTICE: api.sled.com started', 'Started on ' + Os.hostname());
+Email.send(Config.email.admin, 'NOTICE: API server started', 'Started on ' + Os.hostname());
 
 
 // Listen to uncaught exceptions
@@ -40,7 +40,7 @@ process.on('uncaughtException', function (err) {
 
     Log.err('Uncaught exception: ' + err.stack);
 
-    Email.send(internals.adminEmail, 'ERROR: Exception on api.sled.com', err.stack, '', function (err) {
+    Email.send(Config.email.admin, 'ERROR: Exception on API server', err.stack, '', function (err) {
 
         process.exit(1);
     });
@@ -705,7 +705,7 @@ internals.finalizeResponse = function (req, res, next) {
             }
             else if (res.api.created) {
 
-                res.send(res.api.result, { 'Location': 'http://api.sled.com' + res.api.created }, 201);
+                res.send(res.api.result, { 'Location': Config.host.uri('api') + res.api.created }, 201);
             }
             else {
 

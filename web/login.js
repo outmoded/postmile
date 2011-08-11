@@ -16,6 +16,7 @@ var Err = require('./error');
 var Session = require('./session');
 var Vault = require('./vault');
 var Tos = require('./tos');
+var Config = require('./config');
 
 
 // OAuth 1.0 clients
@@ -25,7 +26,7 @@ var twitterClient = new OAuth.OAuth('https://api.twitter.com/oauth/request_token
                                      Vault.twitter.clientId,
                                      Vault.twitter.clientSecret,
                                      '1.0',
-                                     'https://sled.com/auth/twitter',
+                                     Config.host.uri('web') + '/auth/twitter',
                                      'HMAC-SHA1');
 
 var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2/get_request_token',
@@ -33,7 +34,7 @@ var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2
                                   Vault.yahoo.clientId,
                                   Vault.yahoo.clientSecret,
                                   '1.0',
-                                  'https://sled.com/auth/yahoo',
+                                  Config.host.uri('web') + '/auth/yahoo',
                                   'HMAC-SHA1');
 
 
@@ -224,7 +225,7 @@ exports.auth = function (req, res, next) {
                     client_id: Vault.facebook.clientId,
                     response_type: 'code',
                     scope: 'email',
-                    redirect_uri: 'https://sled.com/auth/facebook',
+                    redirect_uri: Config.host.uri('web') + '/auth/facebook',
                     state: Utils.getRandomString(22),
                     display: req.api.agent.os === 'iPhone' ? 'touch' : 'page'
                 }
@@ -250,7 +251,7 @@ exports.auth = function (req, res, next) {
                         client_secret: Vault.facebook.clientSecret,
                         grant_type: 'authorization_code',
                         code: req.query.code,
-                        redirect_uri: 'https://sled.com/auth/facebook'
+                        redirect_uri: Config.host.uri('web') + '/auth/facebook'
                     };
 
                     var body = QueryString.stringify(query);
@@ -511,7 +512,7 @@ exports.auth = function (req, res, next) {
 
             var tokenRequest = {
 
-                grant_type: 'http://ns.sled.com/' + account.network,
+                grant_type: 'http://ns.postmile.net/' + account.network,
                 x_user_id: account.id
             };
 
@@ -552,7 +553,7 @@ exports.emailToken = function (req, res, next) {
 
     var tokenRequest = {
 
-        grant_type: 'http://ns.sled.com/email',
+        grant_type: 'http://ns.postmile.net/email',
         x_email_token: req.params.token
     };
 
@@ -621,7 +622,7 @@ exports.loginCall = function (tokenRequest, res, next, destination, account) {
 
             Session.clear(res);
 
-            if (tokenRequest.grant_type === 'http://ns.sled.com/email') {
+            if (tokenRequest.grant_type === 'http://ns.postmile.net/email') {
 
                 res.api.jar.message = err.error_description;
                 res.api.redirect = '/';

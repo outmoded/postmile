@@ -9,17 +9,7 @@ var Http = require('http');
 var MAC = require('mac');
 var Client = require('./client');
 var Utils = require('./utils');
-
-
-// Declare internals
-
-var internals = {
-
-    // API settings
-
-    apiHost: 'api.sled.com',
-    apiPort: 80
-};
+var Config = require('./config');
 
 
 // Make API call w/ client token
@@ -61,7 +51,7 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
     if (session) {
 
-        authorization = MAC.getAuthorizationHeader(method, path, internals.apiHost, internals.apiPort, session, body);
+        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session, body);
 
         if (authorization === '') {
 
@@ -72,7 +62,7 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
     if (isValid) {
 
-        var hreq = Http.request({ host: internals.apiHost, port: internals.apiPort, path: path, method: method }, function (hres) {
+        var hreq = Http.request({ host: Config.host.api.domain, port: Config.host.api.port, path: path, method: method }, function (hres) {
 
             if (hres) {
 

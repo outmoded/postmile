@@ -118,7 +118,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.sled.com/sled':
+                    case 'http://ns.postmile.net/sled':
 
                         // Check if client has 'login' scope
 
@@ -150,7 +150,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.sled.com/twitter':
+                    case 'http://ns.postmile.net/twitter':
 
                         // Check if client has 'login' scope
 
@@ -182,7 +182,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.sled.com/facebook':
+                    case 'http://ns.postmile.net/facebook':
 
                         // Check if client has 'login' scope
 
@@ -214,7 +214,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.sled.com/yahoo':
+                    case 'http://ns.postmile.net/yahoo':
 
                         // Check if client has 'login' scope
 
@@ -246,7 +246,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.sled.com/email':
+                    case 'http://ns.postmile.net/email':
 
                         // Check if client has 'login' scope
 

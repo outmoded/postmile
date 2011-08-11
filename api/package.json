@@ -1,7 +1,7 @@
 {
-  "name": "api.sled.com",
-  "description": "Sled API Server",
-  "version": "0.1.0",
+  "name": "postmile.api",
+  "description": "Postmile API Server",
+  "version": "0.0.1",
   "author": "Eran Hammer-Lahav <eran@hammer-lahav.net>",
   "private": true,
   "dependencies": {
