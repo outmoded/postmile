@@ -7,7 +7,6 @@
 
 var Express = require('express');
 var Semver = require('semver');
-var Opts = require('opts');
 var Os = require('os');
 var Fs = require('fs');
 var Crypto = require('crypto');
@@ -49,29 +48,20 @@ process.on('uncaughtException', function (err) {
 
 exports.create = function (paths) {
 
-    // Command line options
-
-    var options = [{ short: 'h', long: 'host', description: 'The hostname to bind to', value: true },
-                   { short: 'p', long: 'port', description: 'The port to connect to', value: true },
-                   { short: 'u', long: 'user', description: 'User id to run as', value: true },
-                   { short: 'c', long: 'cert', description: 'TLS certificate chain', value: true },
-                   { short: 'k', long: 'key', description: 'TLS certificate key', value: true }];
-
-    Opts.parse(options, true);
-
-    var port = Opts.get('port') || 443;
-    var host = Opts.get('host') || Os.hostname();
-    var user = Opts.get('user') || null;
-
     // Create server
 
-    var tls = {
+    var tls = null;
 
-        key: Fs.readFileSync(Opts.get('key') || 'cert/' + Config.host.web.domain + '.key'),
-        cert: Fs.readFileSync(Opts.get('cert') || 'cert/' + Config.host.web.domain + '.crt')
-    };
+    if (Config.process.web.tls) {
 
-    var server = Express.createServer(tls);
+        var tls = {
+
+            key: Fs.readFileSync(Config.process.web.tls.key),
+            cert: Fs.readFileSync(Config.process.web.tls.cert)
+        };
+    }
+
+    var server = (tls ? Express.createServer(tls) : Express.createServer());
 
     // Configure Server
 
@@ -99,28 +89,28 @@ exports.create = function (paths) {
 
     // Start Server
 
-    server.listen(port, host);
-    Log.info('Web Server started at http://' + host + ':' + port);
+    server.listen(Config.host.web.port, Config.host.web.domain);
+    Log.info('Web Server started at ' + Config.host.uri('web'));
 
     // Start bouncer for port 80
-
+    /*
     var bouncer = Express.createServer();
     bouncer.all(/.+/, function (req, res, next) {
 
-        res.send('You are being redirected...', { 'Location': Config.host.uri('web') + req.url }, 307);
+    res.send('You are being redirected...', { 'Location': Config.host.uri('web') + req.url }, 307);
     });
 
-    bouncer.listen(80, host);
+    bouncer.listen(80, Config.host.web.domain);
     Log.info('Bouncer Server started at http://' + host + ':' + 80);
-
+    */
     // Change OS User
 
-    if (user) {
+    if (Config.process.web.runAs) {
 
-        Log.info('Web Server switching users from ' + process.getuid() + ' to ' + user);
+        Log.info('Web Server switching users from ' + process.getuid() + ' to ' + Config.process.web.runAs);
         try {
 
-            process.setuid(user);
+            process.setuid(Config.process.web.runAs);
             Log.info('Web Server active user: ' + process.getuid());
         }
         catch (err) {

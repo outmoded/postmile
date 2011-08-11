@@ -5,7 +5,6 @@
 
 // Load modules
 
-var Opts = require('opts');
 var Os = require('os');
 var Express = require('express');
 var MAC = require('mac');
@@ -50,18 +49,6 @@ process.on('uncaughtException', function (err) {
 // Create and configure server instance
 
 exports.create = function (paths, onInitialized) {
-
-    // Command line options
-
-    var options = [{ short: 'h', long: 'host', description: 'The hostname to bind to', value: true },
-                   { short: 'p', long: 'port', description: 'The port to connect to', value: true },
-                   { short: 'u', long: 'user', description: 'User id to run as', value: true}];
-
-    Opts.parse(options, true);
-
-    var port = Opts.get('port') || 80;
-    var host = Opts.get('host') || Os.hostname();
-    var user = Opts.get('user') || null;
 
     // Create server
 
@@ -116,18 +103,18 @@ exports.create = function (paths, onInitialized) {
 
             // Start Server
 
-            server.listen(port, host);
-            Log.info('API Server started at http://' + host + ':' + port);
+            server.listen(Config.host.api.port, Config.host.api.domain);
+            Log.info('API Server started at http://' + Config.host.api.domain + ':' + Config.host.api.port);
             Stream.initialize(server);
 
             // Change OS User
 
-            if (user) {
+            if (Config.process.api.runAs) {
 
-                Log.info('API Server switching users from ' + process.getuid() + ' to ' + user);
+                Log.info('API Server switching users from ' + process.getuid() + ' to ' + Config.process.api.runAs);
                 try {
 
-                    process.setuid(user);
+                    process.setuid(Config.process.api.runAs);
                     Log.info('API Server active user: ' + process.getuid());
                 }
                 catch (err) {

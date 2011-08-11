@@ -8,6 +8,8 @@
 var MongoDB = require('mongodb');
 var Err = require('./error');
 var Utils = require('./utils');
+var Vault = require('./vault');
+var Config = require('./config');
 
 
 // Declare internals
@@ -23,7 +25,7 @@ var internals = {
                        'tip',
                        'user', 'user.exclude', 'user.last', 'user.storage'],
 
-    client: new MongoDB.Db('sled', new MongoDB.Server('127.0.0.1', 27017, {}), { strict: true }),
+    client: new MongoDB.Db(Config.database.db, new MongoDB.Server(Config.database.host, Config.database.port, {}), { strict: true }),
     collections: {}
 };
 
@@ -40,24 +42,31 @@ exports.initialize = function (callback) {
 
         if (err === null) {
 
-            internals.client.authenticate('api', 'Silkie2BW', function (err, result) {
+            if (Vault.database.username) {
 
-                if (err === null) {
+                internals.client.authenticate(Vault.database.username, Vault.database.password, function (err, result) {
 
-                    if (result === true) {
+                    if (err === null) {
 
-                        internals.initCollection(0, callback);
+                        if (result === true) {
+
+                            internals.initCollection(0, callback);
+                        }
+                        else {
+
+                            callback('Database authentication failed');
+                        }
                     }
                     else {
 
-                        callback('Database authentication failed');
+                        callback('Database authentication error: ' + JSON.stringify(err));
                     }
-                }
-                else {
+                });
+            }
+            else {
 
-                    callback('Database authentication error: ' + JSON.stringify(err));
-                }
-            });
+                internals.initCollection(0, callback);
+            }
         }
         else {
 

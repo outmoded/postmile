@@ -509,7 +509,7 @@ exports.send = function (to, subject, text, html, callback) {
             }
             else {
 
-                Log.err('Email error: ' + err);
+                Log.err('Email error: ' + JSON.stringify(err));
             }
         }
     });

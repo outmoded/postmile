@@ -25,3 +25,12 @@ exports.oauthRefresh = {
 
     aes256Key: ''
 };
+
+
+// Database credentials
+
+exports.database = {
+
+    username: '',
+    password: ''
+};
