@@ -5,7 +5,7 @@ Postmile is based on the discontinued experimental Yahoo! Sled project initially
 
 # To Do
 
-This project is still being concerted and does not work yet outside its original environment. The main task right now is to remove the hard-coded sled.com references throughout the project and replace them with a configurable document.
+This project is still being adjusted and does not work yet outside its original environment. The main task right now is to remove the hard-coded sled.com references throughout the project and replace them with a configurable document.
 
 Other tasks include:
 
