@@ -719,14 +719,14 @@ YUI.add('sledsled', function (Y) {
 		var logout = Y.one("#account-menu #logout");
 		if (logout) {
 			logout.on('click', function (e) {
-			    window.location = "https://" + postmile.domain + "/logout";
+			    window.location = postmile.api.uri + "/logout";
 			});
 		}
 
 		var account = Y.one("#account-menu #accountsettings");
 		if (account) {
 			account.on('click', function (e) {
-			    window.location = "https://" + postmile.domain + "/account";
+			    window.location = postmile.api.uri + "/account";
 			});
 		}
 

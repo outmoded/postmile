@@ -19,6 +19,37 @@ exports.getTimestamp = function () {
 };
 
 
+// Clone object or array
+
+exports.clone = function (obj) {
+
+    if (obj === null ||
+        obj === undefined) {
+
+        return null;
+    }
+
+    var newObj = (obj instanceof Array) ? [] : {};
+
+    for (var i in obj) {
+
+        if (obj.hasOwnProperty(i)) {
+
+            if (obj[i] && typeof obj[i] === 'object') {
+
+                newObj[i] = exports.clone(obj[i]);
+            }
+            else {
+
+                newObj[i] = obj[i];
+            }
+        }
+    }
+
+    return newObj;
+};
+
+
 // Validate email address
 
 exports.checkEmail = function (email) {

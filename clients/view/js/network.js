@@ -62,7 +62,7 @@ function xFire( e, a1, a2, a3 ) {
 		}
 
 		if (uri.indexOf('http://') !== 0 && uri.indexOf('https://') !== 0) {
-			uri = 'http://api.' + postmile.domain + '/' + uri;
+			uri = postmile.api.uri + '/' + uri;
 		}
 
 		// Calculate Signature
@@ -118,7 +118,7 @@ function xFire( e, a1, a2, a3 ) {
 						} ;
 						if (jsonResponse.message === 'Insufficient TOS accepted') {
 							// getCredentials(function () {}/*, true*/);	// not refreshCredentials();
-						    window.location = 'https://' + postmile.domain + '/login';
+						    window.location = postmile.api.uri + '/login';
 						} else {
 							xFire( 'sled:askJoinCurrentSled', true, retryRequest ) ;
 						}

@@ -7,12 +7,12 @@
 
 var options = {
 
-	nativeDomain: postmile.domain,
+	nativeDomain: postmile.web.domain,
 	nativeClientId: 'postmile.view',
 	clientProfileURI: 'client.json',
-	loginURI: 'https://' + postmile.domain + '/login',
-	authorizationEndpointURI: 'https://' + postmile.domain + '/oauth/authorize',
-	issueEndpointURI: 'https://' + postmile.domain + '/oauth/issue'
+	loginURI: postmile.web.uri + '/login',
+	authorizationEndpointURI: postmile.web.uri + '/oauth/authorize',
+	issueEndpointURI: postmile.web.uri + '/oauth/issue'
 };
 
 

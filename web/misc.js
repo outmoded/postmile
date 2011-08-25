@@ -7,6 +7,7 @@
 
 var Email = require('./email');
 var Config = require('./config');
+var Utils = require('./utils');
 
 
 // Welcome page
@@ -84,7 +85,11 @@ exports.feedback = function (req, res, next) {
 
 exports.config = function (req, res, next) {
 
-    res.api.result = 'var postmile = { domain: \'' + Config.host.web.domain + '\', scheme: \'' + Config.host.web.scheme + '\' };';
+    var config = Utils.clone(Config.host);
+    config.web.uri = Config.host.uri('web');
+    config.web.api = Config.host.uri('api');
+
+    res.api.result = 'var postmile = ' + JSON.stringify(config) + ';';
     res.api.isAPI = true;
     next();
 };

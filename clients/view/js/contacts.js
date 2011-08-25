@@ -203,7 +203,7 @@ function bindInviteOverlay() {
 		// needs to be URL encoded since it's a query param
 		var message = encodeURIComponent( inviteMessage.get( 'value' ) ) ;
 
-		var uri = "http://api." + postmile.domain + "/sled/" + gsled.sled.id + "/participants?message=" + message ;
+		var uri = postmile.api.uri + "/sled/" + gsled.sled.id + "/participants?message=" + message ;
 
 		var newParticipants = inviteEmails.get( 'value' ).replace(/^\s+|\s+$/g,"") ;
 		newParticipants = newParticipants.split( ',' ) ;
@@ -465,7 +465,7 @@ function bindManageOverlay() {
 			} ;
 
 			var askRemove = function( arg ) {
-				var uri = "http://api." + postmile.domain + "/sled/" + gsled.sled.id + "/participants" ;
+			    var uri = postmile.api.uri + "/sled/" + gsled.sled.id + "/participants";
 				deleteJson( uri, json, confirmRemove ) ;				
 			} ;
 			askHeader = participants.length > 1 ? 'Remove Participants?' : 'Remove Participant?' ;

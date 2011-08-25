@@ -465,7 +465,7 @@ function updateSuggestions( message ) {
 
 function bind( ) {
 
-        socket = new io.Socket('api.' + postmile.domain, { port: 80, rememberTransport: false });
+        socket = new io.Socket(postmile.api.domain, { port: postmile.api.port, rememberTransport: false });
 		
 		socket.on('connect', function () {
 			Y.log( 'Connected!' ) ;

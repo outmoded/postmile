@@ -188,14 +188,14 @@ preBody = function() {
 				} 
 			}
 
-			getJson("http://api." + postmile.domain + "/sled/" + initialSledId + "/tasks", gotTasks);
-			getJson("http://api." + postmile.domain + "/sled/" + initialSledId, gotSled);
+			getJson(postmile.api.uri + "/sled/" + initialSledId + "/tasks", gotTasks);
+			getJson(postmile.api.uri + "/sled/" + initialSledId, gotSled);
 		}
 
 		if( fragSled ) {
 			confirmActiveSled( { activesled: fragSled } );
 		} else {
-            getJson("http://api." + postmile.domain + "/storage/activesled", confirmActiveSled); // sync these:?
+            getJson(postmile.api.uri + "/storage/activesled", confirmActiveSled); // sync these:?
 		}
 
 	}
