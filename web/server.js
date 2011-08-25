@@ -395,7 +395,7 @@ internals.finalizeResponse = function (req, res) {
 
             // Encrypt and Cookiefy
 
-            cookies.push('jar=' + Utils.encrypt(Vault.jar.aes256Key, res.api.jar) + '; Path=/; Secure');
+            cookies.push('jar=' + Utils.encrypt(Vault.jar.aes256Key, res.api.jar) + '; Path=/' + (Config.host.web.scheme === 'https' ? '; Secure' : ''));
         }
         else if (res.api.clearJar) {
 

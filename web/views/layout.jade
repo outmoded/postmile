@@ -8,7 +8,7 @@ html(lang: 'en')
     link(rel: 'stylesheet', href: '/css/node-menunav-core.css', type: 'text/css', media: 'screen', charset: 'utf-8')
     script(src:'https://sec.yimg.com/combo?yui-ssl/3.3.0/build/yui/yui-min.js', language: 'javascript', type: 'text/javascript')
     script(src:'/scripts/base.js', language: 'javascript', type: 'text/javascript')
-    script(language: 'javascript', type: 'text/javascript') var env = !{JSON.stringify(env)}; var apiURI = !{host.uri('api')};
+    script(language: 'javascript', type: 'text/javascript') var env = !{JSON.stringify(env)}; var apiURI = '!{host.uri('api')}';
 
   body(onload: 'onPageReady(' + (profile !== null) + ');', class: (typeof theme === 'string' ? theme : ''))
 

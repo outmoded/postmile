@@ -248,6 +248,7 @@ internals.authenticate = function (scope, minTos, userMode, isOptional) {
 
     var options = {
 
+        isHTTPS: (Config.host.api.scheme === 'https'),
         bodyHashMode: 'require'
     };
 

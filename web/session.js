@@ -12,6 +12,7 @@ var Utils = require('./utils');
 var Log = require('./log');
 var Vault = require('./vault');
 var Tos = require('./tos');
+var Config = require('./config');
 
 
 // Declare internals
@@ -89,7 +90,7 @@ exports.refresh = function (req, res, session, callback) {
 
             grant_type: 'refresh_token',
             refresh_token: session.refresh,
-            client_id: 'postmile.v1',
+            client_id: 'postmile.view',
             client_secret: ''
         };
 
@@ -164,8 +165,13 @@ exports.set = function (res, token, callback) {
         res.api.cookie = {
 
             values: ['session=' + Utils.encrypt(Vault.session.aes256Key, session)],
-            attributes: ['Secure', 'Expires=' + nextYear.toUTCString(), 'Path=/']
+            attributes: ['Expires=' + nextYear.toUTCString(), 'Path=/']
         };
+
+        if (Config.host.web.scheme === 'https') {
+
+            res.api.cookie.attributes.push('Secure');
+        }
 
         callback(true, session.restriction);
     }
@@ -373,7 +379,7 @@ exports.issue = function (req, res, next) {
 
             grant_type: 'refresh_token',
             refresh_token: req.api.session.refresh,
-            client_id: 'postmile.v1',
+            client_id: 'postmile.view',
             client_secret: ''
         };
 
