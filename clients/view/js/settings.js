@@ -5,9 +5,9 @@
 
 /**
 *
-* sled settings (aka perferences) module
+* project settings (aka perferences) module
 *
-*	needed before YUI is loaded to start net req of sled data
+*	needed before YUI is loaded to start net req of project data
 *	use Y.fire for misc when it become available
 *
 *
@@ -118,19 +118,19 @@ YUI.add('postmile-settings', function (Y) {
         }
         return (settings() && settings().confirmDelete) ? settings().confirmDelete.value : true;
     }
-    function sledsReorder() {
-        if (!settings().sledsReorder) {
-            gpostmile.settings.push({ id: "sledsReorder", title: "Project Reorder", value: true });
+    function projectsReorder() {
+        if (!settings().projectsReorder) {
+            gpostmile.settings.push({ id: "projectsReorder", title: "List Reorder", value: true });
             renderSettings(gpostmile.settings); // adds settings[id]
         }
-        return (settings() && settings().sledsReorder) ? settings().sledsReorder.value : true;
+        return (settings() && settings().projectsReorder) ? settings().projectsReorder.value : true;
     }
 
-    Y.namespace("sled.settings");
+    Y.namespace("project.settings");
     Y.postmile.settings = {
         multipleDetails: multipleDetails,
         confirmDelete: confirmDelete,
-        sledsReorder: sledsReorder,
+        projectsReorder: projectsReorder,
         multilineDetails: multilineDetails,
         last: null
     };

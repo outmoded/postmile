@@ -392,25 +392,25 @@ YUI.add('postmile-ui-utils', function (Y) {
 
         // event handlers
 
-        Y.on("sled:pointToNode", function (startNode, targetNode, more) {
+        Y.on("postmile:pointToNode", function (startNode, targetNode, more) {
             pointTo(startNode, targetNode, more);
         });
 
-        Y.on("sled:networkError", function (jsonResponse) {
+        Y.on("postmile:networkError", function (jsonResponse) {
             // statusMessage(JSON.stringify(jsonResponse));
             Y.log(JSON.stringify(jsonResponse));
         });
 
-        Y.on("sled:statusMessage", function (m) {
+        Y.on("postmile:statusMessage", function (m) {
             // statusMessage( m );
             Y.log(m);
         });
 
-        Y.on("sled:changedBy", function (what, by, node) {	// replaces sled:updateNode
+        Y.on("postmile:changedBy", function (what, by, node) {	// replaces project:updateNode
 
             var msg = what;
 
-            var whom = Y.postmile.gpostmile.sled.participants[by];
+            var whom = Y.postmile.gpostmile.project.participants[by];
             if (whom) {
                 msg += ' by ' + whom.display.split(' ')[0];
             }
@@ -425,11 +425,11 @@ YUI.add('postmile-ui-utils', function (Y) {
             highlight(node);
         });
 
-        Y.on("sled:confirm", function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
+        Y.on("postmile:confirm", function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
             confirm(a0, a1, a2, a3, a4, a5, a6, a7, a8);
         });
 
-        Y.on("sled:inform", function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
+        Y.on("postmile:inform", function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
             inform(a0, a1, a2, a3, a4, a5, a6, a7, a8);
         });
 
@@ -459,11 +459,11 @@ YUI.add('postmile-ui-utils', function (Y) {
                     }
                     if (currentVersion[0] !== version[0]) {
                         // statusMessage( 'New version required - please reload', 2*timeInterval ) ;	// display twice as long
-                        Y.fire('sled:confirm', 'Reload?', 'A new version is available and required.', reloadProject, null);
+                        Y.fire('postmile:confirm', 'Reload?', 'A new version is available and required.', reloadProject, null);
                         Y.log('Project new major version required ' + version[0] + '.' + version[1]);
                     } else if (currentVersion[1] !== version[1]) {
                         // statusMessage( 'New version available' ) ;
-                        // Y.fire( 'sled:suggest', 'New version available: ' + 'Reload Now', reloadProject, null);
+                        // Y.fire( 'postmile:suggest', 'New version available: ' + 'Reload Now', reloadProject, null);
                         statusMessage('New version available - click this message to reload', 2 * 100 * timeInterval, reloadProject); // display twice as long
                         Y.log('Project new major version required ' + version[0] + '.' + version[1]);
                     }

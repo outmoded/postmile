@@ -18,19 +18,19 @@ YUI.add('postmile-stream', function (Y) {
     var socket;
 
 
-    // subscribe allow us to listen and receieve updates to a particular sled
-    // although we could subscribe to multiple projects, try to limit our subscription to just the current sled
+    // subscribe allow us to listen and receieve updates to a particular project
+    // although we could subscribe to multiple projects, try to limit our subscription to just the current project
     // we automatically receive user/profile events
 
-    function subscribe(sled) {
+    function subscribe(project) {
 
-        if (sled && !sled.subscribed && socketMessage.session) {
+        if (project && !project.subscribed && socketMessage.session) {
 
             var confirmPostStream = function (response, myarg) {
                 if (response.status === 'ok') {
-                    sled.subscribed = true;
+                    project.subscribed = true;
                 } else {
-                    Y.log("post " + response.status + " for " + sled.title + ' ' + JSON.stringify(response));
+                    Y.log("post " + response.status + " for " + project.title + ' ' + JSON.stringify(response));
                 }
             };
 
@@ -38,7 +38,7 @@ YUI.add('postmile-stream', function (Y) {
             // unsubscribeAll() ;
 
             // it's okay to subscribe even before we get an ok reply to unsubribes
-            postJson('/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmPostStream);
+            postJson('/stream/' + socketMessage.session + '/project/' + project.id, null, confirmPostStream);
         }
 
     }
@@ -50,20 +50,20 @@ YUI.add('postmile-stream', function (Y) {
 
         if (socketMessage.session) {
 
-            var confirmDeleteStream = function (response, sled) {
+            var confirmDeleteStream = function (response, project) {
                 if (response.status === 'ok') {
-                    sled.subscribed = false;
+                    project.subscribed = false;
                 } else {
-                    Y.log("delete " + response.status + " for " + sled.title + ' ' + JSON.stringify(response));
+                    Y.log("delete " + response.status + " for " + project.title + ' ' + JSON.stringify(response));
                 }
             };
 
             var i, l;
             for (/*var*/i = 0, l = Y.postmile.gpostmile.projects.length; i < l; ++i) {
-                var sled = Y.postmile.gpostmile.projects[i];
-                if (sled.subscribed) {
-                    deleteJson('/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmDeleteStream, sled);
-                    sled.subscribed = false; // presume this works (we'd not do anything differently anyways)
+                var project = Y.postmile.gpostmile.projects[i];
+                if (project.subscribed) {
+                    deleteJson('/stream/' + socketMessage.session + '/project/' + project.id, null, confirmDeleteStream, project);
+                    project.subscribed = false; // presume this works (we'd not do anything differently anyways)
                 }
             }
         }
@@ -92,12 +92,12 @@ YUI.add('postmile-stream', function (Y) {
                 // unsubscribeAll is probably too heavy, even if it's a reconnect - just reset the subscription status
                 var i, l;
                 for (/*var*/i = 0, l = Y.postmile.gpostmile.projects.length; i < l; ++i) {
-                    var sled = Y.postmile.gpostmile.projects[i];
-                    sled.subscribed = false; // presume this works (we'd not do anything differently anyways)
+                    var project = Y.postmile.gpostmile.projects[i];
+                    project.subscribed = false; // presume this works (we'd not do anything differently anyways)
                 }
 
-                if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.sled) {
-                    subscribe(Y.postmile.gpostmile.sled);
+                if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.project) {
+                    subscribe(Y.postmile.gpostmile.project);
                 }
 
             }
@@ -113,8 +113,8 @@ YUI.add('postmile-stream', function (Y) {
 
             // perhaps reconnect, reinitialize again
 
-            if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.sled) {
-                subscribe(Y.postmile.gpostmile.sled);
+            if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.project) {
+                subscribe(Y.postmile.gpostmile.project);
             }
 
         }
@@ -147,11 +147,10 @@ YUI.add('postmile-stream', function (Y) {
             switch (message.object) {
 
                 case 'projects':
-                case 'sledlist': // not used
                     updateProjects(message);
                     break;
 
-                case 'sled':
+                case 'project':
                     updateProject(message);
                     break;
 
@@ -193,7 +192,7 @@ YUI.add('postmile-stream', function (Y) {
     }
 
 
-    // render updated sled/projectlist
+    // render updated project/projectlist
 
     function updateProjects(message) {
 
@@ -201,9 +200,9 @@ YUI.add('postmile-stream', function (Y) {
 
             if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-                Y.fire('sled:renderProjects', response);
+                Y.fire('postmile:renderProjects', response);
 
-                Y.fire('sled:changedBy', 'Projects changed', message.by, '.sled-title-box');
+                Y.fire('postmile:changedBy', 'Projects changed', message.by, '.project-title-box');
 
             } else {
 
@@ -222,44 +221,44 @@ YUI.add('postmile-stream', function (Y) {
 
     function updateProject(message) {
 
-        // don't set sled object as it will be replaced w subsequent net req for new sled data
-        // var projectId = Y.postmile.gpostmile.projects[ message.sled ].id ;	
-        var projectId = message.sled;
+        // don't set project object as it will be replaced w subsequent net req for new project data
+        // var projectId = Y.postmile.gpostmile.projects[ message.project ].id ;	
+        var projectId = message.project;
 
         function gotProject(response, myArg) {
 
             if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-                // this will redraw what should already be the current sled
-                Y.fire('sled:renderProject', response, myArg);
+                // this will redraw what should already be the current project
+                Y.fire('postmile:renderProject', response, myArg);
 
-                // if title changed, should also rerender sled titles in sledlist
-                // note: we might not be subscribed to a sled when it's title is changed
-                Y.fire('sled:renderProjects', Y.postmile.gpostmile.projects);
+                // if title changed, should also rerender project titles in projects list
+                // note: we might not be subscribed to a project when it's title is changed
+                Y.fire('postmile:renderProjects', Y.postmile.gpostmile.projects);
 
-                // Y.postmile.gpostmile.sled has now changed as a result of network request
-                // but should still have same id to indicate if user is logically on same sled
-                // when that is confirmed, let the user know (where) the sled was updated
-                if (projectId === Y.postmile.gpostmile.sled.id) {	// it's still acticve on the UI
+                // Y.postmile.gpostmile.project has now changed as a result of network request
+                // but should still have same id to indicate if user is logically on same project
+                // when that is confirmed, let the user know (where) the project was updated
+                if (projectId === Y.postmile.gpostmile.project.id) {	// it's still acticve on the UI
 
-                    Y.fire('sled:changedBy', 'Project changed', message.by, '#main-box');
+                    Y.fire('postmile:changedBy', 'Project changed', message.by, '#main-box');
 
                 } else {
 
-                    // var sled = Y.postmile.gpostmile.projects[ projectId ] ;
-                    // sled.dirty = true ;
+                    // var project = Y.postmile.gpostmile.projects[ projectId ] ;
+                    // project.dirty = true ;
 
                 }
 
             } else {
 
-                Y.log('error getting sled for stream update ' + JSON.stringify(response));
+                Y.log('error getting project for stream update ' + JSON.stringify(response));
 
             }
 
         }
 
-        getJson("/project/" + message.sled, gotProject);
+        getJson("/project/" + message.project, gotProject);
 
     }
 
@@ -272,21 +271,21 @@ YUI.add('postmile-stream', function (Y) {
 
             if (tasks && tasks._networkRequestStatusCode && tasks._networkRequestStatusCode === 200) {
 
-                var sled = Y.postmile.gpostmile.projects[message.sled];
+                var project = Y.postmile.gpostmile.projects[message.project];
 
                 // if it's acticve on the UI
-                if (sled.id === Y.postmile.gpostmile.sled.id) {
+                if (project.id === Y.postmile.gpostmile.project.id) {
 
-                    Y.fire('sled:renderTasks', tasks, message.sled);
+                    Y.fire('postmile:renderTasks', tasks, message.project);
 
-                    Y.fire('sled:changedBy', 'Tasks changed', message.by, '#bluebox');
+                    Y.fire('postmile:changedBy', 'Tasks changed', message.by, '#bluebox');
 
                 } else {
 
                     // update the data in leiu of having it done via rendering
-                    // (could also use a dirty flag such as sled.dirty = true)
+                    // (could also use a dirty flag such as project.dirty = true)
 
-                    sled.tasks = tasks;
+                    project.tasks = tasks;
 
                     if (tasks) {	// && isArray && length > 0
                         var i, l;
@@ -307,7 +306,7 @@ YUI.add('postmile-stream', function (Y) {
 
         }
 
-        getJson("/project/" + message.sled + "/tasks", gotTasks);
+        getJson("/project/" + message.project + "/tasks", gotTasks);
     }
 
 
@@ -315,8 +314,8 @@ YUI.add('postmile-stream', function (Y) {
 
     function updateTask(message) {
 
-        var sled = Y.postmile.gpostmile.projects[message.sled];
-        var task = sled.tasks[message.task];
+        var project = Y.postmile.gpostmile.projects[message.project];
+        var task = project.tasks[message.task];
         Y.assert(task.id === message.task);
 
         function gotTask(response, myArg) {
@@ -328,7 +327,7 @@ YUI.add('postmile-stream', function (Y) {
                 task.created = response.modified;
                 task.modified = response.created;
                 task.participants = response.participants || [];
-                Y.assert(!task.sled || task.sled === response.sled);
+                Y.assert(!task.project || task.project === response.project);
                 task.status = response.status;
                 task.title = response.title;
                 Y.assert(task.id === response.id);
@@ -344,7 +343,7 @@ YUI.add('postmile-stream', function (Y) {
                     }
                 }
 
-                if (sled.id === Y.postmile.gpostmile.sled.id) {	// it's acticve on the UI
+                if (project.id === Y.postmile.gpostmile.project.id) {	// it's acticve on the UI
 
                     var tasksNode = Y.one('#tasks');
                     var taskNode = tasksNode.one('.task[task="' + task.id + '"]');
@@ -352,7 +351,7 @@ YUI.add('postmile-stream', function (Y) {
                     taskNode.replace(html);
                     taskNode = tasksNode.one('.task[task="' + task.id + '"]'); // need to reget the node after replace
                     Y.postmile.tasklist.showUpdatedAgo(taskNode, true);
-                    Y.fire('sled:changedBy', 'Task changed', message.by, taskNode);
+                    Y.fire('postmile:changedBy', 'Task changed', message.by, taskNode);
                 }
 
             } else {
@@ -372,8 +371,8 @@ YUI.add('postmile-stream', function (Y) {
 
     function updateDetails(message) {
 
-        var sled = Y.postmile.gpostmile.projects[message.sled];
-        var task = sled.tasks[message.task];
+        var project = Y.postmile.gpostmile.projects[message.project];
+        var task = project.tasks[message.task];
 
         function gotDetails(response, myArg) {
 
@@ -387,7 +386,7 @@ YUI.add('postmile-stream', function (Y) {
                     task.detailsModifiedBy = detailsObject.user;
                 }
 
-                if (sled.id === Y.postmile.gpostmile.sled.id) {	// it's acticve on the UI
+                if (project.id === Y.postmile.gpostmile.project.id) {	// it's acticve on the UI
 
                     var tasksNode = Y.one('#tasks');
                     var taskNode = tasksNode.one('.task[task="' + task.id + '"]');
@@ -403,7 +402,7 @@ YUI.add('postmile-stream', function (Y) {
                     var detailsNode = taskNode.one('.messages');
                     detailsNode.setContent(html);
 
-                    Y.fire('sled:changedBy', 'Item details added', message.by, taskNode);
+                    Y.fire('postmile:changedBy', 'Item details added', message.by, taskNode);
                 }
 
             } else {
@@ -422,7 +421,7 @@ YUI.add('postmile-stream', function (Y) {
     function updateProfile(message) {
 
         // just rerender whole tasklist - todo: global list of tasks, and export detail render
-        getJson("/profile", function (profile) { Y.fire('sled:renderProfile', profile); });
+        getJson("/profile", function (profile) { Y.fire('postmile:renderProfile', profile); });
 
     }
 
@@ -432,9 +431,9 @@ YUI.add('postmile-stream', function (Y) {
     function updateContacts(message) {
 
         // get new contacts when updated
-        // can be caused by ourselves when inviting someone to a sled
+        // can be caused by ourselves when inviting someone to a project
         // just rerender updated contacts - not currently highlighting any node
-        getJson("/contacts", function (contacts) { Y.fire('sled:renderContacts', contacts); });
+        getJson("/contacts", function (contacts) { Y.fire('postmile:renderContacts', contacts); });
 
     }
 
@@ -444,7 +443,7 @@ YUI.add('postmile-stream', function (Y) {
     function updateTips(message) {
 
         if (Y.postmile && Y.postmile.user) {
-            getJson("/project/" + message.id + "/tips", function (tips, projectId) { Y.fire('sled:renderTips', tips, projectId); }, message.id);
+            getJson("/project/" + message.id + "/tips", function (tips, projectId) { Y.fire('postmile:renderTips', tips, projectId); }, message.id);
         }
 
     }
@@ -455,7 +454,7 @@ YUI.add('postmile-stream', function (Y) {
     function updateSuggestions(message) {
 
         if (Y.postmile && Y.postmile.suggestionlist) {
-            getJson("/project/" + message.id + "/suggestions", function (suggestions, projectId) { Y.fire('sled:renderSuggestions', suggestions, projectId); }, message.id);
+            getJson("/project/" + message.id + "/suggestions", function (suggestions, projectId) { Y.fire('postmile:renderSuggestions', suggestions, projectId); }, message.id);
         }
 
     }
@@ -477,8 +476,8 @@ YUI.add('postmile-stream', function (Y) {
 
         socket.connect();
 
-        Y.on("sled:subscribeProject", function (sled) {
-            subscribe(sled);
+        Y.on("postmile:subscribeProject", function (project) {
+            subscribe(project);
         });
 
     }

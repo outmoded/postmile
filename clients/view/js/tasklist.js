@@ -11,7 +11,7 @@
 *	check stat for each task
 *	notes icon and details (rendering and input) for each state (notes aka details)
 *	task title
-*	participants icon (rendering, w and w/o 'Me', menu of sled participants with checkbox state, delete)
+*	participants icon (rendering, w and w/o 'Me', menu of project participants with checkbox state, delete)
 *
 *
 */
@@ -41,11 +41,11 @@ YUI.add('postmile-tasks-list', function (Y) {
             // tho if it's a net err, perhaps could retry (but that'd be at a lower level)
         }
 
-        // may sometimes not have sled yet
+        // may sometimes not have project yet
         if (gpostmile && gpostmile.projects) {
-            var sled = gpostmile.projects[projectId];
-            if (sled) {
-                sled.tasks = tasks;
+            var project = gpostmile.projects[projectId];
+            if (project) {
+                project.tasks = tasks;
             }
         }
 
@@ -218,9 +218,9 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function reorder(dragNode) {
 
-        var projectId = gpostmile.sled.id;
-        var sled = gpostmile.projects[projectId];
-        var tasks = sled.tasks;
+        var projectId = gpostmile.project.id;
+        var project = gpostmile.projects[projectId];
+        var tasks = project.tasks;
 
         var dropNode = dragNode.get('nextSibling');
         var dropIndex = tasks.length;
@@ -262,13 +262,13 @@ YUI.add('postmile-tasks-list', function (Y) {
                         }
                     }
 
-                    Y.fire('sled:statusMessage', 'Item reordered');
+                    Y.fire('postmile:statusMessage', 'Item reordered');
 
                 } else {
 
-                    Y.fire('sled:renderProject', Y.postmile.gpostmile.sled);
+                    Y.fire('postmile:renderProject', Y.postmile.gpostmile.project);
 
-                    Y.fire('sled:errorMessage', 'Item reorder failed');
+                    Y.fire('postmile:errorMessage', 'Item reorder failed');
 
                 }
             };
@@ -302,9 +302,9 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function dropSuggestion(dragNode) {
 
-        var projectId = gpostmile.sled.id;
-        var tasks = gpostmile.sled.tasks;
-        var suggestions = gpostmile.sled.suggestions;
+        var projectId = gpostmile.project.id;
+        var tasks = gpostmile.project.tasks;
+        var suggestions = gpostmile.project.suggestions;
         var dragId = dragNode.getAttribute('suggestion');
         var dragSuggestion = suggestions[dragId];
         // var dragIndex = dragSuggestion.index ;
@@ -327,7 +327,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
         showUpdatedAgo(dragNode, true);
 
-        addSuggestionToServer(dragSuggestion, gpostmile.sled, tasks, task, dropIndex, dragNode);
+        addSuggestionToServer(dragSuggestion, gpostmile.project, tasks, task, dropIndex, dragNode);
 
     }
 
@@ -336,8 +336,8 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function addSuggestion(suggestion) {
 
-        var projectId = gpostmile.sled.id;
-        var tasks = gpostmile.sled.tasks;
+        var projectId = gpostmile.project.id;
+        var tasks = gpostmile.project.tasks;
 
         var title = suggestion.title;
         var task = { "title": title, "participantsCount": 0 };
@@ -357,13 +357,13 @@ YUI.add('postmile-tasks-list', function (Y) {
         // scroll / animate to end of list
         scrollNodeToBottom(newNode);
 
-        addSuggestionToServer(suggestion, gpostmile.sled, tasks, task, tasks.length, newNode);
+        addSuggestionToServer(suggestion, gpostmile.project, tasks, task, tasks.length, newNode);
     }
 
 
     // addSuggestionToServer
 
-    function addSuggestionToServer(suggestion, sled, tasks, task, index, node) {
+    function addSuggestionToServer(suggestion, project, tasks, task, index, node) {
 
         function confirmDroppedSuggestionTaskAdded(response, myarg) { // response has id, rev, status
 
@@ -380,20 +380,20 @@ YUI.add('postmile-tasks-list', function (Y) {
 
                 node.setAttribute("task", task.id);
 
-                Y.fire('sled:statusMessage', 'Suggestion added');
+                Y.fire('postmile:statusMessage', 'Suggestion added');
 
             } else {
 
                 // todo: undelete/regen suggesitons list, renderSuggestions
 
-                Y.fire('sled:renderProject', sled);
+                Y.fire('postmile:renderProject', project);
 
-                Y.fire('sled:errorMessage', 'Suggestion add failed');
+                Y.fire('postmile:errorMessage', 'Suggestion add failed');
 
             }
         }
 
-        putJson('/project/' + sled.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index,
+        putJson('/project/' + project.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index,
 		'',
 		confirmDroppedSuggestionTaskAdded);
 
@@ -529,7 +529,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
         var liTarget = e.currentTarget.ancestor("li", true);
         var taskId = liTarget.getAttribute('task');
-        var task = gpostmile.sled.tasks[taskId];
+        var task = gpostmile.project.tasks[taskId];
         var liTitleTarget = liTarget.one(".tasktitle");
         var newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
         var liDetailsDivTarget = liTarget.one("div.messages");
@@ -704,7 +704,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
         var liTarget = liDetailsInputTarget.ancestor("li");
         var taskId = liTarget.getAttribute('task'); // get does not always work
-        var task = gpostmile.sled.tasks[taskId];
+        var task = gpostmile.project.tasks[taskId];
 
         liDetailsInputTarget.set('value', '');
 
@@ -742,7 +742,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
                 renderDetails(task.details, task);
 
-                Y.fire('sled:statusMessage', 'Details added');
+                Y.fire('postmile:statusMessage', 'Details added');
 
                 var confirmLastPost = function (response, myarg) {
                     if (response.status === 'ok') {
@@ -757,7 +757,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
             } else {
 
-                Y.fire('sled:errorMessage', 'Addition to details failed');
+                Y.fire('postmile:errorMessage', 'Addition to details failed');
 
             }
         }
@@ -778,7 +778,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
         var liCheckTarget = liTarget.one(".check");
         var taskId = liTarget.getAttribute('task'); // get does not always work
-        var task = gpostmile.sled.tasks[taskId];
+        var task = gpostmile.project.tasks[taskId];
 
         var oldState;
 
@@ -820,7 +820,7 @@ YUI.add('postmile-tasks-list', function (Y) {
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var liCheckTarget = liTarget.one(".check");
         var taskId = liTarget.getAttribute('task'); // get does not always work
-        var task = gpostmile.sled.tasks[taskId];
+        var task = gpostmile.project.tasks[taskId];
         var state = nextState(liTarget);
         var jsonObject = { status: task.status };
         var json = JSON.stringify(jsonObject);
@@ -832,13 +832,13 @@ YUI.add('postmile-tasks-list', function (Y) {
 
             if (response.status === "ok") {
 
-                Y.fire('sled:statusMessage', 'Task ' + checkStates[state.newState].ui);
+                Y.fire('postmile:statusMessage', 'Task ' + checkStates[state.newState].ui);
 
             } else {
 
                 nextState(liTarget, state.oldState);
 
-                Y.fire('sled:errorMessage', 'Task ' + 'check' + ' failed');
+                Y.fire('postmile:errorMessage', 'Task ' + 'check' + ' failed');
 
             }
 
@@ -853,7 +853,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function askDeleteTask(e) {
         if (Y.postmile.settings.confirmDelete()) {
-            Y.fire('sled:confirm', 'Delete item?', 'This will permanently delete the item and all its details.', fadeDeleteTask, e);
+            Y.fire('postmile:confirm', 'Delete item?', 'This will permanently delete the item and all its details.', fadeDeleteTask, e);
         } else {
             fadeDeleteTask(e);
         }
@@ -867,8 +867,8 @@ YUI.add('postmile-tasks-list', function (Y) {
         var liCloseTarget = e.currentTarget;
         var liTarget = liCloseTarget.ancestor("li", true);
         var taskId = liTarget.getAttribute('task');
-        var tasks = gpostmile.sled.tasks;
-        var task = gpostmile.sled.tasks[taskId];
+        var tasks = gpostmile.project.tasks;
+        var task = gpostmile.project.tasks[taskId];
         var fadeAnim = new Y.Anim({
             node: liTarget,
             to: {
@@ -905,13 +905,13 @@ YUI.add('postmile-tasks-list', function (Y) {
                     }
                 }
 
-                Y.fire('sled:statusMessage', 'Item deleted');
+                Y.fire('postmile:statusMessage', 'Item deleted');
 
             } else {
 
-                Y.fire('sled:renderProject', Y.postmile.gpostmile.sled);
+                Y.fire('postmile:renderProject', Y.postmile.gpostmile.project);
 
-                Y.fire('sled:errorMessage', 'Item deletion failed');
+                Y.fire('postmile:errorMessage', 'Item deletion failed');
 
             }
         }
@@ -926,13 +926,13 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function showParticipants(e) {
 
-        var sled = gpostmile.sled;
-        var tasks = sled.tasks;
+        var project = gpostmile.project;
+        var tasks = project.tasks;
 
         var liTarget = e.currentTarget.ancestor("li", true);
 
         var taskId = liTarget.getAttribute('task'); // get does not always work
-        var task = gpostmile.sled.tasks[taskId];
+        var task = gpostmile.project.tasks[taskId];
 
         var scrollWindowNode = Y.one("#tasks");
         var maxY = scrollWindowNode.getY() + parseInt(scrollWindowNode.getComputedStyle('height'), 10);
@@ -958,8 +958,8 @@ YUI.add('postmile-tasks-list', function (Y) {
         var taskId = liTarget.getAttribute('task'); // get does not always work
         var task = null;
 
-        if (gpostmile.sled && gpostmile.sled.tasks && taskId) {
-            task = gpostmile.sled.tasks[taskId];
+        if (gpostmile.project && gpostmile.project.tasks && taskId) {
+            task = gpostmile.project.tasks[taskId];
         }
 
         liTarget.addClass("active");
@@ -974,7 +974,7 @@ YUI.add('postmile-tasks-list', function (Y) {
                     task.created = response.modified;
                     task.modified = response.created;
                     task.participants = response.participants || [];
-                    task.sled = response.sled;
+                    task.project = response.project;
                     task.status = response.status;
                     task.title = response.title;
 
@@ -1027,7 +1027,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function titleEntered(e) {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
 
         if (!liTarget) {
@@ -1053,7 +1053,7 @@ YUI.add('postmile-tasks-list', function (Y) {
         liNodes.removeClass("editing");
 
         if (taskId) {
-            task = gpostmile.sled.tasks[taskId];
+            task = gpostmile.project.tasks[taskId];
         }
 
         if (task) {
@@ -1092,10 +1092,10 @@ YUI.add('postmile-tasks-list', function (Y) {
                     if (!task.id) {
                         task.id = response.id;
                         liTarget.setAttribute("task", task.id);
-                        sled.tasks[task.id] = task;
+                        project.tasks[task.id] = task;
                     }
 
-                    Y.fire('sled:statusMessage', 'Task ' + (taskId ? 'changed' : 'added'));
+                    Y.fire('postmile:statusMessage', 'Task ' + (taskId ? 'changed' : 'added'));
 
                 } else {
 
@@ -1103,7 +1103,7 @@ YUI.add('postmile-tasks-list', function (Y) {
                     liTarget.setContent(html);
                     showUpdatedAgo(liTarget, true);
 
-                    Y.fire('sled:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
+                    Y.fire('postmile:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
                 }
             };
 
@@ -1113,8 +1113,8 @@ YUI.add('postmile-tasks-list', function (Y) {
 
                     if (response.status === 'ok') {
 
-                        task.index = sled.tasks.length; // will be added to the end, last in the array
-                        sled.tasks[sled.tasks.length] = task;
+                        task.index = project.tasks.length; // will be added to the end, last in the array
+                        project.tasks[project.tasks.length] = task;
 
                         liTarget.removeClass("addnewtask");
                         liTarget.addClass('task');
@@ -1141,14 +1141,14 @@ YUI.add('postmile-tasks-list', function (Y) {
                         // liTarget = null ;
 
                         // rerender to sync UI w unchanged data
-                        render(sled.tasks, sled.id);
+                        render(project.tasks, project.id);
 
-                        Y.fire('sled:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
+                        Y.fire('postmile:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
                     }
 
                 };
 
-                putJson("/project/" + sled.id + "/task", json, confirmAddTask);
+                putJson("/project/" + project.id + "/task", json, confirmAddTask);
 
             } else {
 
@@ -1249,7 +1249,7 @@ YUI.add('postmile-tasks-list', function (Y) {
 
     function taskSingleClick(e) {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var liTitleTarget = liTarget.one(".tasktitle"); // choses first one, with ttile (not span of right icons)
         var taskId = liTarget.getAttribute('task'); // get does not always work
@@ -1278,7 +1278,7 @@ YUI.add('postmile-tasks-list', function (Y) {
         // don't immediately add active and editing classes 
         // because the forthcoming focus causes a blur which will remove editing
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var liTitleTarget = liTarget.one(".tasktitle"); // choses first one, with ttile (not span of right icons)
         var taskId = liTarget.getAttribute('task'); // get does not always work
@@ -1291,7 +1291,7 @@ YUI.add('postmile-tasks-list', function (Y) {
         }
 
         if (taskId) {
-            task = gpostmile.sled.tasks[taskId];
+            task = gpostmile.project.tasks[taskId];
         }
 
         // do this now after focus as caused blur and removed 'editing' class from all LI nodes
@@ -1331,7 +1331,7 @@ YUI.add('postmile-tasks-list', function (Y) {
             if (e.keyCode === 27) {	// escape
                 var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
                 var taskId = liTarget.getAttribute('task'); // get does not always work
-                var task = gpostmile.sled.tasks[taskId];
+                var task = gpostmile.project.tasks[taskId];
                 if (task) {
                     e.currentTarget.set('value', task.title);
                 }
@@ -1429,25 +1429,25 @@ YUI.add('postmile-tasks-list', function (Y) {
 
         // event handlers
 
-        Y.on("sled:dropSuggestion", function (proxy) {
+        Y.on("postmile:dropSuggestion", function (proxy) {
             dropSuggestion(proxy);
         });
 
-        Y.on("sled:addSuggestion", function (suggestion) {
+        Y.on("postmile:addSuggestion", function (suggestion) {
             addSuggestion(suggestion);
         });
 
-        Y.on("sled:taskReorder", function (node) {
+        Y.on("postmile:taskReorder", function (node) {
             reorder(node);
         });
 
-        Y.on("sled:renderTasks", function (tasks, projectId) {
+        Y.on("postmile:renderTasks", function (tasks, projectId) {
             render(tasks, projectId);
         });
 
     }
 
-    Y.namespace("sled.tasklist");
+    Y.namespace("project.tasklist");
     Y.postmile.tasklist = {
         showUpdatedAgo: showUpdatedAgo
     };

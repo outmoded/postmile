@@ -5,7 +5,7 @@
 
 /**
 *
-* sled tooltips module - lifted from example, with some mods:
+* tooltips module - lifted from example, with some mods:
 *
 *	don't set content in public triggerEnter - gets called too often as user moves mouse over tasks
 *	instead, because it requires some processing, set content in showContent - then should make it public

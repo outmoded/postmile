@@ -26,8 +26,8 @@ YUI.add('postmile-suggestions-list', function (Y) {
             // tho if it's a net err, perhaps could retry (but that'd be at a lower level)
         }
 
-        var sled = gpostmile.projects[projectId];
-        sled.suggestions = suggestions;
+        var project = gpostmile.projects[projectId];
+        project.suggestions = suggestions;
 
         var html = "";
 
@@ -56,7 +56,7 @@ YUI.add('postmile-suggestions-list', function (Y) {
         suggestionpane.removeClass("postmile-loading");
         hideSuggestionsLoading();
 
-        Y.fire('sled:checkUncover');
+        Y.fire('postmile:checkUncover');
     }
 
 
@@ -76,16 +76,16 @@ YUI.add('postmile-suggestions-list', function (Y) {
 
     function suggestionDelete(e) {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
 
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var suggestionId = liTarget.getAttribute('suggestion');
-        var suggestion = sled.suggestions[suggestionId];
+        var suggestion = project.suggestions[suggestionId];
 
-        sled.suggestions.splice(suggestion.index, 1); // remove from task sequence
-        delete sled.suggestions[suggestion.id];
+        project.suggestions.splice(suggestion.index, 1); // remove from task sequence
+        delete project.suggestions[suggestion.id];
 
-        renderSuggestions(sled.suggestions, sled.id);
+        renderSuggestions(project.suggestions, project.id);
 
     }
 
@@ -94,19 +94,19 @@ YUI.add('postmile-suggestions-list', function (Y) {
 
     function suggestionRemove(e) {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
 
         // delete in UI
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var suggestionId = liTarget.getAttribute('suggestion');
-        var suggestion = sled.suggestions[suggestionId];
+        var suggestion = project.suggestions[suggestionId];
 
         function confirmRemovedSuggestion(response, myarg) { // response has id, rev, status
             // todo: put back suggestion in UI
         }
 
         // delete on server
-        deleteJson("/project/" + sled.id + '/suggestion/' + suggestion.id, null, confirmRemovedSuggestion);
+        deleteJson("/project/" + project.id + '/suggestion/' + suggestion.id, null, confirmRemovedSuggestion);
 
         // local delete in data
         suggestionDelete(e);
@@ -117,13 +117,13 @@ YUI.add('postmile-suggestions-list', function (Y) {
 
     function suggestionAdd(e) {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
 
         var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
         var suggestionId = liTarget.getAttribute('suggestion');
-        var suggestion = sled.suggestions[suggestionId];
+        var suggestion = project.suggestions[suggestionId];
 
-        Y.fire('sled:addSuggestion', suggestion);
+        Y.fire('postmile:addSuggestion', suggestion);
 
         suggestionDelete(e);
 
@@ -142,7 +142,7 @@ YUI.add('postmile-suggestions-list', function (Y) {
 
         // event handlers
 
-        Y.on("sled:renderSuggestions", function (suggestions, projectId) {
+        Y.on("postmile:renderSuggestions", function (suggestions, projectId) {
             renderSuggestions(suggestions, projectId);
         });
 

@@ -78,17 +78,17 @@
 		
 		<!-- Project details bar -->
 
-		<div id="sled-details-bar" class="hidden">
+		<div id="project-details-bar" class="hidden">
 	
 	        <!-- Project title -->
             
-            <div class="sled-title-box">
-			    <a id="sled-title"></a>
+            <div class="project-title-box">
+			    <a id="project-title"></a>
             </div>
-            <div id="sled-title-menu-box"></div>
+            <div id="project-title-menu-box"></div>
 
-	        <div id="sled-title-input-overlay" class="yui3-overlay-loading">
-      	        <input id='sled-title-input' />
+	        <div id="project-title-input-overlay" class="yui3-overlay-loading">
+      	        <input id='project-title-input' />
 	        </div>
 			
             <!-- Projects menu -->
@@ -111,16 +111,16 @@
 							</li>
 						</ul>
 						<ul class="break">
-							<li id="newsled" class="menuitem">
+							<li id="new-project" class="menuitem">
 								<a class="menuitem-content">Create New Project</a>
 							</li> 
-							<li id="join-sled" class="menuitem">
+							<li id="join-project" class="menuitem">
                             	<a class="menuitem-content">Accept Invitation</a>
 							</li> 
-							<li class="menuitem postmile-loading leave-sled-menu-item">
-								<a class="leave-sled menuitem-content">Leave Current Project</a>
+							<li class="menuitem postmile-loading leave-project-menu-item">
+								<a class="leave-project menuitem-content">Leave Current Project</a>
 							</li> 
-							<li id="delete-sled" class="menuitem">
+							<li id="delete-project" class="menuitem">
 								<a class="menuitem-content">Delete Current Project</a>
 							</li>
 						</ul>
@@ -128,9 +128,9 @@
 				</div>
 			</span>
 					
-			<!-- sled details (time, place) -->
+			<!-- Project details (time, place) -->
 
-			<div id="sled-details">
+			<div id="project-details">
 				<input id="date" class="date" type="text" placeholder="Date?" /> 
 				<input class="time" type="text" placeholder="Time?" />
     			<input class="place" type="text" placeholder="Where?" />
@@ -138,15 +138,15 @@
 				
             <!-- Project participants menu -->
 
-			<span id="sled-participants" class="menu postmile-loading"> 
-			    <a href="#sled-participants-menu" class="menu-label menu-toggle">
+			<span id="project-participants" class="menu postmile-loading"> 
+			    <a href="#project-participants-menu" class="menu-label menu-toggle">
                     <div class="participants-icon"></div>
                     <div class="name">Participants</div>
                     <div class="menu-arrow"></div>
                     <div id="participants-count"></div>
                 </a>
 
-				<div id="sled-participants-menu" class="menu postmile-loading"> 
+				<div id="project-participants-menu" class="menu postmile-loading"> 
                     <div class="icon-tab"></div>
 					<div class="menu-box menu-content"> 
 						<ul id="participants"> 
@@ -192,7 +192,7 @@
 		<div id="side-panel">
 			<h2>Suggestions</h2>
 			<div id="suggestions-loading"></div>
-			<div class="suggestion-box sledlist postmile-loading" id="suggestionpane">
+			<div class="suggestion-box postmile-loading" id="suggestionpane">
 				
 				<!-- Suggestions -->
 
@@ -299,7 +299,7 @@
 			</ul>
 			<ul class="invite-participants-list yui3-widget-bd">
 				<li>
-					Message <span class='invite-label' id="invite-message-label">Tell your friends what this sled is about</span>
+					Message <span class='invite-label' id="invite-message-label">Tell your friends what this list is about</span>
 				</li>
 				<li>
 					<textarea id='invite-message'></textarea>

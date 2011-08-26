@@ -7,7 +7,7 @@
 *
 * global network code and data
 *
-*	needed before YUI is loaded to start net req of sled data
+*	needed before YUI is loaded to start net req of project data
 *	use Y.fire for misc when it become available
 *
 *
@@ -44,10 +44,10 @@ function loadCredentials(callback) {
 
         session = credentials;
 
-        // Parse sled fragment identifier
+        // Parse project fragment identifier
 
         var fragKVS = document.location.href.split("#")[1];
-        var fragKVP = fragKVS ? fragKVS.split('sled=') : null;
+        var fragKVP = fragKVS ? fragKVS.split('project=') : null;
         fragment = fragKVP ? fragKVP[1] : null;
 
         callback();
@@ -103,7 +103,7 @@ function doJsonReq(method, uri, content, responseFunc, myarg) {
                 }
 
                 if (jsonResponse.error) {	// different/lower/earlier than jsonResponse.status !== 'ok' )
-                    xFire('sled:networkError', jsonResponse);
+                    xFire('postmile:networkError', jsonResponse);
                 }
 
                 // no permission, redirect/prompt for login
@@ -120,7 +120,7 @@ function doJsonReq(method, uri, content, responseFunc, myarg) {
                         // getCredentials(function () {}/*, true*/);	// not refreshCredentials();
                         window.location = postmile.api.uri + '/login';
                     } else {
-                        xFire('sled:askJoinCurrentProject', true, retryRequest);
+                        xFire('postmile:askJoinCurrentProject', true, retryRequest);
                     }
                 }
 

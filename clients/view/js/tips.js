@@ -5,7 +5,7 @@
 
 /**
 *
-* sled module - take care of everything to do with a sled that isn't tasks or suggestions
+* tips module - take care of everything to do with a project that isn't tasks or suggestions
 *
 *
 */
@@ -23,17 +23,17 @@ YUI.add('postmile-tips', function (Y) {
             return;
         }
 
-        var sled = gpostmile.projects[projectId];
+        var project = gpostmile.projects[projectId];
 
-        if (!tips || tips.length <= 0 || !sled) {
+        if (!tips || tips.length <= 0 || !project) {
             return;
         }
 
-        sled.tips = tips;
-        sled.tip = sled.tip || 0;
+        project.tips = tips;
+        project.tip = project.tip || 0;
 
         var target = Y.all('#tiptext');
-        var html = tips[sled.tip].text;
+        var html = tips[project.tip].text;
         target.setContent(html);
 
     }
@@ -43,11 +43,11 @@ YUI.add('postmile-tips', function (Y) {
 
     function nextTip() {
 
-        var sled = gpostmile.sled;
+        var project = gpostmile.project;
 
-        sled.tip = sled.tip + 1 < sled.tips.length ? sled.tip + 1 : 0;
+        project.tip = project.tip + 1 < project.tips.length ? project.tip + 1 : 0;
 
-        renderTips(gpostmile.sled.tips, gpostmile.sled.id);
+        renderTips(gpostmile.project.tips, gpostmile.project.id);
 
     }
 
@@ -56,18 +56,18 @@ YUI.add('postmile-tips', function (Y) {
 
     function showTip() {
 
-        var sled = gpostmile.sled;
-        var tip = sled.tips[sled.tip];
+        var project = gpostmile.project;
+        var tip = project.tips[project.tip];
 
         // until the API returns context - todo: look up tip.context locally to get node and pos
-        if (!tip.context || tip.context === 'sled.title') {
-            tip.context = sled.tip === -1 ? '.taskicon' : '.sled-title-box';
-            tip.pos = sled.tip === -1 ? 10 : [-10, -10, 50, 20];
+        if (!tip.context || tip.context === 'project.title') {
+            tip.context = project.tip === -1 ? '.taskicon' : '.project-title-box';
+            tip.pos = project.tip === -1 ? 10 : [-10, -10, 50, 20];
         }
 
         // if there's a node, point it out, toggle
         if (tip.context) {
-            Y.fire('sled:pointToNode', '#showtip', tip.context, tip.pos, true);
+            Y.fire('postmile:pointToNode', '#showtip', tip.context, tip.pos, true);
         }
 
     }
@@ -114,7 +114,7 @@ YUI.add('postmile-tips', function (Y) {
 
         // event handlers
 
-        Y.on("sled:renderTips", function (tips, projectId) {
+        Y.on("postmile:renderTips", function (tips, projectId) {
             renderTips(tips, projectId);
         });
 

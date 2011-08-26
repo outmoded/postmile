@@ -220,7 +220,7 @@ YUI.add('postmile-templates', function (Y) {
     *
     */
 
-    function sledTitle(title) {
+    function projectTitle(title) {
         return htmlEncode(title);
     }
 
@@ -358,16 +358,16 @@ YUI.add('postmile-templates', function (Y) {
 
     }
 
-    function sledMenuItem(sled, mostRecentProject) {
+    function projectMenuItem(project, mostRecentProject) {
 
-        var selectedClass = ''; // done in renderProject ( sled === mostRecentProject ) ? 'postmile-loading' : '' ;
-        selectedClass += (sled.isPending) ? 'diminishedtextitem' : '';
+        var selectedClass = ''; // done in renderProject ( project === mostRecentProject ) ? 'postmile-loading' : '' ;
+        selectedClass += (project.isPending) ? 'diminishedtextitem' : '';
 
-        var sledTitle = sled.title;
-        sledTitle += sled.isPending ? ' (pending) ' : '';
-        // sledTitle += sled.isPid ? ' (dummy) ' : '' ;
+        var projectTitle = project.title;
+        projectTitle += project.isPending ? ' (pending) ' : '';
+        // projectTitle += project.isPid ? ' (dummy) ' : '' ;
 
-        var html = '<li class="menuitem sled" sled="' + sled.id + '"><a class="menuitem-content ' + selectedClass + '"> ' + sledTitle + '</a></li>';
+        var html = '<li class="menuitem project" project="' + project.id + '"><a class="menuitem-content ' + selectedClass + '"> ' + projectTitle + '</a></li>';
 
         return html;
     }
@@ -416,7 +416,7 @@ YUI.add('postmile-templates', function (Y) {
         return Y.substitute(suggestionTemplate, suggestion);
     }
 
-    Y.namespace("sled.templates");
+    Y.namespace("project.templates");
     Y.postmile.templates = {	// export it
         listAddTaskTemplate: listAddTaskTemplate,
         taskListHtml: taskListHtml,
@@ -428,9 +428,9 @@ YUI.add('postmile-templates', function (Y) {
         manageParticipants: manageParticipants,
         taskParticipants: taskParticipants,
         participantMenuItem: participantMenuItem,
-        sledMenuItem: sledMenuItem,
+        projectMenuItem: projectMenuItem,
         settingsMenuItem: settingsMenuItem,
-        sledTitle: sledTitle,
+        projectTitle: projectTitle,
         last: null
 
     };

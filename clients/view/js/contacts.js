@@ -8,9 +8,9 @@
 *
 * handles three overlays:
 *
-*	invite - for inviting new participants to sled, launched from participants menu
-*  manage, aka disinvite - to take action on existing sled participants (like removing them)
-*	taskParticipants - varying subsets of the sled participants for each task
+*	invite - for inviting new participants to project, launched from participants menu
+*  manage, aka disinvite - to take action on existing project participants (like removing them)
+*	taskParticipants - varying subsets of the project participants for each task
 *
 *
 */
@@ -75,7 +75,7 @@ YUI.add('postmile-contacts', function (Y) {
         // clear text fields
         inviteEmails.set('value', '');
         inviteMessage.set('value', '');
-        inviteLabel.setContent('Tell your friends what this sled is about'); // from html markup
+        inviteLabel.setContent('Tell your friends what this list is about'); // from html markup
 
         if (gpostmile.contacts.length > 0) {
             Y.all('#invite-overlay .participants-pane').show();
@@ -91,8 +91,8 @@ YUI.add('postmile-contacts', function (Y) {
     //
     function renderManage() {
 
-        // sled participants (not contacts)
-        var pplhtml = Y.postmile.templates.manageParticipants(gpostmile.sled.participants);
+        // project participants (not contacts)
+        var pplhtml = Y.postmile.templates.manageParticipants(gpostmile.project.participants);
 
         var dpl = Y.all('#manage-overlay .participants-list');
         dpl.setContent(pplhtml);
@@ -101,15 +101,15 @@ YUI.add('postmile-contacts', function (Y) {
         var manageOverlayNode = Y.one("#manage-overlay");
         manageOverlayNode.all('.participant').removeClass('selected');
 
-        if (gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array) {
+        if (gpostmile.project && gpostmile.project.participants && gpostmile.project.participants instanceof Array) {
             var c, l;
-            for (/*var*/c = 0, l = gpostmile.sled.participants.length; c < l; c++) {
-                var participant = gpostmile.sled.participants[c];
+            for (/*var*/c = 0, l = gpostmile.project.participants.length; c < l; c++) {
+                var participant = gpostmile.project.participants[c];
                 participant.selected = false;
             }
         }
 
-        if (gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array && gpostmile.sled.participants.length > 0) {
+        if (gpostmile.project && gpostmile.project.participants && gpostmile.project.participants instanceof Array && gpostmile.project.participants.length > 0) {
             Y.all('#manage-overlay .participants-pane').show();
         } else {
             Y.all('#manage-overlay .participants-pane').hide();
@@ -124,17 +124,17 @@ YUI.add('postmile-contacts', function (Y) {
     // 
     function renderTaskParticipants(task) {
 
-        // clear/set sled participants (not contacts) for task menu
-        if (gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array) {
+        // clear/set project participants (not contacts) for task menu
+        if (gpostmile.project && gpostmile.project.participants && gpostmile.project.participants instanceof Array) {
             var c, l;
-            for (/*var*/c = 0, l = gpostmile.sled.participants.length; c < l; c++) {
-                var participant = gpostmile.sled.participants[c];
+            for (/*var*/c = 0, l = gpostmile.project.participants.length; c < l; c++) {
+                var participant = gpostmile.project.participants[c];
                 participant.selected = task.participants.indexOf(participant.id) !== -1;
-                gpostmile.sled.participants[participant.id] = participant;
+                gpostmile.project.participants[participant.id] = participant;
             }
         }
 
-        var html = Y.postmile.templates.taskParticipants(gpostmile.sled.participants);
+        var html = Y.postmile.templates.taskParticipants(gpostmile.project.participants);
 
         var tpl = Y.one('#task-participant-list');
         tpl.setContent(html);
@@ -204,7 +204,7 @@ YUI.add('postmile-contacts', function (Y) {
             // needs to be URL encoded since it's a query param
             var message = encodeURIComponent(inviteMessage.get('value'));
 
-            var uri = "/project/" + gpostmile.sled.id + "/participants?message=" + message;
+            var uri = "/project/" + gpostmile.project.id + "/participants?message=" + message;
 
             var newParticipants = inviteEmails.get('value').replace(/^\s+|\s+$/g, "");
             newParticipants = newParticipants.split(',');
@@ -228,9 +228,9 @@ YUI.add('postmile-contacts', function (Y) {
 
                     if (response.status === "ok") {
 
-                        // getJson( "/project/" + gpostmile.sled.id, Y.postmile.sled.renderProjectParticipants ) ;
-                        gpostmile.sled.participants = response.participants;
-                        Y.fire('sled:renderProjectParticipants', gpostmile.sled);
+                        // getJson( "/project/" + gpostmile.project.id, Y.postmile.project.renderProjectParticipants ) ;
+                        gpostmile.project.participants = response.participants;
+                        Y.fire('postmile:renderProjectParticipants', gpostmile.project);
 
                         /* instead of locally turning participant into contact
                         rely on streaming contact update
@@ -256,11 +256,11 @@ YUI.add('postmile-contacts', function (Y) {
                         inviteEmails.set('value', '');
                         inviteMessage.set('value', '');
 
-                        Y.fire('sled:inform', 'Invitation sent', 'You have invited ' + participants.length + ' participants.');
+                        Y.fire('postmile:inform', 'Invitation sent', 'You have invited ' + participants.length + ' participants.');
 
                     } else {
 
-                        Y.fire('sled:inform', 'Invitation failed', 'Failed to invite new participants.');
+                        Y.fire('postmile:inform', 'Invitation failed', 'Failed to invite new participants.');
                     }
                 };
                 postJson(uri, json, confirmInvite);
@@ -279,7 +279,7 @@ YUI.add('postmile-contacts', function (Y) {
         });
 
         launchInvite.on('click', function (e) {
-            var pm = Y.one('#sled-participants-menu');
+            var pm = Y.one('#project-participants-menu');
             pm.addClass('menu-hidden');
             showOverlay();
         });
@@ -315,18 +315,18 @@ YUI.add('postmile-contacts', function (Y) {
             var id = cb.getAttribute('participant');
             var checked = cb.get('checked'); // not getAttribute
 
-            gpostmile.sled.participants[id].selected = checked;
+            gpostmile.project.participants[id].selected = checked;
 
             var taskIsMe = false;
             var participants = [];
-            if (gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array) {
+            if (gpostmile.project && gpostmile.project.participants && gpostmile.project.participants instanceof Array) {
                 var c, l;
-                for (/*var*/c = 0, l = gpostmile.sled.participants.length; c < l; c++) {
-                    if (gpostmile.sled.participants[c].selected) {
-                        participants.push(gpostmile.sled.participants[c].id);
+                for (/*var*/c = 0, l = gpostmile.project.participants.length; c < l; c++) {
+                    if (gpostmile.project.participants[c].selected) {
+                        participants.push(gpostmile.project.participants[c].id);
                     }
-                    if (gpostmile.sled.participants[c].id === Y.postmile.gpostmile.profile.id) {
-                        taskIsMe = gpostmile.sled.participants[c].selected;
+                    if (gpostmile.project.participants[c].id === Y.postmile.gpostmile.profile.id) {
+                        taskIsMe = gpostmile.project.participants[c].selected;
                     }
                 }
             }
@@ -425,9 +425,9 @@ YUI.add('postmile-contacts', function (Y) {
                 t.addClass('selected');
             }
             if (id) {
-                var participant = gpostmile.sled.participants[id];
+                var participant = gpostmile.project.participants[id];
                 if (participant) {
-                    gpostmile.sled.participants[id].selected = t.hasClass('selected');
+                    gpostmile.project.participants[id].selected = t.hasClass('selected');
                 }
             }
 
@@ -437,10 +437,10 @@ YUI.add('postmile-contacts', function (Y) {
         manageButton.on('click', function (e) {
 
             var participants = [];
-            if (gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array) {
+            if (gpostmile.project && gpostmile.project.participants && gpostmile.project.participants instanceof Array) {
                 var c, l;
-                for (/*var*/c = 0, l = gpostmile.sled.participants.length; c < l; c++) {
-                    var participant = gpostmile.sled.participants[c];
+                for (/*var*/c = 0, l = gpostmile.project.participants.length; c < l; c++) {
+                    var participant = gpostmile.project.participants[c];
                     if (participant.selected) {
                         participants.push(participant.id);
                     }
@@ -456,23 +456,23 @@ YUI.add('postmile-contacts', function (Y) {
 
                     if (response.status === "ok") {
 
-                        gpostmile.sled.participants = response.participants;
-                        Y.fire('sled:renderProjectParticipants', gpostmile.sled);
+                        gpostmile.project.participants = response.participants;
+                        Y.fire('postmile:renderProjectParticipants', gpostmile.project);
 
                     } else {
 
-                        Y.log('error leaving sled ' + JSON.stringify(response));
-                        Y.fire('sled:inform', 'Error', 'Failed to remove participants.');
+                        Y.log('error leaving project ' + JSON.stringify(response));
+                        Y.fire('postmile:inform', 'Error', 'Failed to remove participants.');
 
                     }
                 };
 
                 var askRemove = function (arg) {
-                    var uri = "/project/" + gpostmile.sled.id + "/participants";
+                    var uri = "/project/" + gpostmile.project.id + "/participants";
                     deleteJson(uri, json, confirmRemove);
                 };
                 askHeader = participants.length > 1 ? 'Remove Participants?' : 'Remove Participant?';
-                Y.fire('sled:confirm', askHeader, 'If you remove a participant with items assigned, a dummy will be created to assume them.', askRemove);
+                Y.fire('postmile:confirm', askHeader, 'If you remove a participant with items assigned, a dummy will be created to assume them.', askRemove);
 
             }
 
@@ -506,7 +506,7 @@ YUI.add('postmile-contacts', function (Y) {
 
         var launchManage = Y.one(".launch-manage");
         launchManage.on('click', function (e) {
-            var pm = Y.one('#sled-participants-menu');
+            var pm = Y.one('#project-participants-menu');
             pm.addClass('menu-hidden');
             renderManage();
         });
@@ -669,7 +669,7 @@ YUI.add('postmile-contacts', function (Y) {
         bindParticipantsOverlay();
 
         // event handlers
-        Y.on("sled:renderContacts", function (contacts) {
+        Y.on("postmile:renderContacts", function (contacts) {
             renderContacts(contacts);
         });
 

@@ -21,7 +21,7 @@ YUI.add('postmile-global', function (Y) {
         profile: {},
         contacts: [],
         projects: [],
-        sled: null, // no active/selected sled
+        project: null, // no active/selected project
         users: {},
         tips: {},
         tip: -1,

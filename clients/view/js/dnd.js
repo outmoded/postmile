@@ -19,7 +19,7 @@ YUI.add('postmile-dnd', function (Y) {
     var legitDrop = false;
     var savedCursor;
     var savedMouseOutHideDelay;
-    var sledsDndDelegate;
+    var projectsDndDelegate;
 
     //Static Vars
     var goingUp = false, lastY = 0;
@@ -104,7 +104,7 @@ YUI.add('postmile-dnd', function (Y) {
         // so go back to data and templates to regen markup
         // drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	
         var taskId = drag.get('node').getAttribute('task');
-        var task = Y.postmile.gpostmile.sled.tasks[taskId];
+        var task = Y.postmile.gpostmile.project.tasks[taskId];
         var html = Y.postmile.templates.taskListHtml(task);
         drag.get('dragNode').set('innerHTML', html); // innerHTML's parent includes sibs
         drag.get('dragNode').setStyles({
@@ -124,7 +124,7 @@ YUI.add('postmile-dnd', function (Y) {
         // and can't count on outerHTML in places like FF
         // so go back to data and templates to regen markup
         // drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	// outerHTML better than text since it includes markup
-        var suggestions = Y.postmile.gpostmile.sled.suggestions;
+        var suggestions = Y.postmile.gpostmile.project.suggestions;
         var dragId = drag.get('node').getAttribute('suggestion');
         var dragSuggestion = suggestions[dragId];
         var html = Y.postmile.templates.suggestionListHtml(dragSuggestion);
@@ -171,7 +171,7 @@ YUI.add('postmile-dnd', function (Y) {
     // listen for over - could be a dragged task or suggestion
     tasksDndDelegate.on('drop:over', function (e) {
 
-        // somehow the sledslist menu is leaking events back into the task list - ignore those by checking if we're in a projects drag
+        // somehow the projectslist menu is leaking events back into the task list - ignore those by checking if we're in a projects drag
         if (savedMouseOutHideDelay) {
             return;
         }
@@ -228,7 +228,7 @@ YUI.add('postmile-dnd', function (Y) {
             visibility: '',
             opacity: '1'
         });
-        Y.fire('sled:taskReorder', drag.get('node'));
+        Y.fire('postmile:taskReorder', drag.get('node'));
         document.body.style.cursor = savedCursor;
     });
 
@@ -260,7 +260,7 @@ YUI.add('postmile-dnd', function (Y) {
                 proxy.removeClass('addnewitem');
                 proxy.addClass('task');
                 // add it to task list via tasklist's dropSuggestion method
-                Y.fire('sled:dropSuggestion', proxy);
+                Y.fire('postmile:dropSuggestion', proxy);
             }
         }
     });
@@ -268,21 +268,21 @@ YUI.add('postmile-dnd', function (Y) {
 
     // this is strictly for the projects list menu - nothing to do with tasks and suggestion - perhaps factor out somewhere else
 
-    function sledsDnd() {
+    function projectsDnd() {
 
-        if (Y.postmile.settings && !Y.postmile.settings.sledsReorder()) {
+        if (Y.postmile.settings && !Y.postmile.settings.projectsReorder()) {
             return null;
         }
 
-        if (sledsDndDelegate) {
-            sledsDndDelegate.syncTargets(); // gpostmile.tasksSortable.delegate.syncTargets() ;
-            return sledsDndDelegate;
+        if (projectsDndDelegate) {
+            projectsDndDelegate.syncTargets(); // gpostmile.tasksSortable.delegate.syncTargets() ;
+            return projectsDndDelegate;
         }
 
-        // sled list is both a drag and drop target
-        sledsDndDelegate = new Y.DD.Delegate({
+        // project list is both a drag and drop target
+        projectsDndDelegate = new Y.DD.Delegate({
             cont: '#projects',
-            nodes: '#projects li.sled',
+            nodes: '#projects li.project',
             // invalid: 'input',
             // valid: 'a',
             target: { padding: '-10 10 10 -10' }, // needed
@@ -290,43 +290,43 @@ YUI.add('postmile-dnd', function (Y) {
             last: null
         });
 
-        sledsDndDelegate.dd.removeInvalid('a');
-        // sledsDndDelegate.dd.addInvalid( '.sledtitle' ) ;
-        // sledsDndDelegate.dd.addInvalid( '.sleddetails' ) ;
+        projectsDndDelegate.dd.removeInvalid('a');
+        // projectsDndDelegate.dd.addInvalid( '.projecttitle' ) ;
+        // projectsDndDelegate.dd.addInvalid( '.projectdetails' ) ;
 
         // plug it index
-        sledsDndDelegate.dd.plug(Y.Plugin.DDProxy, {
+        projectsDndDelegate.dd.plug(Y.Plugin.DDProxy, {
             moveOnEnd: false,
             // cloneNode: true,
             last: null
         });
 
-        // constrain projects to just the sled list
-        var sledlistNode = Y.one('#projects');
-        if (sledlistNode) {
-            sledsDndDelegate.dd.plug(Y.Plugin.DDConstrained, {
-                constrain2node: sledlistNode,
+        // constrain projects to just the project list
+        var projectsListNode = Y.one('#projects');
+        if (projectsListNode) {
+            projectsDndDelegate.dd.plug(Y.Plugin.DDConstrained, {
+                constrain2node: projectsListNode,
                 last: null
             });
         }
 
         /*
         // don't allow draggin up or down past list
-        var sledsNode = Y.one( '#projects' ) ;
-        if( sledsNode ) {
-        sledsDndDelegate.dd.plug(Y.Plugin.DDNodeScroll, {
-        node: sledsNode,	// get('parentNode')
+        var projectsNode = Y.one( '#projects' ) ;
+        if( projectsNode ) {
+        projectsDndDelegate.dd.plug(Y.Plugin.DDNodeScroll, {
+        node: projectsNode,	// get('parentNode')
         last: null
         });
         }
         */
 
         //Listen for drag:start events on projects
-        sledsDndDelegate.on('drag:start', function (e) {
+        projectsDndDelegate.on('drag:start', function (e) {
 
             // we need to make the menu stick up during drag by ignoring the mouse out caused by the drag proxy
-            savedMouseOutHideDelay = sledsmenu.menuNav.get('mouseOutHideDelay');
-            sledsmenu.menuNav.set('mouseOutHideDelay', 999999);
+            savedMouseOutHideDelay = projectsmenu.menuNav.get('mouseOutHideDelay');
+            projectsmenu.menuNav.set('mouseOutHideDelay', 999999);
 
             savedCursor = document.body.style.cursor;
             document.body.style.cursor = 'move';
@@ -336,9 +336,9 @@ YUI.add('postmile-dnd', function (Y) {
             // and can't count on outerHTML in places like FF
             // so go back to data and templates to regen markup
             // drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	// innerHTML's parent includes sibs
-            var id = drag.get('node').getAttribute('sled');
-            var sled = Y.postmile.gpostmile.projects[id];
-            var html = Y.postmile.templates.sledMenuItem(sled, Y.postmile.gpostmile.sled);
+            var id = drag.get('node').getAttribute('project');
+            var project = Y.postmile.gpostmile.projects[id];
+            var html = Y.postmile.templates.projectMenuItem(project, Y.postmile.gpostmile.project);
             drag.get('dragNode').set('innerHTML', html); // innerHTML's parent includes sibs
             drag.get('dragNode').setStyles({
                 opacity: '.5',
@@ -353,12 +353,12 @@ YUI.add('postmile-dnd', function (Y) {
             // e.stopPropagation();, prevent default, halt, return false, etc
         });
 
-        sledsDndDelegate.on('drag:drag', function (e) {
+        projectsDndDelegate.on('drag:drag', function (e) {
             setLastY(e);
             // document.body.style.cursor = 'move' ;
         });
 
-        sledsDndDelegate.on('drop:over', function (e) {
+        projectsDndDelegate.on('drop:over', function (e) {
 
             var drag = e.drag.get('node'),
 				dragDrag = e.drag.get('dragNode'),
@@ -370,22 +370,22 @@ YUI.add('postmile-dnd', function (Y) {
                 }
 
                 // is this coming from suggestions, or a reordering of projects?
-                if (drag.hasClass('sled')) {
-                    e.drop.get('node').get('parentNode').insertBefore(drag, drop); // reordered sled
+                if (drag.hasClass('project')) {
+                    e.drop.get('node').get('parentNode').insertBefore(drag, drop); // reordered project
                 } else {
                     // drag from suggestion
                     // pull proxy from list instead of using drag
                     var list = Y.one('#projects');
                     var proxy = list.one('.proxy');
                     if (!proxy) {
-                        // create proxy from sled template
+                        // create proxy from project template
                         // (with slight adjustments, like suggestion attr and proxy class)
                         var anchor = drag.one('a');
-                        var sled = { "title": anchor.get('text'), "participantsCount": 0 };
+                        var project = { "title": anchor.get('text'), "participantsCount": 0 };
                         var extraClasses = 'proxy addnewitem';
                         var extraAttrs = 'suggestion="' + drag.getAttribute('suggestion') + '"';
                         var extraContent = '';
-                        var html = Y.postmile.templates.sledMenuItem(sled, null); // , extraClasses, extraAttrs, extraContent ) ;
+                        var html = Y.postmile.templates.projectMenuItem(project, null); // , extraClasses, extraAttrs, extraContent ) ;
                         e.drop.get('node').get('parentNode').insertBefore(html, drop);
                     } else {
                         list.insertBefore(proxy, drop); // just move proxy
@@ -403,9 +403,9 @@ YUI.add('postmile-dnd', function (Y) {
         });
 
         // Listen for drag:end events started on projects (and must end on projects since that's the only drop)
-        sledsDndDelegate.on('drag:end', function (e) {
+        projectsDndDelegate.on('drag:end', function (e) {
 
-            sledsmenu.menuNav.set('mouseOutHideDelay', savedMouseOutHideDelay);
+            projectsmenu.menuNav.set('mouseOutHideDelay', savedMouseOutHideDelay);
             savedMouseOutHideDelay = null; // thsi is also used as a flag to help task ignore these drags
 
             var drag = e.target;
@@ -415,20 +415,20 @@ YUI.add('postmile-dnd', function (Y) {
                 opacity: '1'
             });
 
-            Y.fire('sled:sledReorder', drag.get('node'));
+            Y.fire('postmile:projectReorder', drag.get('node'));
             document.body.style.cursor = savedCursor;
 
         });
 
-        return sledsDndDelegate;
+        return projectsDndDelegate;
     }
 
 
-    Y.namespace("sled.dnd");
+    Y.namespace("project.dnd");
     Y.postmile.dnd = {
         tasksDndDelegate: tasksDndDelegate,
         suggestionsDndDelegate: suggestionsDndDelegate,
-        sledsDnd: sledsDnd,
+        projectsDnd: projectsDnd,
         last: null
     };
 

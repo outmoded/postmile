@@ -398,7 +398,7 @@ body {
  * ----------------------------------------------------------------------------
  */
  
-#sled-details-bar {
+#project-details-bar {
     margin-left: 10px;
     position: relative;
     height: 75px;
@@ -410,7 +410,7 @@ body {
  * ----------------------------------------------------------------------------
  */
 
-.sled-title-box {
+.project-title-box {
     display: inline-block;
     position: absolute;
 	width: 410px;
@@ -423,7 +423,7 @@ body {
 	background-color: #ffffff;
 }
 
-#sled-title {
+#project-title {
     position: relative;
     top: 5px;
 	padding: 6px 10px;
@@ -433,7 +433,7 @@ body {
 	width: 390px;
 }
 
-#sled-title-input {
+#project-title-input {
     position: relative;
     top: 1px;
     left: 3px;
@@ -445,7 +445,7 @@ body {
 	width: 390px;
 }
 
-#sled-title-menu-box {
+#project-title-menu-box {
     display: inline-block;
 	position: absolute;
     left: 412px;
@@ -546,13 +546,13 @@ body {
  * ----------------------------------------------------------------------------
  */
 
-#sled-details {
+#project-details {
     display: inline-block;
     height: 15px;
     margin: 50px 0 10px 0;
 }
  
-#sled-details input {
+#project-details input {
     font-size: 12px;
     font-weight: bold;
     color: #6e6e6e;
@@ -562,36 +562,36 @@ body {
     padding: 0 0 0 20px;
 }
 
-#sled-details .date {
+#project-details .date {
 	background: url('../images/colage.png') 0 -339px no-repeat;
 	width: 80px;
     height: 15px;
 }
 
-#sled-details .date:hover,
-#sled-details .date:focus {
+#project-details .date:hover,
+#project-details .date:focus {
 	background: url('../images/colage.png') 0 -354px no-repeat;
 }
 
-#sled-details .time {
+#project-details .time {
 	background: url('../images/colage.png') 0 -369px no-repeat;
 	width: 60px;
     height: 15px;
 }
 
-#sled-details .time:hover {
+#project-details .time:hover {
 	background: url('../images/colage.png') 0 -384px no-repeat;
 }
 
-#sled-details .place {
+#project-details .place {
 	background: url('../images/colage.png') 0 -399px no-repeat;
 	width: 320px;
     height: 15px;
 	margin: 0 20px;
 }
 
-#sled-details .place:hover,
-#sled-details .place:focus {
+#project-details .place:hover,
+#project-details .place:focus {
 	background: url('../images/colage.png') 0 -414px no-repeat;
 }
 
@@ -600,11 +600,11 @@ body {
  * ----------------------------------------------------------------------------
  */
 
-#sled-participants {
+#project-participants {
     position: relative;
 }
 
-#sled-participants .menu-label {
+#project-participants .menu-label {
     display: inline-block;
     top: -5px;
     left: 0px;
@@ -613,22 +613,22 @@ body {
 	text-decoration: none;
 }
 
-#sled-participants .menu-label .participants-icon {
+#project-participants .menu-label .participants-icon {
     display: inline-block;
     width: 25px;
 	height: 20px;
     background: url('../images/colage.png') 0 -234px no-repeat;
 }
 
-#sled-participants .menu-label:hover .participants-icon {
+#project-participants .menu-label:hover .participants-icon {
     background: url('../images/colage.png') 0 -124px no-repeat;
 }
 
-#sled-participants.multi-participants .menu-label .participants-icon {
+#project-participants.multi-participants .menu-label .participants-icon {
     background: url('../images/colage.png') 0 -599px no-repeat;
 }
 
-#sled-participants.multi-participants .menu-label:hover .participants-icon {
+#project-participants.multi-participants .menu-label:hover .participants-icon {
     background: url('../images/colage.png') 0 -619px no-repeat;
 }
 
@@ -646,7 +646,7 @@ body {
     font-size: 8px;
 }
 
-#sled-participants .menu-label .name {
+#project-participants .menu-label .name {
     display: inline-block;
     color: #3474a1;
     font-weight: bold;
@@ -655,22 +655,22 @@ body {
     top: -3px;
 }
 
-#sled-participants .menu-label:hover .name {
+#project-participants .menu-label:hover .name {
 	color: #ff6600;
 }
 
-#sled-participants .menu-label .menu-arrow {
+#project-participants .menu-label .menu-arrow {
     display: inline-block;
     width: 20px;
 	height: 14px;
     background: url('../images/colage.png') 0 -491px no-repeat;
 }
 
-#sled-participants .menu-label:hover .menu-arrow {
+#project-participants .menu-label:hover .menu-arrow {
     background: url('../images/colage.png') 0 -503px no-repeat;
 }
 
-#sled-participants-menu {
+#project-participants-menu {
     right: -134px;
     top: -3px;
 	-moz-box-shadow: 3px 3px 2px #aaaaaa;
@@ -681,7 +681,7 @@ body {
 	width: 250px;
 }
 
-#sled-participants-menu .icon-tab {
+#project-participants-menu .icon-tab {
     float: right;
     display: block;
     height: 20px;
@@ -689,7 +689,7 @@ body {
 	background-color: #dddddd;
 }
 
-#sled-participants-menu .menu-content {
+#project-participants-menu .menu-content {
 	clear: right;
 	padding: 10px 0;
 	border-radius: 10px;
@@ -698,22 +698,22 @@ body {
 	display: inline-block;
 }
 
-#sled-participants-menu li {
+#project-participants-menu li {
 	cursor: default;
 	padding: 0 10px 0 20px;
 }
 
-#sled-participants-menu li a {
+#project-participants-menu li a {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	width: inherit;
 }
 
-#sled-participants-menu #participants li:hover {
+#project-participants-menu #participants li:hover {
 	background-color: transparent;
 }
 
-#sled-participants-menu  #participants li a {
+#project-participants-menu  #participants li a {
 	padding-left: 20px;
 	background: url('../images/colage.png') 0 -579px no-repeat;
 }

@@ -5,7 +5,7 @@
 
 /**
 *
-* global ui and data functions needed to get sled started smoothly before yui et al loaded
+* global ui and data functions needed to get project started smoothly before yui et al loaded
 *
 *	will use some YUI (via global Y) when available
 *
@@ -20,7 +20,7 @@ var initialTasks;
 var initialTasksRendered;
 /* let it be global var */initialProject = null;
 var initialProjectRendered;
-var sledCodeLoaded;
+var projectCodeLoaded;
 
 var st;
 st = new Date;
@@ -50,7 +50,7 @@ function resizeListBox() {
 
     var topBar = document.getElementById('top-bar');
     var mainBox = document.getElementById('main-box');
-    var sledDetails = document.getElementById('sled-details-bar');
+    var projectDetails = document.getElementById('project-details-bar');
     var blueBox = document.getElementById('bluebox');
     var tasks = document.getElementById('tasks');
     var tourGuideBox = document.getElementById('tour-guide-alignment');
@@ -73,7 +73,7 @@ function resizeListBox() {
 
     topBar.style.width = (width - 150) + 'px';
     mainBox.style.width = (width - 180) + 'px';
-    sledDetails.style.width = (width - 460) + 'px';
+    projectDetails.style.width = (width - 460) + 'px';
     blueBox.style.width = (width - 445) + 'px';
     tourGuideBox.style.width = (width - 150) + 'px';
 
@@ -149,14 +149,14 @@ hideSuggestionsLoading = function () {
     getJson("/storage/showtour", function (json) {
         Y.postmile.gpostmile.showTour = (json.showtour ? (json.showtour === 'true') : true);
         if (Y.postmile.gpostmile.showTour) {
-            Y.fire('sled:launchTour');
+            Y.fire('postmile:launchTour');
             postJson('/storage/showtour', '{"value":"false"}', function (response, myarg) { });
         }
     });
 }
 
 
-// <!--========== prime/prefetch active sled id and tasks (loaded before body for perf) =============================== -->
+// <!--========== prime/prefetch active project id and tasks (loaded before body for perf) =============================== -->
 
 preBody = function () {
 
@@ -170,19 +170,19 @@ preBody = function () {
 
                 initialTasks = tasks;
 
-                if (typeof initialTaskRender === 'function' && !initialTasksRendered && sledCodeLoaded) {	// sled loaded and already tried 
+                if (typeof initialTaskRender === 'function' && !initialTasksRendered && projectCodeLoaded) {	// project loaded and already tried 
                     timeLog("rendering tasks from gotTasks callback ", 1);
                     initialTaskRender();
                     // console.log( "Retrying initialLoad " );
                 }
             }
 
-            function gotProject(sled) {
+            function gotProject(project) {
 
-                initialProject = sled;
+                initialProject = project;
 
-                if (typeof initialProjectRender === 'function' && !initialProjectRendered && sledCodeLoaded) {	// sled loaded and already tried 
-                    timeLog("rendering sled from gotProject callback ", 1);
+                if (typeof initialProjectRender === 'function' && !initialProjectRendered && projectCodeLoaded) {	// project loaded and already tried 
+                    timeLog("rendering project from gotProject callback ", 1);
                     initialProjectRender();
                     // console.log( "Retrying initialLoad " );
                 }
@@ -235,7 +235,7 @@ postYUI = function () {
 
     Y = new YUI({
 
-        filter: debug ? 'raw' : null, // can make sled-min unfound	// or debug
+        filter: debug ? 'raw' : null,
         debug: debug,
         combine: false,
 
@@ -265,7 +265,7 @@ postYUI = function () {
 		});
 }
 
-// <!--========== run Y.use on all needed YUI and sled modules =============================== -->
+// <!--========== run Y.use on all needed YUI and project modules =============================== -->
 
 postBody = function () {
 
@@ -278,7 +278,7 @@ postBody = function () {
 
             initialProject.tasks = initialTasks;
 
-            Y.fire('sled:renderTasks', initialTasks, initialProjectId);
+            Y.fire('postmile:renderTasks', initialTasks, initialProjectId);
 
         }
 
@@ -291,13 +291,13 @@ postBody = function () {
 
         if (initialProject) {
 
-            Y.postmile.gpostmile.projects[initialProjectId] = initialProject; // doesn't help much as sledsList just wipes it out again
+            Y.postmile.gpostmile.projects[initialProjectId] = initialProject; // doesn't help much as projectsList just wipes it out again
 
             initialProject.tasks = initialTasks;
 
             initialProject.requestedDetails = true; // just to say we tried
 
-            Y.fire('sled:renderProject', initialProject);
+            Y.fire('postmile:renderProject', initialProject);
 
         }
 
@@ -305,9 +305,9 @@ postBody = function () {
 
     function initialRender() {
 
-        timeLog("rendering tasks and sled from initialRender (sled loaded) ", 1);
+        timeLog("rendering tasks and project from initialRender (project loaded) ", 1);
 
-        sledCodeLoaded = true;
+        projectCodeLoaded = true;
 
         initialTaskRender();
 
@@ -355,7 +355,7 @@ postBody = function () {
 		        Y.use(
 
 		        // for one batch request
-					'sled',
+					'project',
 					'postmile-tasks-list',
 					'postmile-project',
 
@@ -373,10 +373,10 @@ postBody = function () {
             var accountmenu = Y.one('#account');
             accountmenu.plug(Y.Plugin.NodeMenuNav);
 
-            /*for now, make this global var*/sledsmenu = Y.one('#projects-list');
-            sledsmenu.plug(Y.Plugin.NodeMenuNav);
+            /*for now, make this global var*/projectsmenu = Y.one('#projects-list');
+            projectsmenu.plug(Y.Plugin.NodeMenuNav);
 
-            var participantsmenu = Y.one('#sled-participants');
+            var participantsmenu = Y.one('#project-participants');
             participantsmenu.plug(Y.Plugin.NodeMenuNav);
         });
     });
@@ -398,7 +398,7 @@ postBody = function () {
 
 			"history",
 
-			'postmile-overlays-extra', // brought from YUI/gallery-land into sled fold for https issues
+			'postmile-overlays-extra', // brought from YUI/gallery-land into project fold for https issues
 			'postmile-calendar',
 
 			'postmile-global',
@@ -421,7 +421,7 @@ postBody = function () {
 
 		function (Y) {
 
-		    timeLog("done loading sled ", 2);
+		    timeLog("done loading project ", 2);
 
 		});
 

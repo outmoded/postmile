@@ -33,9 +33,9 @@ YUI.add('postmile-history', function (Y) {
 
         var changed = e.changed; // removed = e.removed;
 
-        if (changed.sled && e.src !== 'replace' && Y.postmile.sled) {
-            var ssled = gpostmile.projects[changed.sled.newVal];
-            Y.fire('sled:renderProject', ssled);
+        if (changed.project && e.src !== 'replace' && Y.postmile.project) {
+            var sproject = gpostmile.projects[changed.project.newVal];
+            Y.fire('postmile:renderProject', sproject);
         }
 
     });
