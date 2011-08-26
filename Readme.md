@@ -1,6 +1,7 @@
-﻿# About
+﻿Postmile is a collaborative list making tool built using JS, Node.js, and MongoDB.
 
-Postmile is a collaborative list making tool built using JS, Node.js, and MongoDB.
+# About
+
 Postmile is based on the discontinued experimental Yahoo! Sled project initially published at: https://github.com/yahoo/postmile.
 
 # To Do
