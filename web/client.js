@@ -30,8 +30,8 @@ exports.getToken = function (callback) {
 
         var tokenRequest = {
             grant_type: 'client_credentials',
-            client_id: Vault.sledAPI.clientId,
-            client_secret: Vault.sledAPI.clientSecret
+            client_id: Vault.postmileAPI.clientId,
+            client_secret: Vault.postmileAPI.clientSecret
         };
 
         Api.call('POST', '/oauth/token', tokenRequest, function (token, err, code) {

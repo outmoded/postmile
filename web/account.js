@@ -7,6 +7,7 @@
 
 var Api = require('./api');
 var Err = require('./error');
+var Config = require('./config');
 
 
 // Account page
@@ -146,7 +147,7 @@ exports.emails = function (req, res, next) {
                 }
                 else if (req.body.action === 'verify') {
 
-                    res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from Sled and follow the instructions.';
+                    res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
                 }
 
                 res.api.redirect = '/account/emails';

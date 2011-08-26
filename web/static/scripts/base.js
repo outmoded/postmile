@@ -79,18 +79,18 @@ function enterCall(event, func, otherwise) {
 
 // Display message scrolling from top
 
-var sledYUI = (typeof YUI !== 'undefined') ? new YUI() : null;
+var postmileYUI = (typeof YUI !== 'undefined') ? new YUI() : null;
 var notifyNode;
 var showAnimation;
 var hideAnimation;
 
 function refreshNotifyNode() {
 
-    if (sledYUI) {
+    if (postmileYUI) {
 
-        sledYUI.use('node-base', 'anim-base', function (Y) {	// called immediately/synchronously if already loaded
+        postmileYUI.use('node-base', 'anim-base', function (Y) {	// called immediately/synchronously if already loaded
 
-            notifyNode = sledYUI.one('#notify'); // presume DOM ready
+            notifyNode = postmileYUI.one('#notify'); // presume DOM ready
 
             showAnimation = new Y.Anim({
                 node: notifyNode,
@@ -116,7 +116,7 @@ refreshNotifyNode(); // prime the load of 'node' module as well as the data
 
 function notify() {
 
-    if (sledYUI &&
+    if (postmileYUI &&
         env &&
         env.message) {
 

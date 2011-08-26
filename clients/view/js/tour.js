@@ -12,7 +12,6 @@
 
 YUI.add('postmile-tour', function (Y) {
 
-
     // module data
 
     var guideCurrentStop = 0;
@@ -20,11 +19,11 @@ YUI.add('postmile-tour', function (Y) {
 
     var guideContent = [
 
-	    { title: 'Welcome to Postmile!', text: 'Postmile helps you make lists and collaborate with your friends and family. You can use Postmile for planning an event, a project, a shopping list, or any other list you want. This quick tour will introduce you to Postmile\'s main features. Let\'s get started!<div class="mini">You can stop the tour at any point and launch it again from the Account menu</div>', style: { top: 32, left: 10, height: 0, width: 0} },
+	    { title: 'Welcome!', text: 'This tool helps you make lists and collaborate with your friends and family. You can use it for planning an event, a project, a shopping list, or any other list you want. This quick tour will introduce you to the tool\'s main features. Let\'s get started!<div class="mini">You can stop the tour at any point and launch it again from the Account menu</div>', style: { top: 32, left: 10, height: 0, width: 0} },
 	    { title: 'Current list', text: 'The title of the current list. You can edit the title by clicking on the text. We recommend using descriptive names that will help you and the other participants quickly recognize what this list is about.', style: { top: 32, left: 10, height: 46, width: 410} },
 	    { title: 'Projects menu', text: 'The projects menu allows you to switch between your projects, create a new list, or delete the current list.', style: { top: 32, left: 420, height: 46, width: 50} },
-	    { title: 'Postmile details', text: 'If your list is about an event or if it has a location, you can use the date, time, and place options to keep that information. Use these fields as you wish. They are just for keeping track and sharing information with the other participants. These detail are about the entire list, not any individual item.', style: { top: 84, left: 10, height: 22, width: 560} },
-	    { title: 'Projects participants', text: 'Postmile is more fun with friends. The participants menu allows you to see who is part of this list, invite new participants, or remove participants (if you are the list owner). When you invite new participants, the menu will show you who accepted your invitation.', style: { top: 80, left: 583, height: 30, width: 150} },
+	    { title: 'Project details', text: 'If your list is about an event or if it has a location, you can use the date, time, and place options to keep that information. Use these fields as you wish. They are just for keeping track and sharing information with the other participants. These detail are about the entire list, not any individual item.', style: { top: 84, left: 10, height: 22, width: 560} },
+	    { title: 'Projects participants', text: 'Lists are more fun with friends. The participants menu allows you to see who is part of this list, invite new participants, or remove participants (if you are the list owner). When you invite new participants, the menu will show you who accepted your invitation.', style: { top: 80, left: 583, height: 30, width: 150} },
 	    { title: 'Items list', text: 'This is the heart of your list - the items. Each item has a title, status, details, and participants assignment. To organize the items, simply drag and drop them to the desired position.', style: { top: 106, left: 3, height: -14, width: -270} },
 	    { title: 'Status and comments', text: 'On the left side of each item you\'ll find a checkbox indicating the item\'s status and a comments icon. Click on the status checkbox to toggle its state. Click the comments icon to expand the item, read the comments, or add a new comment.', style: { top: 120, left: 30, height: -26, width: 65} },
 	    { title: 'Status checkbox', text: 'The checkbox has three states: open, in-progress, and completed. <div class="image checkbox"></div>', style: { top: 120, left: 30, height: -26, width: 65} },
@@ -32,9 +31,9 @@ YUI.add('postmile-tour', function (Y) {
 	    { title: 'Assignment and delete', text: 'When the cursor hovers above the right side of each item, an assignment icon and a delete icon appear. Click the assignment icon to open the menu.', style: { top: 120, right: -325, height: -26, width: 85} },
 	    { title: 'Item assignment menu', text: 'Use the menu to assign the item to one or more participants. <div class="image assign"></div>', style: { top: 120, right: -325, height: -26, width: 85} },
 	    { title: 'Item assignment icon', text: 'Assigned items have a persistent icon, and a \'me\' label if assigned to you. <div class="image assigned"></div>', style: { top: 120, right: -325, height: -26, width: 85} },
-	    { title: 'Tips and suggestion', text: 'As you add details and items, Postmile will be offering you tips and suggestions. Tips are ways to get more out of Postmile, like using the three-state checkboxs. Suggestions are ideas you might want to add to your items, like "Buy cake" if you are planning a party.', style: { top: 106, right: -18, height: -14, width: 245} },
+	    { title: 'Tips and suggestion', text: 'As you add details and items, the tool will be offering you tips and suggestions. Tips are ways to get more out of the tool, like using the three-state checkboxs. Suggestions are ideas you might want to add to your items, like "Buy cake" if you are planning a party.', style: { top: 106, right: -18, height: -14, width: 245} },
 	    { title: 'Account menu', text: 'The account menu let\'s you manage your preferences, change your account information, manage email addresses, link to social networks, and log out.', style: { top: -10, right: -10, height: 40, width: 190} },
-	    { title: 'Got feedback?', text: 'You\'ve reached the end of the tour. We hope you\'ll find Postmile useful and fun. If you have questions or suggestions, please use the feedback link to let us know. You can launch this tour again from the Account menu.', style: { top: -35, right: -10, height: 16, width: 110} }
+	    { title: 'Got feedback?', text: 'You\'ve reached the end of the tour. We hope you\'ll find it useful and fun. If you have questions or suggestions, please use the feedback link to let us know. You can launch this tour again from the Account menu.', style: { top: -35, right: -10, height: 16, width: 110} }
     ];
 
     // module functions

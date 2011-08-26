@@ -110,7 +110,7 @@ exports.register = function (req, res, next) {
 };
 
 
-// Sled invitation entry point
+// Project invitation entry point
 
 exports.i = function (req, res, next) {
 
@@ -138,7 +138,7 @@ exports.i = function (req, res, next) {
 };
 
 
-// Sled invitation
+// Project invitation
 
 exports.invite = function (req, res, next) {
 
@@ -174,7 +174,7 @@ exports.invite = function (req, res, next) {
 };
 
 
-// Claim sled invitation by current user
+// Claim project invitation by current user
 
 exports.claim = function (req, res, next) {
 
@@ -185,9 +185,9 @@ exports.claim = function (req, res, next) {
 
             if (err === null &&
                 data &&
-                data.sled) {
+                data.project) {
 
-                res.api.redirect = req.api.profile.view + '#sled=' + data.sled;
+                res.api.redirect = req.api.profile.view + '#project=' + data.project;
                 next();
             }
             else {
@@ -224,7 +224,7 @@ exports.other = function (req, res, next) {
 };
 
 
-// Create account from sled invite
+// Create account from project invite
 
 exports.inviteRegister = function (req, res, next) {
 
@@ -242,11 +242,11 @@ exports.inviteRegister = function (req, res, next) {
 
                 var tokenRequest = {
 
-                    grant_type: 'http://ns.postmile.net/sled',
+                    grant_type: 'http://ns.postmile.net/id',
                     x_user_id: result.id
                 };
 
-                Login.loginCall(tokenRequest, res, next, '/view/' + (req.api.jar.invite.about.sled ? '#sled=' + req.api.jar.invite.about.sled : ''));
+                Login.loginCall(tokenRequest, res, next, '/view/' + (req.api.jar.invite.about.project ? '#project=' + req.api.jar.invite.about.project : ''));
             }
             else {
 

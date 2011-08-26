@@ -446,7 +446,7 @@ internals.finalizeResponse = function (req, res) {
 
         if (res.api.redirect) {
 
-            var location = ((res.api.redirect.indexOf('http') !== 0 && res.api.redirect.indexOf('sled://') !== 0) ? Config.host.uri('web') + res.api.redirect : res.api.redirect);
+            var location = ((res.api.redirect.indexOf('http') !== 0 && res.api.redirect.indexOf('postmile://') !== 0) ? Config.host.uri('web') + res.api.redirect : res.api.redirect);
             res.send(res.api.result || 'You are being redirected...', { 'Location': location }, (req.method === 'GET' || location.indexOf('http') !== 0 ? 307 : 303));
         }
         else {

@@ -19,9 +19,9 @@ exports.session = {
 };
 
 
-// Sled API
+// Postmile API
 
-exports.sledAPI = {
+exports.postmileAPI = {
 
     clientId: '',
     clientSecret: ''
