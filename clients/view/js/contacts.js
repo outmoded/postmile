@@ -157,7 +157,7 @@ YUI.add('postmile-contacts', function (Y) {
         var xButton = Y.one("#invite-close");
         var launchInvite = Y.one(".launch-invite");
 
-        inviteOverlayNode.removeClass('sled-loading');
+        inviteOverlayNode.removeClass('postmile-loading');
 
         function showOverlay() {
             // could clear here
@@ -290,7 +290,7 @@ YUI.add('postmile-contacts', function (Y) {
     function bindParticipantsOverlay() {
         var taskParticipantsOverlayNode = Y.one("#task-participants");
 
-        taskParticipantsOverlayNode.removeClass('sled-loading');
+        taskParticipantsOverlayNode.removeClass('postmile-loading');
 
         taskParticipantsOverlay = new Y.Overlay({
             srcNode: taskParticipantsOverlayNode,
@@ -397,7 +397,7 @@ YUI.add('postmile-contacts', function (Y) {
         var xButton = Y.one("#manage-overlay #manage-close");
         var cancelButton = Y.one("#manage-overlay #manage-cancel");
 
-        manageOverlayNode.removeClass('sled-loading');
+        manageOverlayNode.removeClass('postmile-loading');
 
         manageOverlay = new Y.Overlay({
             srcNode: manageOverlayNode,

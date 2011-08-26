@@ -360,7 +360,7 @@ YUI.add('postmile-templates', function (Y) {
 
     function sledMenuItem(sled, mostRecentProject) {
 
-        var selectedClass = ''; // done in renderProject ( sled === mostRecentProject ) ? 'sled-loading' : '' ;
+        var selectedClass = ''; // done in renderProject ( sled === mostRecentProject ) ? 'postmile-loading' : '' ;
         selectedClass += (sled.isPending) ? 'diminishedtextitem' : '';
 
         var sledTitle = sled.title;

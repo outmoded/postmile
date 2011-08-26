@@ -70,8 +70,8 @@ YUI.add('postmile-user', function (Y) {
 
         // show the acct menu now that it's loaded
         var accountmenu = Y.one("#account");
-        accountmenu.removeClass("sled-loading");
-        setTimeout(function () { accountmenu.one('#account-menu').removeClass("sled-loading"); }, 1000);
+        accountmenu.removeClass("postmile-loading");
+        setTimeout(function () { accountmenu.one('#account-menu').removeClass("postmile-loading"); }, 1000);
 
         Y.fire('sled:checkUncover');
     }

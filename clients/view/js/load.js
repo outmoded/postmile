@@ -215,22 +215,22 @@ postYUI = function () {
         'postmile-global': { path: 'global.js' },
         'postmile-history': { path: 'history.js' },
         'postmile-settings': { path: 'settings.js' },
-        'postmile-suggestions-list': { path: 'suggestionlist.js' },
+        'postmile-suggestions-list': { path: 'suggestions.js' },
         'postmile-templates': { path: 'templates.js' },
         'postmile-network': { path: 'network.js' },
         'postmile-stream': { path: 'stream.js' },
         'postmile-dnd': { path: 'dnd.js' },
         'postmile-user': { path: 'user.js' },
-        'postmile-project': { path: 'sled.js' },
-        'postmile-projects-list': { path: 'sledlist.js' },
+        'postmile-project': { path: 'project.js' },
+        'postmile-projects-list': { path: 'projectslist.js' },
         'postmile-contacts': { path: 'contacts.js' },
         'postmile-tooltips': { path: 'tooltips.js' },
         'postmile-ui-utils': { path: 'uiutils.js' },
         'postmile-tips': { path: 'tips.js' },
         'postmile-tour': { path: 'tour.js' },
         'postmile-calendar': { path: 'calendar.js' },
-        'postmile-menu': { path: 'sled-menu.js' },
-        'postmile-overlays-extra': { path: 'sled-overlay-extras.js' }
+        'postmile-menu': { path: 'menu.js' },
+        'postmile-overlays-extra': { path: 'overlay-extras.js' }
     };
 
     Y = new YUI({
@@ -243,7 +243,7 @@ postYUI = function () {
         root: 'yui-ssl/3.3.0/build/',
 
         groups: {
-            sled: {
+            postmile: {
                 base: 'js/',
                 modules: loadModules
             }

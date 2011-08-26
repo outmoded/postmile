@@ -105,30 +105,30 @@ YUI.add('postmile-project', function (Y) {
 
         // show detail area now that it's valid
         // var sleddetails = Y.one("#sled-details");
-        // sleddetails.removeClass("sled-loading");
+        // sleddetails.removeClass("postmile-loading");
         var sleddetailsbar = Y.one("#sled-details-bar");
         sleddetailsbar.removeClass("hidden");
 
         // show participants menu now that it's valid
         var participantsmenu = Y.one("#sled-participants");
-        participantsmenu.removeClass("sled-loading");
-        setTimeout(function () { participantsmenu.one('#sled-participants-menu').removeClass("sled-loading"); }, 1000);
+        participantsmenu.removeClass("postmile-loading");
+        setTimeout(function () { participantsmenu.one('#sled-participants-menu').removeClass("postmile-loading"); }, 1000);
 
         // show projects menu area - even though the underlying sled list may not yet be populated,
         // it's worth showing just for the current sled title
         // todo: do not let the underlying menu be clickable until the sled list is populated / valid
         var sledsmenu = Y.one("#projects-list");
         // todo: figure out why immediate removal of class doesn't work var sledoptions = Y.one( "#projects-menu" ) ;
-        setTimeout(function () { sledsmenu.removeClass("sled-loading"); }, 0);
-        setTimeout(function () { sledsmenu.one('#projects-menu').removeClass("sled-loading"); }, 1000);
-        // setTimeout( function() { sledsmenu.one('#projects').removeClass("sled-loading"); }, 1000 ) ;
+        setTimeout(function () { sledsmenu.removeClass("postmile-loading"); }, 0);
+        setTimeout(function () { sledsmenu.one('#projects-menu').removeClass("postmile-loading"); }, 1000);
+        // setTimeout( function() { sledsmenu.one('#projects').removeClass("postmile-loading"); }, 1000 ) ;
 
         // conditional display of menu item
         var joinProject = Y.one("#join-sled");
         if (sled.isPending) {
-            joinProject.removeClass('sled-loading');
+            joinProject.removeClass('postmile-loading');
         } else {
-            joinProject.addClass('sled-loading');
+            joinProject.addClass('postmile-loading');
         }
 
         // if pending, be proactive upon rendering and ask user to join sled
@@ -211,17 +211,17 @@ YUI.add('postmile-project', function (Y) {
             var sm = Y.one('#projects-menu');
             var deleteProjectMenuItem = Y.one("#projects-list #delete-sled");
             if (sled.participants[0].id === Y.postmile.gpostmile.profile.id) {
-                deleteProjectMenuItem.removeClass('sled-loading');
+                deleteProjectMenuItem.removeClass('postmile-loading');
                 if (sled.participants.length > 1) {
-                    pm.one('.launch-manage-menu-item').removeClass('sled-loading');
+                    pm.one('.launch-manage-menu-item').removeClass('postmile-loading');
                 } else {
-                    pm.one('.launch-manage-menu-item').addClass('sled-loading');
+                    pm.one('.launch-manage-menu-item').addClass('postmile-loading');
                 }
-                sm.one('.leave-sled-menu-item').addClass('sled-loading');
+                sm.one('.leave-sled-menu-item').addClass('postmile-loading');
             } else {
-                deleteProjectMenuItem.addClass('sled-loading');
-                sm.one('.leave-sled-menu-item').removeClass('sled-loading');
-                pm.one('.launch-manage-menu-item').addClass('sled-loading');
+                deleteProjectMenuItem.addClass('postmile-loading');
+                sm.one('.leave-sled-menu-item').removeClass('postmile-loading');
+                pm.one('.launch-manage-menu-item').addClass('postmile-loading');
             }
 
             var i, l; // at least try to keep jslint from being so unhappy

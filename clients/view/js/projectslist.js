@@ -82,8 +82,8 @@ YUI.add('postmile-projects-list', function (Y) {
         // put this here as well as in sled.js just in case sled is not rendered
         var sledsMenuLabel = Y.one("#projects-list");
         // for some reason, immediate removal of class doesn't work - delay even of 0 does
-        setTimeout(function () { sledsMenuLabel.removeClass("sled-loading"); }, 0);
-        setTimeout(function () { sledsMenuLabel.one('#projects-menu').removeClass("sled-loading"); }, 1000);
+        setTimeout(function () { sledsMenuLabel.removeClass("postmile-loading"); }, 0);
+        setTimeout(function () { sledsMenuLabel.one('#projects-menu').removeClass("postmile-loading"); }, 1000);
 
         // configure menu for the state of this sled 
         if (mostRecentProject) {
@@ -106,10 +106,10 @@ YUI.add('postmile-projects-list', function (Y) {
         }
         var sledsMenu = Y.one("#projects-list #projects");
         sledMenuAnchors = sledsMenu.all(".sled a");
-        sledMenuAnchors.removeClass('sled-loading');
+        sledMenuAnchors.removeClass('postmile-loading');
         selectedProjectMenuLink = sledsMenu.one('li[sled="' + projectId + '"]');
         selectedProjectMenuAnchor = selectedProjectMenuLink.one('a');
-        selectedProjectMenuAnchor.addClass('sled-loading');
+        selectedProjectMenuAnchor.addClass('postmile-loading');
     }
 
 

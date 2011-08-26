@@ -16,7 +16,7 @@
     <!-- Application scripts -->
 
 	<script type="text/javascript" src="js/network.js"></script>
-	<script type="text/javascript" src="js/loadsled.js"></script>
+	<script type="text/javascript" src="js/load.js"></script>
 
 	<script type="text/javascript"> 
 		// debug = getQueryVariable( 'debug' ) ;	// debug off by default - easier for prod/deployment
@@ -38,7 +38,7 @@
 		
 		<!-- Account menu -->
 
-		<div id="account" class="menu sled-loading"> 
+		<div id="account" class="menu postmile-loading"> 
 			<a href="#account-menu" class="menu-label menu-toggle">
                 <div class="account-icon"></div>
                 <div id="name"></div>
@@ -93,7 +93,7 @@
 			
             <!-- Projects menu -->
 
-			<span id="projects-list" class="menu sled-loading">
+			<span id="projects-list" class="menu postmile-loading">
 				<a href="#projects-menu" class="menu-label menu-toggle">
                     <div class="menu-arrow">
                         <div class="menu-arrow-inner">
@@ -101,7 +101,7 @@
                     </div>
                 </a> 
 
-				<div id="projects-menu" class="menu sled-loading">
+				<div id="projects-menu" class="menu postmile-loading">
                     <div class="white-filler"></div>
                     <div class="icon-tab"></div>
 					<div class="menu-content">
@@ -117,7 +117,7 @@
 							<li id="join-sled" class="menuitem">
                             	<a class="menuitem-content">Accept Invitation</a>
 							</li> 
-							<li class="menuitem sled-loading leave-sled-menu-item">
+							<li class="menuitem postmile-loading leave-sled-menu-item">
 								<a class="leave-sled menuitem-content">Leave Current Project</a>
 							</li> 
 							<li id="delete-sled" class="menuitem">
@@ -138,7 +138,7 @@
 				
             <!-- Project participants menu -->
 
-			<span id="sled-participants" class="menu sled-loading"> 
+			<span id="sled-participants" class="menu postmile-loading"> 
 			    <a href="#sled-participants-menu" class="menu-label menu-toggle">
                     <div class="participants-icon"></div>
                     <div class="name">Participants</div>
@@ -146,13 +146,13 @@
                     <div id="participants-count"></div>
                 </a>
 
-				<div id="sled-participants-menu" class="menu sled-loading"> 
+				<div id="sled-participants-menu" class="menu postmile-loading"> 
                     <div class="icon-tab"></div>
 					<div class="menu-box menu-content"> 
 						<ul id="participants"> 
 						</ul>
 						<ul class="break">
-							<li class="menuitem sled-loading launch-manage-menu-item">
+							<li class="menuitem postmile-loading launch-manage-menu-item">
 								<a class="launch-manage menuitem-content">
 									Manage Participants
 								</a>
@@ -176,7 +176,7 @@
 
 	        <!-- Task participants menu -->
 
-	        <div id="task-participants" class="sled-loading">
+	        <div id="task-participants" class="postmile-loading">
                 <div class="icon-tab"></div>
                 <div class="menu-box yui3-overlay-loading">
 	                <div class="yui3-widget-bd">
@@ -192,7 +192,7 @@
 		<div id="side-panel">
 			<h2>Suggestions</h2>
 			<div id="suggestions-loading"></div>
-			<div class="suggestion-box sledlist sled-loading" id="suggestionpane">
+			<div class="suggestion-box sledlist postmile-loading" id="suggestionpane">
 				
 				<!-- Suggestions -->
 
@@ -273,7 +273,7 @@
 	
 	<!-- Invite participants dialog -->
 
-	<div id="invite-overlay" class="yui3-overlay-loading sled-loading">
+	<div id="invite-overlay" class="yui3-overlay-loading postmile-loading">
 	    <div class="participant-overlay-header yui3-widget-hd">
             Invite participants
 			<span class="closex">
@@ -321,7 +321,7 @@
 	
 	<!-- Manage participants dialog -->
 
-	<div id="manage-overlay" class="yui3-overlay-loading sled-loading">
+	<div id="manage-overlay" class="yui3-overlay-loading postmile-loading">
 	    <div class="participant-overlay-header yui3-widget-hd">
             Manage Participants
 			<span class="closex">
@@ -352,7 +352,7 @@
 
 	<!-- point to node by animating highlight (tip show me, etc) -->
 	
-	<div id="pointTo" class="pointTo sled-loading"></div>
+	<div id="pointTo" class="pointTo postmile-loading"></div>
 
 	<!-- Status bar (center-top) -->
 

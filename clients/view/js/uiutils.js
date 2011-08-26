@@ -5,7 +5,7 @@
 
 /**
 *
-* sled UI Utilities module
+* UI Utilities module
 *
 *
 */
@@ -377,7 +377,7 @@ YUI.add('postmile-ui-utils', function (Y) {
 		]
         });
 
-        pointToNode.removeClass('sled-loading');
+        pointToNode.removeClass('postmile-loading');
 
         // dismiss if cilcked-on
         pointToOverlay.on('click', function (e) {
@@ -459,7 +459,7 @@ YUI.add('postmile-ui-utils', function (Y) {
                     }
                     if (currentVersion[0] !== version[0]) {
                         // statusMessage( 'New version required - please reload', 2*timeInterval ) ;	// display twice as long
-                        Y.fire('sled:confirm', 'Reload?', 'A new version of sled is required.', reloadProject, null);
+                        Y.fire('sled:confirm', 'Reload?', 'A new version is available and required.', reloadProject, null);
                         Y.log('Project new major version required ' + version[0] + '.' + version[1]);
                     } else if (currentVersion[1] !== version[1]) {
                         // statusMessage( 'New version available' ) ;

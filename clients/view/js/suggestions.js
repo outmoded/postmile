@@ -53,7 +53,7 @@ YUI.add('postmile-suggestions-list', function (Y) {
         }
 
         var suggestionpane = Y.one("#suggestionpane");
-        suggestionpane.removeClass("sled-loading");
+        suggestionpane.removeClass("postmile-loading");
         hideSuggestionsLoading();
 
         Y.fire('sled:checkUncover');
