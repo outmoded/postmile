@@ -11,45 +11,48 @@
     a#bottom.blue(href: '/') &larr; Back to Sled
 
   .right.icons
-    - if (profile.facebook || profile.twitter || profile.yahoo)
+    - if ((auth.facebook && profile.facebook) || (auth.twitter && profile.twitter) || (auth.yahoo && profile.yahoo))
       h3 Your account is linked to:
       p
-        - if (profile.facebook)
+        - if (auth.facebook && profile.facebook)
           .facebook.icon Facebook 
-        - if (profile.twitter)
+        - if (auth.twitter && profile.twitter)
           .twitter.icon Twitter 
-        - if (profile.yahoo)
+        - if (auth.yahoo && profile.yahoo)
           .yahoo.icon Yahoo 
     br
 
     h3 Manage your connections:
     ul.social-connects
-      - if (profile.facebook)
-        li.facebook-disconnect
-          a(href: 'javascript: unlink("facebook");')
-            span.text-position Disconnect from Facebook
-      - else
-        li.facebook-connect
-          a(href: '/auth/facebook')
-            span.text-position Connect to Facebook
+      - if (auth.facebook)
+        - if (profile.facebook)
+          li.facebook-disconnect
+            a(href: 'javascript: unlink("facebook");')
+              span.text-position Disconnect from Facebook
+        - else
+          li.facebook-connect
+            a(href: '/auth/facebook')
+              span.text-position Connect to Facebook
 
-      - if (profile.twitter)
-        li.twitter-disconnect
-          a(href: 'javascript: unlink("twitter");')
-            span.text-position Disconnect from Twitter
-      - else
-        li.twitter-connect
-          a(href: '/auth/twitter')
-            span.text-position Connect to Twitter
+      - if (auth.twitter)
+        - if (profile.twitter)
+          li.twitter-disconnect
+            a(href: 'javascript: unlink("twitter");')
+              span.text-position Disconnect from Twitter
+        - else
+          li.twitter-connect
+            a(href: '/auth/twitter')
+              span.text-position Connect to Twitter
 
-      - if (profile.yahoo)
-        li.yahoo-disconnect
-          a(href: 'javascript: unlink("yahoo");')
-            span.text-position Disconnect from Yahoo!
-      - else
-        li.yahoo-connect
-          a(href: '/auth/yahoo')
-            span.text-position Connect to Yahoo!
+      - if (auth.yahoo)
+        - if (profile.yahoo)
+          li.yahoo-disconnect
+            a(href: 'javascript: unlink("yahoo");')
+              span.text-position Disconnect from Yahoo!
+        - else
+          li.yahoo-connect
+            a(href: '/auth/yahoo')
+              span.text-position Connect to Yahoo!
 
   .clearfix
 

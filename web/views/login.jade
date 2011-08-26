@@ -1,12 +1,14 @@
 - if (isMobile)
   ul.social-connects
-    li
-      a.facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : '')) Sign In With Facebook
-    li
-      a.twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : '')) Sign In With Twitter
-    li
-      a.yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + 
-env.next : '')) Sign In With Yahoo!
+    - if (auth.facebook)
+      li
+        a.facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : '')) Sign In With Facebook
+    - if (auth.twitter)
+      li
+        a.twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : '')) Sign In With Twitter
+    - if (auth.yahoo)
+      li
+        a.yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : '')) Sign In With Yahoo!
 - else
   #two-columns
     .left
@@ -17,15 +19,18 @@ env.next : '')) Sign In With Yahoo!
       h2 Sign in using one of your linked accounts
 
       ul.social-connects
-        li.facebook-connect
-          a#login-facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : ''))
-            span.text-position Sign In With Facebook
-        li.twitter-connect
-          a#login-twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : ''))
-            span.text-position Sign In With Twitter
-        li.yahoo-connect
-          a#login-yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : ''))
-            span.text-position Sign In With Yahoo!
+        - if (auth.facebook)
+          li.facebook-connect
+            a#login-facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : ''))
+              span.text-position Sign In With Facebook
+        - if (auth.twitter)
+          li.twitter-connect
+            a#login-twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : ''))
+              span.text-position Sign In With Twitter
+        - if (auth.yahoo)
+          li.yahoo-connect
+            a#login-yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : ''))
+              span.text-position Sign In With Yahoo!
       .clearfix
 
       p

@@ -415,6 +415,7 @@ internals.finalizeResponse = function (req, res) {
         locals.env = locals.env || {};
         locals.host = Config.host;
         locals.profile = req.api.profile;
+        locals.auth = { facebook: Vault.facebook.clientId ? true : false, twitter: Vault.twitter.clientId ? true : false, yahoo: Vault.yahoo.clientId ? true : false };
 
         // Add crumb
 
