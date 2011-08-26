@@ -273,7 +273,7 @@ function reorder( dragNode ) {
 			}
 		} ;
 
-		postJson( "task/" + dragTask.id + "?position=" + dropIndex, "", confirmTaskOrder ) ;
+		postJson( "/task/" + dragTask.id + "?position=" + dropIndex, "", confirmTaskOrder ) ;
 	}
 
 }
@@ -393,8 +393,7 @@ function addSuggestionToServer( suggestion, sled, tasks, task, index, node ) {
 		}
 	}
 
-	putJson( 
-		'sled/' + sled.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index, 
+	putJson('/project/' + sled.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index, 
 		'', 
 		confirmDroppedSuggestionTaskAdded ) ;
 
@@ -624,7 +623,7 @@ function openDetails(e) {
 		if( !task.requestedDetails && taskId !== "" ) {
 
 			task.requestedDetails = true ;
-			getJson( "task/" + taskId + "/details", renderDetailsAndSetFocus, task ) ;
+			getJson( "/task/" + taskId + "/details", renderDetailsAndSetFocus, task ) ;
 
 		} else {
 
@@ -671,7 +670,7 @@ function openDetails(e) {
 
 	showUpdatedAgo( liTarget ) ;
 
-	postJson( 'task/' + task.id + '/last', "", confirmLastPost ) ;
+	postJson( '/task/' + task.id + '/last', "", confirmLastPost ) ;
 
 }
 
@@ -754,7 +753,7 @@ function blurDetails(e) {
 				}
 			} ;
 
-			postJson( 'task/' + task.id + '/last', "", confirmLastPost ) ;
+			postJson( '/task/' + task.id + '/last', "", confirmLastPost ) ;
 
 		} else {
 
@@ -763,7 +762,7 @@ function blurDetails(e) {
 		}
 	}
 
-	postJson( 'task/' + task.id + '/detail', json, confirmTaskDetails ) ;
+	postJson( '/task/' + task.id + '/detail', json, confirmTaskDetails ) ;
 
 }
 
@@ -845,7 +844,7 @@ function checkTask(e) {
 
 	}
 
-	postJson( "task/" + task.id, json, confirmTaskCheck ) ;
+	postJson( "/task/" + task.id, json, confirmTaskCheck ) ;
 
 }
 
@@ -917,7 +916,7 @@ function fadeDeleteTask(e) {
 		}
 	}
 
-	deleteJson( "task/" + task.id, null, confirmTaskDelete ) ;
+	deleteJson( "/task/" + task.id, null, confirmTaskDelete ) ;
 
 }
 
@@ -985,7 +984,7 @@ function onHover(e) {
 
 		} ;
 
-		getJson( "task/" + task.id, gotTaskParticipants ) ;
+		getJson( "/task/" + task.id, gotTaskParticipants ) ;
 	}
 
 }
@@ -1149,12 +1148,12 @@ function titleEntered(e) {
 
 			} ;
 
-			putJson( "sled/" + sled.id + "/task", json, confirmAddTask ) ;
+			putJson( "/project/" + sled.id + "/task", json, confirmAddTask ) ;
 
 		} else {
 
 			if( title && title !== oldTaskTitle ) {
-				postJson( "task/" + task.id, json, confirmTask ) ;
+				postJson( "/task/" + task.id, json, confirmTask ) ;
 			}
 
 		}

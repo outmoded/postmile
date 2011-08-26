@@ -106,7 +106,7 @@ function suggestionRemove(e) {
 	}
 
 	// delete on server
-	deleteJson( "sled/" + sled.id + '/suggestion/' + suggestion.id, null, confirmRemovedSuggestion ) ;
+	deleteJson( "/project/" + sled.id + '/suggestion/' + suggestion.id, null, confirmRemovedSuggestion ) ;
 
 	// local delete in data
 	suggestionDelete(e);

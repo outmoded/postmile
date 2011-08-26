@@ -29,7 +29,7 @@ exports.type = {
 
 exports.get = function (req, res, next) {
 
-    exports.load(req.params.id, req.api.userId, false, function (details, err, task, sled) {
+    exports.load(req.params.id, req.api.userId, false, function (details, err, task, project) {
 
         details = details || { id: req.params.id, thread: [] };
 
@@ -64,7 +64,7 @@ exports.get = function (req, res, next) {
                 userIds.push(details.thread[i].user);
             }
 
-            User.quickList(userIds, function (users, usersMap) {
+            User.expandIds(userIds, function (users, usersMap) {
 
                 // Assign to each thread item
 
@@ -93,7 +93,7 @@ exports.post = function (req, res, next) {
 
     var now = Utils.getTimestamp();
 
-    exports.load(req.params.id, req.api.userId, true, function (details, err, task, sled) {
+    exports.load(req.params.id, req.api.userId, true, function (details, err, task, project) {
 
         if (task) {
 
@@ -111,7 +111,7 @@ exports.post = function (req, res, next) {
 
                         if (err === null) {
 
-                            reply(task, sled);
+                            reply(task, project);
                         }
                         else {
 
@@ -124,14 +124,14 @@ exports.post = function (req, res, next) {
 
                     // First detail
 
-                    details = { _id: task._id, sled: sled._id, thread: [] };
+                    details = { _id: task._id, project: project._id, thread: [] };
                     details.thread.push(detail);
 
                     Db.insert('task.details', details, function (items, err) {
 
                         if (err === null) {
 
-                            reply(task, sled);
+                            reply(task, project);
                         }
                         else {
 
@@ -154,15 +154,15 @@ exports.post = function (req, res, next) {
         }
     });
 
-    function reply(task, sled) {
+    function reply(task, project) {
 
         if (req.query.last &&
             req.query.last === 'true') {
 
-            Last.setLast(req.api.userId, sled, task, function (err) {});    // Ignore response
+            Last.setLast(req.api.userId, project, task, function (err) {});    // Ignore response
         }
 
-        Stream.update({ object: 'details', sled: task.sled, task: task._id }, req);
+        Stream.update({ object: 'details', project: task.project, task: task._id }, req);
         res.api.result = { status: 'ok' };
         next();
     }
@@ -173,7 +173,7 @@ exports.post = function (req, res, next) {
 
 exports.load = function (taskId, userId, isWritable, callback) {
 
-    Task.load(taskId, userId, isWritable, function (task, err, sled) {      // Check ownership
+    Task.load(taskId, userId, isWritable, function (task, err, project) {      // Check ownership
 
         if (task) {
 
@@ -181,13 +181,13 @@ exports.load = function (taskId, userId, isWritable, callback) {
 
                 if (item) {
 
-                    callback(item, null, task, sled);
+                    callback(item, null, task, project);
                 }
                 else {
 
                     if (err === null) {
 
-                        callback(null, null, task, sled);
+                        callback(null, null, task, project);
                     }
                     else {
 
@@ -206,7 +206,7 @@ exports.load = function (taskId, userId, isWritable, callback) {
 
 // Get details quick list
 
-exports.quickList = function (ids, sledId, userId, callback) {
+exports.expandIds = function (ids, projectId, userId, callback) {
 
     Db.getMany('task.details', ids, function (items, err, notFound) {
 
@@ -226,19 +226,19 @@ exports.quickList = function (ids, sledId, userId, callback) {
                         userIds.push(threadHead.user);
 
                         if (last &&
-                            last.sleds &&
-                            last.sleds[sledId] &&
-                            last.sleds[sledId].tasks &&
-                            last.sleds[sledId].tasks[details._id]) {
+                            last.projects &&
+                            last.projects[projectId] &&
+                            last.projects[projectId].tasks &&
+                            last.projects[projectId].tasks[details._id]) {
 
-                            records[details._id].last = last.sleds[sledId].tasks[details._id];
+                            records[details._id].last = last.projects[projectId].tasks[details._id];
                         }
                     }
                 }
 
                 // Load user display information
 
-                User.quickList(userIds, function (users, usersMap) {
+                User.expandIds(userIds, function (users, usersMap) {
 
                     // Assign to each thread item
 

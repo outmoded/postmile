@@ -97,7 +97,7 @@ YUI.add('sledsled', function (Y) {
 					}
 				} ;
 				var json = '{"value":"' + sled.id + '"}';
-				postJson( 'storage/activesled', json, confirmSavedActiveSled);
+				postJson( '/storage/activesled', json, confirmSavedActiveSled);
 			}
 
 		}
@@ -175,7 +175,7 @@ YUI.add('sledsled', function (Y) {
 		// otherwise render already present details
 		if (!sled.requestedDetails && sled.id !== "") {
 			sled.requestedDetails = true; // just to say we've tried
-			getJson( "sled/" + sled.id, renderSled); 
+			getJson( "/project/" + sled.id, renderSled); 
 		} else {
 			// they may be blank on purpose rather than an initial conditoon
 			placeT = sled.place || "";
@@ -258,7 +258,7 @@ YUI.add('sledsled', function (Y) {
 		// tasks
 		if (!sled.requestedTasks && sled.id && sled.id !== "") {
 			sled.requestedTasks = true; // just to say we tried
-			getJson( "sled/" + sled.id + "/tasks", function( tasks, sledId ){ Y.fire( 'sled:renderTasks', tasks, sledId ) ; }, sled.id ) ;
+			getJson( "/project/" + sled.id + "/tasks", function( tasks, sledId ){ Y.fire( 'sled:renderTasks', tasks, sledId ) ; }, sled.id ) ;
 		} else {	
 			// clear even if not tasks
 			Y.fire( 'sled:renderTasks', sled.tasks, sled.id ) ;	
@@ -272,7 +272,7 @@ YUI.add('sledsled', function (Y) {
 		// tips (start here w tips, using events instead of calls)
 		if (!sled.requestedTips && sled.id && sled.id !== "") {
 			sled.requestedTips = true; // just to say we tried
-			getJson( "sled/" + sled.id + "/tips", function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, sled.id ) ;
+			getJson( "/project/" + sled.id + "/tips", function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, sled.id ) ;
 		} else {	
 			// clear even if no tips
 			Y.fire( 'sled:renderTips', sled.tips, sled.id ) ;
@@ -286,7 +286,7 @@ YUI.add('sledsled', function (Y) {
 		// and suggestions
 		if (!sled.requestedSuggestions && sled.id && sled.id !== "") {
 			sled.requestedSuggestions = true; // just to say we tried
-			getJson( "sled/" + sled.id + "/suggestions", function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, sled.id);
+			getJson( "/project/" + sled.id + "/suggestions", function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, sled.id);
 		} else {	
 			// clear even if no suggestions
 			Y.fire( 'sled:renderSuggestions', sled.suggestions, sled.id ) ;
@@ -403,7 +403,7 @@ YUI.add('sledsled', function (Y) {
 
 			var jsonStruct = { date: j };
 			var jsonString = JSON.stringify(jsonStruct);
-			postJson( "sled/" + sled.id, jsonString, confirmDateAndTime);
+			postJson( "/project/" + sled.id, jsonString, confirmDateAndTime);
 		}
 
 		var ds = displayStringFromDate(d);
@@ -445,7 +445,7 @@ YUI.add('sledsled', function (Y) {
 
 			}
 
-			postJson("sled/" + Y.sled.gsled.sled.id + '/join', null, confirmJoinSled);
+			postJson("/project/" + Y.sled.gsled.sled.id + '/join', null, confirmJoinSled);
 
 		}
 
@@ -550,7 +550,7 @@ YUI.add('sledsled', function (Y) {
 				}
 			}
 
-			postJson( "sled/" + sled.id, json, confirmChangedSled);
+			postJson( "/project/" + sled.id, json, confirmChangedSled);
 		});
 
 		// handle return and escape
@@ -642,7 +642,7 @@ YUI.add('sledsled', function (Y) {
 				}
 			}
 			var json = JSON.stringify(update);
-			postJson( "sled/" + sled.id, json, confirmChangedTime);
+			postJson( "/project/" + sled.id, json, confirmChangedTime);
 			timeField.set('value', newContents);
 		}
 
@@ -696,7 +696,7 @@ YUI.add('sledsled', function (Y) {
 					Y.log( 'error setting place ' + JSON.stringify( response ) ) ;
 				}
 			}
-			postJson( "sled/" + sled.id, json, confirmChangedPlace);
+			postJson( "/project/" + sled.id, json, confirmChangedPlace);
 		}
 		gsled.onPlaceHandler = place.on('blur', onPlace);
 
@@ -744,7 +744,7 @@ YUI.add('sledsled', function (Y) {
 				function confirmDeleteSettings( response ) {
 					Y.log( 'deleted storage/settings' ) ;
 				}
-				deleteJson( "storage/settings", null, confirmDeleteSettings ) ;
+				deleteJson( "/storage/settings", null, confirmDeleteSettings ) ;
 			});
 		}
 

@@ -62,7 +62,7 @@ function xFire( e, a1, a2, a3 ) {
 		}
 
 		if (uri.indexOf('http://') !== 0 && uri.indexOf('https://') !== 0) {
-			uri = postmile.api.uri + '/' + uri;
+			uri = postmile.api.uri + uri;
 		}
 
 		// Calculate Signature

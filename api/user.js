@@ -12,7 +12,7 @@ var Email = require('./email');
 var Invite = require('./invite');
 var Last = require('./last');
 var Session = require('./session');
-var Sled = require('./sled');
+var Project = require('./project');
 var Sort = require('./sort');
 var Stream = require('./stream');
 var Storage = require('./storage');
@@ -445,11 +445,11 @@ exports.contacts = function (req, res, next) {
 
     if (req.query.exclude) {
 
-        Sled.load(req.query.exclude, req.api.userId, false, function (sled, member, err) {
+        Project.load(req.query.exclude, req.api.userId, false, function (project, member, err) {
 
             if (err === null) {
 
-                getList(Sled.participantsMap(sled));
+                getList(Project.participantsMap(project));
             }
             else {
 
@@ -482,7 +482,7 @@ exports.contacts = function (req, res, next) {
                     }
                 }
 
-                exports.quickList(userIds, function (users, usersMap) {
+                exports.expandIds(userIds, function (users, usersMap) {
 
                     var contacts = [];
                     for (var i in user.contacts) {
@@ -570,53 +570,53 @@ exports.put = function (req, res, next) {
 
     var inviteId = null;
     var origin = null;
-    var sledPid = null;
+    var projectPid = null;
 
     var email = null;
     var isEmailVerified = null;
 
     if (req.query.invite) {
 
-        // Check code source (invite or sled participation)
+        // Check code source (invite or project participation)
 
-        if (req.query.invite.indexOf('sled:') === 0) {
+        if (req.query.invite.indexOf('project:') === 0) {
 
-            // Sled participation
+            // Project participation
 
-            var inviteRegex = /^sled:([^:]+):([^:]+):([^:]+)$/;
+            var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
             var parts = inviteRegex.exec(req.query.invite);
 
             if (parts &&
                 parts.length === 4) {
 
-                var sledId = parts[1];
+                var projectId = parts[1];
                 var pid = parts[2];
                 var code = parts[3];
 
-                // Load sled (not using Sled.load since there is no active user)
+                // Load project (not using Project.load since there is no active user)
 
-                Db.get('sled', sledId, function (sled, err) {
+                Db.get('project', projectId, function (project, err) {
 
-                    if (sled) {
+                    if (project) {
 
                         // Lookup code
 
-                        for (var i = 0, il = sled.participants.length; i < il; ++i) {
+                        for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                            if (sled.participants[i].pid &&
-                                sled.participants[i].pid === pid) {
+                            if (project.participants[i].pid &&
+                                project.participants[i].pid === pid) {
 
-                                if (sled.participants[i].code &&
-                                    sled.participants[i].code === code) {
+                                if (project.participants[i].code &&
+                                    project.participants[i].code === code) {
 
-                                    sledPid = sled.participants[i];
-                                    sledPid.sled = sled;                // Pass on for later use
+                                    projectPid = project.participants[i];
+                                    projectPid.project = project;                // Pass on for later use
 
-                                    origin = { type: 'sled', sled: sled._id };
+                                    origin = { type: 'project', project: project._id };
 
-                                    if (sled.participants[i].inviter) {
+                                    if (project.participants[i].inviter) {
 
-                                        origin.user = sled.participants[i].inviter;
+                                        origin.user = project.participants[i].inviter;
                                     }
 
                                     break;
@@ -683,8 +683,8 @@ exports.put = function (req, res, next) {
 
         // Look for email address
 
-        email = (req.body.email ? req.body.email : (sledPid && sledPid.email ? sledPid.email : null));
-        isEmailVerified = (sledPid && sledPid.email && sledPid.email === email ? true : false);
+        email = (req.body.email ? req.body.email : (projectPid && projectPid.email ? projectPid.email : null));
+        isEmailVerified = (projectPid && projectPid.email && projectPid.email === email ? true : false);
 
         // Check for at least one identifier
 
@@ -867,15 +867,15 @@ exports.put = function (req, res, next) {
                         Db.update('invite', inviteId, { $inc: { count: 1} }, function (err) { });
                     }
 
-                    if (sledPid) {
+                    if (projectPid) {
 
-                        // Update sled with new participant
+                        // Update project with new participant
 
-                        Sled.replacePid(sledPid.sled, sledPid.pid, userId, function (err) {
+                        Project.replacePid(projectPid.project, projectPid.pid, userId, function (err) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'sled', sled: sledPid.sled._id }, req);
+                                Stream.update({ object: 'project', project: projectPid.project._id }, req);
                                 sendWelcome(items[0]);
                             }
                             else {
@@ -1276,27 +1276,27 @@ exports.reminder = function (req, res, next) {
 
 exports.del = function (req, res, next) {
 
-    // Check if user has any sleds
+    // Check if user has any projects
 
-    Sled.unsortedList(req.api.userId, function (sleds, owner, notOwner, err) {
+    Project.unsortedList(req.api.userId, function (projects, owner, notOwner, err) {
 
         if (err === null) {
 
-            // Check if member of any sleds
+            // Check if member of any projects
 
             if (notOwner.length === 0) {
 
-                // Check if owner of any sleds
+                // Check if owner of any projects
 
                 if (owner.length === 0) {
 
-                    // No own sleds
+                    // No own projects
 
                     deleteAccount(null);
                 }
                 else if (owner.length === 1) {
 
-                    // If only one sled, check if it has other participants or any tasks (UX creates an empty sled automatically)
+                    // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
 
                     if (owner[0].participants.length === 1) {
 
@@ -1310,7 +1310,7 @@ exports.del = function (req, res, next) {
                                 }
                                 else {
 
-                                    res.api.error = Err.badRequest('Must first delete sled');
+                                    res.api.error = Err.badRequest('Must first delete project');
                                     next();
                                 }
                             }
@@ -1323,23 +1323,23 @@ exports.del = function (req, res, next) {
                     }
                     else {
 
-                        res.api.error = Err.badRequest('Must first delete sled (has participants)');
+                        res.api.error = Err.badRequest('Must first delete project (has participants)');
                         next();
                     }
                 }
                 else {
 
-                    // Multiple own sleds
+                    // Multiple own projects
 
-                    res.api.error = Err.badRequest('Must first delete all sleds');
+                    res.api.error = Err.badRequest('Must first delete all projects');
                     next();
                 }
             }
             else {
 
-                // Member of sleds
+                // Member of projects
 
-                res.api.error = Err.badRequest('Must first leave all sleds');
+                res.api.error = Err.badRequest('Must first leave all projects');
                 next();
             }
         }
@@ -1350,7 +1350,7 @@ exports.del = function (req, res, next) {
         }
     });
 
-    function deleteAccount(sledId) {
+    function deleteAccount(projectId) {
 
         var ignore = function () { };
 
@@ -1360,16 +1360,16 @@ exports.del = function (req, res, next) {
 
             if (err === null) {
 
-                // Remove own empty sled
+                // Remove own empty project
 
-                if (sledId) {
+                if (projectId) {
 
-                    Sled.delEmpty(sledId, ignore);
+                    Project.delEmpty(projectId, ignore);
                 }
 
-                // Delete the sleds sort list
+                // Delete the projects sort list
 
-                Sort.del('sled', req.api.userId, ignore);
+                Sort.del('project', req.api.userId, ignore);
 
                 // Remove grants
 
@@ -1458,7 +1458,7 @@ exports.quick = function (id, callback) {
 
 // Get user quick list
 
-exports.quickList = function (ids, callback) {
+exports.expandIds = function (ids, callback) {
 
     Db.getMany('user', ids, function (items, err, notFound) {
 

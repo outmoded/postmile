@@ -10,7 +10,7 @@ var Utils = require('./utils');
 var Err = require('./error');
 var Log = require('./log');
 var Rules = require('./rules');
-var Sled = require('./sled');
+var Project = require('./project');
 
 
 // Declare internals
@@ -56,13 +56,13 @@ exports.initialize = function () {
 };
 
 
-// Remove suggestion from sled
+// Remove suggestion from project
 
 exports.exclude = function (req, res, next) {
 
-    Sled.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             var suggestion = internals.suggestions[req.params.drop];
             if (suggestion) {
@@ -78,31 +78,31 @@ exports.exclude = function (req, res, next) {
                             var changes = { $set: {} };
                             var now = Utils.getTimestamp();
 
-                            if (excludes.sleds) {
+                            if (excludes.projects) {
 
-                                if (excludes.sleds[sled._id]) {
+                                if (excludes.projects[project._id]) {
 
-                                    if (excludes.sleds[sled._id].suggestions) {
+                                    if (excludes.projects[project._id].suggestions) {
 
-                                        changes.$set['sleds.' + sled._id + '.suggestions.' + req.params.drop] = now;
+                                        changes.$set['projects.' + project._id + '.suggestions.' + req.params.drop] = now;
                                     }
                                     else {
 
-                                        changes.$set['sleds.' + sled._id + '.suggestions'] = {};
-                                        changes.$set['sleds.' + sled._id + '.suggestions'][req.params.drop] = now;
+                                        changes.$set['projects.' + project._id + '.suggestions'] = {};
+                                        changes.$set['projects.' + project._id + '.suggestions'][req.params.drop] = now;
                                     }
                                 }
                                 else {
 
-                                    changes.$set['sleds.' + sled._id] = { suggestions: {} };
-                                    changes.$set['sleds.' + sled._id].suggestions[req.params.drop] = now;
+                                    changes.$set['projects.' + project._id] = { suggestions: {} };
+                                    changes.$set['projects.' + project._id].suggestions[req.params.drop] = now;
                                 }
                             }
                             else {
 
-                                changes.$set.sleds = {};
-                                changes.$set.sleds[sled._id] = { suggestions: {} };
-                                changes.$set.sleds[sled._id].suggestions[req.params.drop] = now;
+                                changes.$set.projects = {};
+                                changes.$set.projects[project._id] = { suggestions: {} };
+                                changes.$set.projects[project._id].suggestions[req.params.drop] = now;
                             }
 
                             Db.update('user.exclude', excludes._id, changes, function (err) {
@@ -123,9 +123,9 @@ exports.exclude = function (req, res, next) {
 
                             // First exclude
 
-                            excludes = { _id: req.api.userId, sleds: {} };
-                            excludes.sleds[sled._id] = { suggestions: {} };
-                            excludes.sleds[sled._id].suggestions[req.params.drop] = Utils.getTimestamp();
+                            excludes = { _id: req.api.userId, projects: {} };
+                            excludes.projects[project._id] = { suggestions: {} };
+                            excludes.projects[project._id].suggestions[req.params.drop] = Utils.getTimestamp();
 
                             Db.insert('user.exclude', excludes, function (items, err) {
 
@@ -164,9 +164,9 @@ exports.exclude = function (req, res, next) {
 };
 
 
-// Analyze sled and return suggestions list
+// Analyze project and return suggestions list
 
-exports.list = function (sled, userId, callback) {
+exports.list = function (project, userId, callback) {
 
     Db.get('user.exclude', userId, function (item, err) {
 
@@ -183,10 +183,10 @@ exports.list = function (sled, userId, callback) {
 
                     var isExcluded = false;
                     if (excludes &&
-                        excludes.sleds &&
-                        excludes.sleds[sled._id] &&
-                        excludes.sleds[sled._id].suggestions &&
-                        excludes.sleds[sled._id].suggestions[suggestion._id]) {
+                        excludes.projects &&
+                        excludes.projects[project._id] &&
+                        excludes.projects[project._id].suggestions &&
+                        excludes.projects[project._id].suggestions[suggestion._id]) {
 
                         isExcluded = true;
                     }

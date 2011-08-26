@@ -7,7 +7,7 @@
 
 var SocketIO = require('socket.io');
 var Utils = require('./utils');
-var Sled = require('./sled');
+var Project = require('./project');
 var Session = require('./session');
 var Log = require('./log');
 var Err = require('./error');
@@ -24,9 +24,9 @@ var internals = {
     // Clients list
 
     clientsBySessionId: {},     // { _sessionId_: { client: _client_, userId: _userId_ }, ... }
-    sessionIdsBySled: {},       // { _sledId_: { _sessionId_: true, ... }, ... }
+    sessionIdsByProject: {},    // { _projectId_: { _sessionId_: true, ... }, ... }
     sessionIdsByUserId: {},     // { _userId_: { _sessionId_: true, ... }, ... }
-    sledsBySessionId: {}        // { _sessionId_: { _sledId_: true, ... }, ... }
+    projectsBySessionId: {}     // { _sessionId_: { _projectId_: true, ... }, ... }
 };
 
 
@@ -83,25 +83,25 @@ exports.subscribe = function (req, res, next) {
 
                 var client = internals.clientsBySessionId[req.params.id].client;
 
-                // Lookup sled
+                // Lookup project
 
-                Sled.load(req.params.sled, req.api.userId, false, function (sled, member, err) {
+                Project.load(req.params.project, req.api.userId, false, function (project, member, err) {
 
                     if (err === null) {
 
                         // Add to subscriber list
 
-                        internals.sessionIdsBySled[sled._id] = internals.sessionIdsBySled[sled._id] || {};
-                        internals.sessionIdsBySled[sled._id][req.params.id] = true;
+                        internals.sessionIdsByProject[project._id] = internals.sessionIdsByProject[project._id] || {};
+                        internals.sessionIdsByProject[project._id][req.params.id] = true;
 
                         // Add to cleanup list
 
-                        internals.sledsBySessionId[req.params.id] = internals.sledsBySessionId[req.params.id] || {};
-                        internals.sledsBySessionId[req.params.id][sled._id] = true;
+                        internals.projectsBySessionId[req.params.id] = internals.projectsBySessionId[req.params.id] || {};
+                        internals.projectsBySessionId[req.params.id][project._id] = true;
 
                         // Send ack via the stream
 
-                        client.send({ type: 'subscribe', sled: sled._id });
+                        client.send({ type: 'subscribe', project: project._id });
 
                         // Send ack via the request
 
@@ -152,21 +152,21 @@ exports.unsubscribe = function (req, res, next) {
 
                 // Remove from subscriber list
 
-                if (internals.sessionIdsBySled[req.params.sled] &&
-                    internals.sessionIdsBySled[req.params.sled][req.params.id]) {
+                if (internals.sessionIdsByProject[req.params.project] &&
+                    internals.sessionIdsByProject[req.params.project][req.params.id]) {
 
-                    delete internals.sessionIdsBySled[req.params.sled][req.params.id];
+                    delete internals.sessionIdsByProject[req.params.project][req.params.id];
 
                     // Remove from cleanup list
 
-                    if (internals.sledsBySessionId[req.params.id]) {
+                    if (internals.projectsBySessionId[req.params.id]) {
 
-                        delete internals.sledsBySessionId[req.params.id][req.params.sled];
+                        delete internals.projectsBySessionId[req.params.id][req.params.project];
                     }
 
                     // Send ack via the stream
 
-                    client.send({ type: 'unsubscribe', sled: req.params.sled });
+                    client.send({ type: 'unsubscribe', project: req.params.project });
 
                     // Send ack via the request
 
@@ -175,7 +175,7 @@ exports.unsubscribe = function (req, res, next) {
                 }
                 else {
 
-                    res.api.error = Err.notFound('Sled subscription not found');
+                    res.api.error = Err.notFound('Project subscription not found');
                     next();
                 }
             }
@@ -201,28 +201,28 @@ exports.unsubscribe = function (req, res, next) {
 
 // Force unsubscribe
 
-exports.drop = function (userId, sledId) {
+exports.drop = function (userId, projectId) {
 
     var userSessionIds = internals.sessionIdsByUserId[userId];
     if (userSessionIds) {
 
-        var sledSessionIds = internals.sessionIdsBySled[sledId];
-        if (sledSessionIds) {
+        var projectSessionIds = internals.sessionIdsByProject[projectId];
+        if (projectSessionIds) {
 
             for (var i in userSessionIds) {
 
                 if (userSessionIds.hasOwnProperty(i)) {
 
-                    if (sledSessionIds[i]) {
+                    if (projectSessionIds[i]) {
 
-                        delete internals.sessionIdsBySled[sledId][i];
+                        delete internals.sessionIdsByProject[projectId][i];
 
                         // Send ack via the stream
 
                         if (internals.clientsBySessionId[i] &&
                             internals.clientsBySessionId[i].client) {
 
-                            internals.clientsBySessionId[i].client.send({ type: 'unsubscribe', sled: sledId });
+                            internals.clientsBySessionId[i].client.send({ type: 'unsubscribe', project: projectId });
                         }
                     }
                 }
@@ -325,16 +325,16 @@ internals.disconnectHandler = function (client) {
 
         // Remove from subscribers list
 
-        var sleds = internals.sledsBySessionId[client.sessionId];
-        if (sleds) {
+        var projects = internals.projectsBySessionId[client.sessionId];
+        if (projects) {
 
-            for (var i in sleds) {
+            for (var i in projects) {
 
-                if (sleds.hasOwnProperty(i)) {
+                if (projects.hasOwnProperty(i)) {
 
-                    if (internals.sessionIdsBySled[i]) {
+                    if (internals.sessionIdsByProject[i]) {
 
-                        delete internals.sessionIdsBySled[i][client.sessionId];
+                        delete internals.sessionIdsByProject[i][client.sessionId];
                     }
                 }
             }
@@ -342,7 +342,7 @@ internals.disconnectHandler = function (client) {
 
         // Remove from cleanup list
 
-        delete internals.sledsBySessionId[client.sessionId];
+        delete internals.projectsBySessionId[client.sessionId];
     };
 }
 
@@ -358,14 +358,14 @@ internals.processUpdates = function () {
 
         switch (update.object) {
 
-            case 'sled':
+            case 'project':
             case 'tasks':
             case 'task':
             case 'details':
 
-                // Lookup sled list
+                // Lookup project list
 
-                var sessionIds = internals.sessionIdsBySled[update.sled];
+                var sessionIds = internals.sessionIdsByProject[update.project];
                 if (sessionIds) {
 
                     for (var s in sessionIds) {
@@ -386,7 +386,7 @@ internals.processUpdates = function () {
 
             case 'profile':
             case 'contacts':
-            case 'sleds':
+            case 'projects':
 
                 var sessionIds = internals.sessionIdsByUserId[update.user];
                 if (sessionIds) {
@@ -410,7 +410,7 @@ internals.processUpdates = function () {
 
         if (updatedSessionIds) {
 
-            Log.info('Stream update: ' + update.object + ':' + (update.user || update.sled) + ' sent to' + updatedSessionIds);
+            Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedSessionIds);
         }
     }
 

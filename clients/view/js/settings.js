@@ -66,7 +66,7 @@ function bind( ) {
 			selectedSledMenuAnchor.removeClass( 'enabled' ) ;
 		}
 		var postableSettings = { 'value' : JSON.stringify(gsled.settings) } ;
-		postJson( "storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
+		postJson( "/storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
 	}, '.setting' ) ;
 }
 
@@ -81,7 +81,7 @@ function confirmSetSettings( response ) {
 function confirmGetSettings( response ) {
 	if (!response || ( response._networkRequestStatusCode && response._networkRequestStatusCode !== 200 ) || !response.settings ) {	// && settings.length > 0 ) {
 		var postableSettings = { 'value' : JSON.stringify(gsled.settings) } ;
-		postJson( "storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
+		postJson( "/storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
 	} else {
 		gsled.settings = JSON.parse( response.settings ) ;	// todo: secure
 		renderSettings( gsled.settings ) ;	// adds settings[id]
@@ -93,7 +93,7 @@ function settings() {
 	if( !gsled.settings ) {
 		gsled.settings = [ { id:"multipleDetails", title:"Multi-Details", value:false } ] ;	// defaults until response, and stops it from rerequesting
 		renderSettings( gsled.settings ) ;	// adds settings[id]
-		getJson( "storage/settings", confirmGetSettings ) ;
+		getJson( "/storage/settings", confirmGetSettings ) ;
 	}
 	return gsled.settings ;
 }

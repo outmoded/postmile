@@ -53,9 +53,9 @@ exports.initialize = function () {
 };
 
 
-// Analyze sled and return tips list
+// Analyze project and return tips list
 
-exports.list = function (sled, callback) {
+exports.list = function (project, callback) {
 
     var results = [];
 

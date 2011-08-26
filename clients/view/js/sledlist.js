@@ -148,7 +148,7 @@ function makeAndRenderNewSled() {
 			if( !myNewSled.requestedSuggestions && myNewSled.id !== "" ) {
 
 				myNewSled.requestedSuggestions = true ;
-				getJson( "sled/" + myNewSled.id + "/suggestions",
+				getJson( "/project/" + myNewSled.id + "/suggestions",
 						function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, myNewSled.id ) ;
 
 			} else {	
@@ -161,7 +161,7 @@ function makeAndRenderNewSled() {
 			if( !myNewSled.requestedTips && myNewSled.id !== "" ) {
 
 				myNewSled.requestedTips = true ;	// just to say we tried
-				getJson( "sled/" + myNewSled.id + "/tips", 
+				getJson( "/project/" + myNewSled.id + "/tips", 
 						function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, myNewSled.id ) ;	
 
 			} else {	
@@ -185,7 +185,7 @@ function makeAndRenderNewSled() {
 	}
 
 	var json = '{"title":"' + myNewSled.title + '"}'  ;
-	putJson( "sled", json, confirmAddedSled ) ;
+	putJson( "/project", json, confirmAddedSled ) ;
 
 }
 
@@ -244,7 +244,7 @@ function reorder( dragNode ) {
 			}
 		} ;
 
-		postJson( "sled/" + dragSled.id + "?position=" + dropIndex, "", confirmOrder ) ;
+		postJson( "/project/" + dragSled.id + "?position=" + dropIndex, "", confirmOrder ) ;
 		// Y.log( "sled/" + dragSled.id + "?position=" + dropIndex + "  (" + dragIndex + ")" ) ;
 	}
 
@@ -327,7 +327,7 @@ function deleteSled( sledId ) {
 
 	}
 
-	deleteJson( "sled/" + sledId, null, confirmLeftSled ) ;
+	deleteJson( "/project/" + sledId, null, confirmLeftSled ) ;
 
 }
 

@@ -203,7 +203,7 @@ function bindInviteOverlay() {
 		// needs to be URL encoded since it's a query param
 		var message = encodeURIComponent( inviteMessage.get( 'value' ) ) ;
 
-		var uri = postmile.api.uri + "/sled/" + gsled.sled.id + "/participants?message=" + message ;
+		var uri = "/project/" + gsled.sled.id + "/participants?message=" + message ;
 
 		var newParticipants = inviteEmails.get( 'value' ).replace(/^\s+|\s+$/g,"") ;
 		newParticipants = newParticipants.split( ',' ) ;
@@ -227,7 +227,7 @@ function bindInviteOverlay() {
 
 				if( response.status === "ok" ) {
 
-					// getJson( "sled/" + gsled.sled.id, Y.sled.sled.renderSledParticipants ) ;
+					// getJson( "/project/" + gsled.sled.id, Y.sled.sled.renderSledParticipants ) ;
 					gsled.sled.participants = response.participants ;
 					Y.fire( 'sled:renderSledParticipants', gsled.sled ) ;
 
@@ -354,7 +354,7 @@ function bindParticipantsOverlay() {
 			}
 		}
 
-		postJson( "task/" + task.id, json, confirmTaskParticiants ) ;
+		postJson( "/task/" + task.id, json, confirmTaskParticiants ) ;
 
 		// update the overlay node right away for responsiveness - 
 		// if it fails, the underlying task participants node will reflect correct state
@@ -465,7 +465,7 @@ function bindManageOverlay() {
 			} ;
 
 			var askRemove = function( arg ) {
-			    var uri = postmile.api.uri + "/sled/" + gsled.sled.id + "/participants";
+			    var uri = "/project/" + gsled.sled.id + "/participants";
 				deleteJson( uri, json, confirmRemove ) ;				
 			} ;
 			askHeader = participants.length > 1 ? 'Remove Participants?' : 'Remove Participant?' ;
@@ -528,7 +528,7 @@ function showTaskParticipants( trigger, task, maxY ) {
 			task: task,
 			maxY: maxY
 		} ;
-		getJson( "task/" + task.id, showTaskParticipantsCB, cbo ) ;
+		getJson( "/task/" + task.id, showTaskParticipantsCB, cbo ) ;
 	}
 }
 

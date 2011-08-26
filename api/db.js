@@ -19,7 +19,7 @@ var internals = {
     collectionNames: [ 'client',
                        'invite',
                        'grant',
-                       'sled', 'sled.sort',
+                       'project', 'project.sort',
                        'suggestion',
                        'task', 'task.details', 'task.sort',
                        'tip',

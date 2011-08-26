@@ -35,7 +35,7 @@ exports.post = function (req, res, next) {
 
     function entry() {
 
-        var requestRegex = /(?:\/)(?:\$(\d)+\.)?([\w:\.]+)/g;       // /sled/$1.sled/tasks, does not allow using array responses
+        var requestRegex = /(?:\/)(?:\$(\d)+\.)?([\w:\.]+)/g;       // /project/$1.project/tasks, does not allow using array responses
 
         // Validate requests
 

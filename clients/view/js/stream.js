@@ -38,7 +38,7 @@ function subscribe( sled ) {
 		// unsubscribeAll() ;
 
 		// it's okay to subscribe even before we get an ok reply to unsubribes
-		postJson( 'stream/' + socketMessage.session + '/sled/' + sled.id, null, confirmPostStream ) ;
+		postJson( '/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmPostStream ) ;
 	}
 
 }
@@ -62,7 +62,7 @@ function unsubscribeAll( ) {
 		for (/*var*/ i=0, l=Y.sled.gsled.sleds.length; i < l; ++i) {
 			var sled = Y.sled.gsled.sleds[i] ;
 			if( sled.subscribed ) {
-				deleteJson( 'stream/' + socketMessage.session + '/sled/' + sled.id, null, confirmDeleteStream, sled ) ;
+				deleteJson( '/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmDeleteStream, sled ) ;
 				sled.subscribed = false ;	// presume this works (we'd not do anything differently anyways)
 			}
 		}
@@ -193,7 +193,7 @@ function handleStreamUpate( message ) {
 }
 
 
-// render updated sled/sledlist
+// render updated sled/projectlist
 
 function updateSleds( message ) {
 
@@ -213,7 +213,7 @@ function updateSleds( message ) {
 
 		}
 
-		getJson( "sleds", gotSleds ) ;
+		getJson( "/projects", gotSleds ) ;
 
 	}
 	
@@ -259,7 +259,7 @@ function updateSled( message ) {
 
 	}
 
-	getJson( "sled/" + message.sled, gotSled ) ;
+	getJson( "/project/" + message.sled, gotSled ) ;
 
 }
 
@@ -307,7 +307,7 @@ function updateTasks( message ) {
 
 	}
 	
-	getJson( "sled/" + message.sled + "/tasks", gotTasks ) ;
+	getJson( "/project/" + message.sled + "/tasks", gotTasks ) ;
 }
 
 
@@ -363,7 +363,7 @@ function updateTask( message ) {
 
 	}
 
-	getJson( "task/" + task.id, gotTask ) ;
+	getJson( "/task/" + task.id, gotTask ) ;
 
 }
 
@@ -413,7 +413,7 @@ function updateDetails( message ) {
 		}
 	}
 
-	getJson( "task/" + task.id + "/details", gotDetails, task ) ;
+	getJson( "/task/" + task.id + "/details", gotDetails, task ) ;
 }
 
 
@@ -422,7 +422,7 @@ function updateDetails( message ) {
 function updateProfile( message ) {
 
 	// just rerender whole tasklist - todo: global list of tasks, and export detail render
-	getJson( "profile", function( profile ){ Y.fire( 'sled:renderProfile', profile ) ; } ) ; 
+	getJson( "/profile", function( profile ){ Y.fire( 'sled:renderProfile', profile ) ; } ) ; 
 
 }
 
@@ -434,7 +434,7 @@ function updateContacts( message ) {
 	// get new contacts when updated
 	// can be caused by ourselves when inviting someone to a sled
 	// just rerender updated contacts - not currently highlighting any node
-	getJson( "contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
+	getJson( "/contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
 
 }
 
@@ -444,7 +444,7 @@ function updateContacts( message ) {
 function updateTips( message ) {
 
 	if( Y.sled && Y.sled.user ) {
-		getJson( "sled/" + message.id + "/tips", function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, message.id ) ;
+		getJson( "/project/" + message.id + "/tips", function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, message.id ) ;
 	}
 
 }
@@ -455,7 +455,7 @@ function updateTips( message ) {
 function updateSuggestions( message ) {
 
 	if( Y.sled && Y.sled.suggestionlist ) {
-		getJson( "sled/" + message.id + "/suggestions", function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, message.id ) ;
+		getJson( "/project/" + message.id + "/suggestions", function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, message.id ) ;
 	}
 
 }

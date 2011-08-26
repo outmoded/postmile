@@ -7,7 +7,7 @@
 
 var Db = require('./db');
 var Utils = require('./utils');
-var Sled = require('./sled');
+var Project = require('./project');
 var Sort = require('./sort');
 var Err = require('./error');
 var Suggestions = require('./suggestions');
@@ -21,7 +21,7 @@ exports.type = {};
 
 exports.type.post = {
 
-    sled:           { type: 'id',       set: false },
+    project:           { type: 'id',       set: false },
     title:          { type: 'string' },
     status:         { type: 'enum',                    values: { open: 1, pending: 2, close: 3 } },
     participants:   { type: 'id',                      array: true, empty: true },
@@ -40,7 +40,7 @@ exports.get = function (req, res, next) {
 
         if (task) {
 
-            Details.quickList([req.params.id], task.sled, req.api.userId, function (details) {
+            Details.expandIds([req.params.id], task.project, req.api.userId, function (details) {
 
                 if (details &&
                     details[req.params.id]) {
@@ -64,15 +64,15 @@ exports.get = function (req, res, next) {
 };
 
 
-// Get list of tasks for given sled
+// Get list of tasks for given project
 
 exports.list = function (req, res, next) {
 
-    Sled.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
-            Sort.list('task', req.params.id, 'sled', function (tasks) {
+            Sort.list('task', req.params.id, 'project', function (tasks) {
 
                 if (tasks) {
 
@@ -110,7 +110,7 @@ exports.list = function (req, res, next) {
                         ids.push(tasks[i]._id);
                     }
 
-                    Details.quickList(ids, req.params.id, req.api.userId, function (details) {
+                    Details.expandIds(ids, req.params.id, req.api.userId, function (details) {
 
                         if (details) {
 
@@ -149,7 +149,7 @@ exports.list = function (req, res, next) {
 
 exports.post = function (req, res, next) {
 
-    exports.load(req.params.id, req.api.userId, true, function (task, err, sled) {
+    exports.load(req.params.id, req.api.userId, true, function (task, err, project) {
 
         if (task) {
 
@@ -164,7 +164,7 @@ exports.post = function (req, res, next) {
                     if (req.body.participants &&
                         req.body.participants.length > 0) {
 
-                        // Verify participants are members of the sled
+                        // Verify participants are members of the project
 
                         var error = null;
                         var index = {};
@@ -175,9 +175,9 @@ exports.post = function (req, res, next) {
 
                                 index[req.body.participants[p]] = true;
 
-                                if (Sled.isMember(sled, req.body.participants[p]) === false) {
+                                if (Project.isMember(project, req.body.participants[p]) === false) {
 
-                                    error = 'user ' + req.body.participants[p] + ' is not a member of the Sled';
+                                    error = 'user ' + req.body.participants[p] + ' is not a member of the Project';
                                     break;
                                 }
                             }
@@ -202,7 +202,7 @@ exports.post = function (req, res, next) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'task', sled: task.sled, task: task._id }, req);
+                                Stream.update({ object: 'task', project: task.project, task: task._id }, req);
                                 res.api.result = { status: 'ok' };
                                 next();
                             }
@@ -225,11 +225,11 @@ exports.post = function (req, res, next) {
 
                 // Set task position in list
 
-                Sort.set('task', task.sled, 'sled', req.params.id, req.query.position, function (err) {
+                Sort.set('task', task.project, 'project', req.params.id, req.query.position, function (err) {
 
                     if (err === null) {
 
-                        Stream.update({ object: 'tasks', sled: task.sled }, req);
+                        Stream.update({ object: 'tasks', project: task.project }, req);
                         res.api.result = { status: 'ok' };
                         next();
                     }
@@ -259,9 +259,9 @@ exports.post = function (req, res, next) {
 
 exports.put = function (req, res, next) {
 
-    Sled.load(req.params.id, req.api.userId, true, function (sled, member, err) {
+    Project.load(req.params.id, req.api.userId, true, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             if (req.query.suggestion) {
 
@@ -313,14 +313,14 @@ exports.put = function (req, res, next) {
 
     function addTask(task) {
 
-        task.sled = req.params.id;
+        task.project = req.params.id;
         task.status = task.status || 'open';
 
         Db.insert('task', task, function (items, err) {
 
             if (err === null) {
 
-                Stream.update({ object: 'tasks', sled: task.sled }, req);
+                Stream.update({ object: 'tasks', project: task.project }, req);
                 res.api.result = { status: 'ok', id: items[0]._id };
                 res.api.created = '/task/' + items[0]._id;
 
@@ -329,7 +329,7 @@ exports.put = function (req, res, next) {
 
                     // Set task position in list
 
-                    Sort.set('task', task.sled, 'sled', res.api.result.id, req.query.position, function (err) {
+                    Sort.set('task', task.project, 'project', res.api.result.id, req.query.position, function (err) {
 
                         if (err === null) {
 
@@ -368,7 +368,7 @@ exports.del = function (req, res, next) {
 
                     Db.remove('task.details', task._id, function (err) { });
 
-                    Stream.update({ object: 'tasks', sled: task.sled }, req);
+                    Stream.update({ object: 'tasks', project: task.project }, req);
                     res.api.result = { status: 'ok' };
                     next();
                 }
@@ -396,11 +396,11 @@ exports.load = function (taskId, userId, isWritable, callback) {
 
         if (item) {
 
-            Sled.load(item.sled, userId, isWritable, function (sled, member, err) {
+            Project.load(item.project, userId, isWritable, function (project, member, err) {
 
-                if (sled) {
+                if (project) {
 
-                    callback(item, null, sled);
+                    callback(item, null, project);
                 }
                 else {
 
@@ -423,19 +423,19 @@ exports.load = function (taskId, userId, isWritable, callback) {
 };
 
 
-// Delete all tasks for a given sled
+// Delete all tasks for a given project
 
-exports.delSled = function (sledId, callback) {
+exports.delProject = function (projectId, callback) {
 
-    Db.removeCriteria('task', { sled: sledId }, function (err) {
+    Db.removeCriteria('task', { project: projectId }, function (err) {
 
         if (err === null) {
 
-            Db.removeCriteria('task.details', { sled: sledId }, function (err) {
+            Db.removeCriteria('task.details', { project: projectId }, function (err) {
 
                 // Delete the sort list
 
-                Sort.del('task', sledId, callback);
+                Sort.del('task', projectId, callback);
             });
         }
         else {
@@ -448,9 +448,9 @@ exports.delSled = function (sledId, callback) {
 
 // List of tasks assigned to a user
 
-exports.userTaskList = function (sledId, userId, callback) {
+exports.userTaskList = function (projectId, userId, callback) {
 
-    Db.query('task', { sled: sledId, participants: userId }, function (items, err) {
+    Db.query('task', { project: projectId, participants: userId }, function (items, err) {
 
         if (err === null) {
 
@@ -464,11 +464,11 @@ exports.userTaskList = function (sledId, userId, callback) {
 };
 
 
-// Count of tasks in a given sled
+// Count of tasks in a given project
 
-exports.count = function (sledId, callback) {
+exports.count = function (projectId, callback) {
 
-    Db.count('task', { sled: sledId }, function (count, err) {
+    Db.count('task', { project: projectId }, function (count, err) {
 
         if (err === null) {
 

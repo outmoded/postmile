@@ -8,7 +8,7 @@
 var Db = require('./db');
 var Utils = require('./utils');
 var Err = require('./error');
-var Sled = require('./sled');
+var Project = require('./project');
 var User = require('./user');
 var Stream = require('./stream');
 
@@ -19,37 +19,37 @@ exports.get = function (req, res, next) {
 
     // Check invitation code type
 
-    var inviteRegex = /^sled:([^:]+):([^:]+):([^:]+)$/;
+    var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
     var parts = inviteRegex.exec(req.params.id);
 
     if (parts &&
         parts.length === 4) {
 
-        // Sled invitation code
+        // Project invitation code
 
-        var sledId = parts[1];
+        var projectId = parts[1];
         var pid = parts[2];
         var code = parts[3];
 
-        // Load sled (not using Sled.load since active user is not a member)
+        // Load project (not using Project.load since active user is not a member)
 
-        Db.get('sled', sledId, function (sled, err) {
+        Db.get('project', projectId, function (project, err) {
 
-            if (sled) {
+            if (project) {
 
                 // Lookup code
 
-                var sledPid = null;
+                var projectPid = null;
 
-                for (var i = 0, il = sled.participants.length; i < il; ++i) {
+                for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                    if (sled.participants[i].pid &&
-                        sled.participants[i].pid === pid) {
+                    if (project.participants[i].pid &&
+                        project.participants[i].pid === pid) {
 
-                        if (sled.participants[i].code &&
-                            sled.participants[i].code === code) {
+                        if (project.participants[i].code &&
+                            project.participants[i].code === code) {
 
-                            sledPid = sled.participants[i];
+                            projectPid = project.participants[i];
                             break;
                         }
                         else {
@@ -60,11 +60,11 @@ exports.get = function (req, res, next) {
                     }
                 }
 
-                if (sledPid) {
+                if (projectPid) {
 
-                    User.quick(sledPid.inviter, function (inviter) {
+                    User.quick(projectPid.inviter, function (inviter) {
 
-                        var about = { title: sled.title, sled: sled._id };
+                        var about = { title: project.title, project: project._id };
 
                         if (inviter &&
                             inviter.display) {
@@ -110,39 +110,39 @@ exports.get = function (req, res, next) {
 };
 
 
-// Claim a sled invitation
+// Claim a project invitation
 
 exports.claim = function (req, res, next) {
 
-    var inviteRegex = /^sled:([^:]+):([^:]+):([^:]+)$/;
+    var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
     var parts = inviteRegex.exec(req.params.id);
 
     if (parts &&
         parts.length === 4) {
 
-        var sledId = parts[1];
+        var projectId = parts[1];
         var pid = parts[2];
         var code = parts[3];
 
-        // Load sled (not using Sled.load since active user is not a member)
+        // Load project (not using Project.load since active user is not a member)
 
-        Db.get('sled', sledId, function (sled, err) {
+        Db.get('project', projectId, function (project, err) {
 
-            if (sled) {
+            if (project) {
 
                 // Lookup code
 
-                var sledPid = null;
+                var projectPid = null;
 
-                for (var i = 0, il = sled.participants.length; i < il; ++i) {
+                for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                    if (sled.participants[i].pid &&
-                        sled.participants[i].pid === pid) {
+                    if (project.participants[i].pid &&
+                        project.participants[i].pid === pid) {
 
-                        if (sled.participants[i].code &&
-                            sled.participants[i].code === code) {
+                        if (project.participants[i].code &&
+                            project.participants[i].code === code) {
 
-                            sledPid = sled.participants[i];
+                            projectPid = project.participants[i];
                             break;
                         }
                         else {
@@ -153,14 +153,14 @@ exports.claim = function (req, res, next) {
                     }
                 }
 
-                if (sledPid) {
+                if (projectPid) {
 
-                    Sled.replacePid(sled, sledPid.pid, req.api.userId, function (err) {
+                    Project.replacePid(project, projectPid.pid, req.api.userId, function (err) {
 
                         if (err === null) {
 
-                            Stream.update({ object: 'sled', sled: sledId }, req);
-                            res.api.result = { status: 'ok', sled: sledId };
+                            Stream.update({ object: 'project', project: projectId }, req);
+                            res.api.result = { status: 'ok', project: projectId };
                             next();
                         }
                         else {

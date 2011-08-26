@@ -402,9 +402,9 @@ exports.sendWelcome = function (user, callback) {
 };
 
 
-// Invite sled participants
+// Invite project participants
 
-exports.sledInvite = function (users, pids, sled, message, inviter) {
+exports.projectInvite = function (users, pids, project, message, inviter) {
 
     if (inviter &&
         inviter.emails &&
@@ -416,7 +416,7 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
         var from = (inviter.name || inviter.username) ? (inviter.name || inviter.username) + ' (' + inviter.emails[0].address + ')'
                                                       : inviter.emails[0].address;
 
-        var text = from + ' invited you to collaborate on \'' + sled.title + '\'' +
+        var text = from + ' invited you to collaborate on \'' + project.title + '\'' +
                    (message ? ', and included the following message: ' + message : '.') + '\n\n';
 
         // Existing users
@@ -427,9 +427,9 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
                 users[i].emails[0] &&
                 users[i].emails[0].address) {
 
-                subject = 'Invitation to participate in ' + sled.title;
+                subject = 'Invitation to participate in ' + project.title;
                 link = 'Use this link to join: \n\n' +
-                       '    ' + Config.host.uri('web') + '/view/#sled=' + sled._id;
+                       '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
 
                 exports.send(users[i].emails[0].address,
                              subject,
@@ -445,8 +445,8 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
 
             if (pid.email) {
 
-                subject = 'Invitation to join ' + Config.product.name + ' and participate in ' + sled.title;
-                var invite = 'sled:' + sled._id + ':' + pid.pid + ':' + pid.code;
+                subject = 'Invitation to join ' + Config.product.name + ' and participate in ' + project.title;
+                var invite = 'project:' + project._id + ':' + pid.pid + ':' + pid.code;
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
@@ -454,17 +454,17 @@ exports.sledInvite = function (users, pids, sled, message, inviter) {
 
                     if (err === null) {
 
-                        Log.info('Email sent to: ' + pid.email + ' for sled: ' + sled._id);
+                        Log.info('Email sent to: ' + pid.email + ' for project: ' + project._id);
                     }
                     else {
 
-                        Log.err('Email error: ' + pid.email + ' for sled: ' + sled._id);
+                        Log.err('Email error: ' + pid.email + ' for project: ' + project._id);
                     }
                 });
             }
             else {
 
-                Log.err('Email error: sled (' + sled._id + ') pid (' + pid.pid + ') missing email address');
+                Log.err('Email error: project (' + project._id + ') pid (' + pid.pid + ') missing email address');
             }
         }
     }

@@ -36,14 +36,14 @@ YUI.add('sleduser', function (Y) {
 					Y.log('login confirmActiveSled - error: ' + JSON.stringify(response));
 				}
 			} ;
-			getJson("storage/activesled", confirmActiveSled); // sync these:?
+			getJson("/storage/activesled", confirmActiveSled); // sync these:?
 		}
 
-		getJson("profile", renderProfile);
+		getJson("/profile", renderProfile);
 
-		getJson( "sleds", function( sleds ){ Y.fire( 'sled:renderSleds', sleds, true ) ; } ) ; 
+		getJson( "/projects", function( sleds ){ Y.fire( 'sled:renderSleds', sleds, true ) ; } ) ; 
 
-		getJson( "contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
+		getJson( "/contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
 	}
 
 

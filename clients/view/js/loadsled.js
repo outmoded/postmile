@@ -146,11 +146,11 @@ hideSuggestionsLoading = function () {
 
 	// Lauch guided tour if first time
 
-	getJson("storage/showtour", function (json) {
+	getJson("/storage/showtour", function (json) {
 		Y.sled.gsled.showTour = (json.showtour ? (json.showtour === 'true') : true);
 		if (Y.sled.gsled.showTour) {
 			Y.fire( 'sled:launchTour' );
-			postJson('storage/showtour', '{"value":"false"}', function (response, myarg) {});
+			postJson('/storage/showtour', '{"value":"false"}', function (response, myarg) {});
 		}
 	});
 }
@@ -188,14 +188,14 @@ preBody = function() {
 				} 
 			}
 
-			getJson(postmile.api.uri + "/sled/" + initialSledId + "/tasks", gotTasks);
-			getJson(postmile.api.uri + "/sled/" + initialSledId, gotSled);
+			getJson("/project/" + initialSledId + "/tasks", gotTasks);
+			getJson("/project/" + initialSledId, gotSled);
 		}
 
 		if( fragSled ) {
 			confirmActiveSled( { activesled: fragSled } );
 		} else {
-            getJson(postmile.api.uri + "/storage/activesled", confirmActiveSled); // sync these:?
+            getJson("/storage/activesled", confirmActiveSled); // sync these:?
 		}
 
 	}

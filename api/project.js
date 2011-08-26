@@ -26,7 +26,7 @@ var internals = {
 };
 
 
-// Sled definitions
+// Project definitions
 
 exports.type = {};
 
@@ -54,19 +54,19 @@ exports.type.uninvite = {
 };
 
 
-// Get sled information
+// Get project information
 
 exports.get = function (req, res, next) {
 
-    exports.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
-            exports.participantsList(sled, function (participants) {
+            exports.participantsList(project, function (participants) {
 
-                sled.participants = participants;
+                project.participants = participants;
 
-                res.api.result = sled;
+                res.api.result = project;
                 next();
             });
         }
@@ -79,29 +79,29 @@ exports.get = function (req, res, next) {
 };
 
 
-// Get list of sleds for current user
+// Get list of projects for current user
 
 exports.list = function (req, res, next) {
 
-    Sort.list('sled', req.api.userId, 'participants.id', function (sleds) {
+    Sort.list('project', req.api.userId, 'participants.id', function (projects) {
 
-        if (sleds) {
+        if (projects) {
 
             var list = [];
-            for (var i = 0, il = sleds.length; i < il; ++i) {
+            for (var i = 0, il = projects.length; i < il; ++i) {
 
                 var isPending = false;
-                for (var p = 0, pl = sleds[i].participants.length; p < pl; ++p) {
+                for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
 
-                    if (sleds[i].participants[p].id &&
-                        sleds[i].participants[p].id === req.api.userId) {
+                    if (projects[i].participants[p].id &&
+                        projects[i].participants[p].id === req.api.userId) {
 
-                        isPending = sleds[i].participants[p].isPending || false;
+                        isPending = projects[i].participants[p].isPending || false;
                         break;
                     }
                 }
 
-                var item = { id: sleds[i]._id, title: sleds[i].title };
+                var item = { id: projects[i]._id, title: projects[i].title };
 
                 if (isPending) {
 
@@ -114,13 +114,13 @@ exports.list = function (req, res, next) {
             Last.load(req.api.userId, function (last, err) {
 
                 if (last &&
-                    last.sleds) {
+                    last.projects) {
 
                     for (i = 0, il = list.length; i < il; ++i) {
 
-                        if (last.sleds[list[i].id]) {
+                        if (last.projects[list[i].id]) {
 
-                            list[i].last = last.sleds[list[i].id].last;
+                            list[i].last = last.projects[list[i].id].last;
                         }
                     }
                 }
@@ -138,31 +138,31 @@ exports.list = function (req, res, next) {
 };
 
 
-// Update sled properties
+// Update project properties
 
 exports.post = function (req, res, next) {
 
-    exports.load(req.params.id, req.api.userId, true, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, true, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             if (Object.keys(req.body).length > 0) {
 
                 if (req.query.position === undefined) {
 
-                    Db.update('sled', sled._id, Db.toChanges(req.body), function (err) {
+                    Db.update('project', project._id, Db.toChanges(req.body), function (err) {
 
                         if (err === null) {
 
-                            Stream.update({ object: 'sled', sled: sled._id }, req);
+                            Stream.update({ object: 'project', project: project._id }, req);
 
-                            if (req.body.title !== sled.title) {
+                            if (req.body.title !== project.title) {
 
-                                for (var i = 0, il = sled.participants.length; i < il; ++i) {
+                                for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                                    if (sled.participants[i].id) {
+                                    if (project.participants[i].id) {
 
-                                        Stream.update({ object: 'sleds', user: sled.participants[i].id }, req);
+                                        Stream.update({ object: 'projects', user: project.participants[i].id }, req);
                                     }
                                 }
                             }
@@ -179,17 +179,17 @@ exports.post = function (req, res, next) {
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Cannot include both position parameter and sled object in body');
+                    res.api.error = Err.badRequest('Cannot include both position parameter and project object in body');
                     next();
                 }
             }
             else if (req.query.position) {
 
-                Sort.set('sled', req.api.userId, 'participants.id', req.params.id, req.query.position, function (err) {
+                Sort.set('project', req.api.userId, 'participants.id', req.params.id, req.query.position, function (err) {
 
                     if (err === null) {
 
-                        Stream.update({ object: 'sleds', user: req.api.userId }, req);
+                        Stream.update({ object: 'projects', user: req.api.userId }, req);
                         res.api.result = { status: 'ok' };
                         next();
                     }
@@ -202,7 +202,7 @@ exports.post = function (req, res, next) {
             }
             else {
 
-                res.api.error = Err.badRequest('Missing position parameter or sled object in body');
+                res.api.error = Err.badRequest('Missing position parameter or project object in body');
                 next();
             }
         }
@@ -215,21 +215,21 @@ exports.post = function (req, res, next) {
 };
 
 
-// Create new sled
+// Create new project
 
 exports.put = function (req, res, next) {
 
-    var sled = req.body;
-    sled.participants = [{ id: req.api.userId}];
+    var project = req.body;
+    project.participants = [{ id: req.api.userId}];
 
-    Db.insert('sled', sled, function (items, err) {
+    Db.insert('project', project, function (items, err) {
 
         if (err === null) {
 
-            Stream.update({ object: 'sleds', user: req.api.userId }, req);
+            Stream.update({ object: 'projects', user: req.api.userId }, req);
 
             res.api.result = { status: 'ok', id: items[0]._id };
-            res.api.created = '/sled/' + items[0]._id;
+            res.api.created = '/project/' + items[0]._id;
             next();
         }
         else {
@@ -241,40 +241,40 @@ exports.put = function (req, res, next) {
 };
 
 
-// Delete a sled
+// Delete a project
 
 exports.del = function (req, res, next) {
 
-    exports.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             // Check if owner
 
-            if (exports.isOwner(sled, req.api.userId)) {
+            if (exports.isOwner(project, req.api.userId)) {
 
                 // Delete all tasks
 
-                Task.delSled(sled._id, function (err) {
+                Task.delProject(project._id, function (err) {
 
                     if (err === null) {
 
-                        // Delete sled
+                        // Delete project
 
-                        Db.remove('sled', sled._id, function (err) {
+                        Db.remove('project', project._id, function (err) {
 
                             if (err === null) {
 
-                                Last.delSled(req.api.userId, sled._id, function (err) { });
+                                Last.delProject(req.api.userId, project._id, function (err) { });
 
-                                Stream.update({ object: 'sled', sled: sled._id }, req);
+                                Stream.update({ object: 'project', project: project._id }, req);
 
-                                for (var i = 0, il = sled.participants.length; i < il; ++i) {
+                                for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                                    if (sled.participants[i].id) {
+                                    if (project.participants[i].id) {
 
-                                        Stream.update({ object: 'sleds', user: sled.participants[i].id }, req);
-                                        Stream.drop(sled.participants[i].id, sled._id);
+                                        Stream.update({ object: 'projects', user: project.participants[i].id }, req);
+                                        Stream.drop(project.participants[i].id, project._id);
                                     }
                                 }
 
@@ -297,15 +297,15 @@ exports.del = function (req, res, next) {
             }
             else {
 
-                // Leave sled
+                // Leave project
 
-                internals.leave(sled, member, function (err) {
+                internals.leave(project, member, function (err) {
 
                     if (err === null) {
 
-                        Stream.update({ object: 'sled', sled: sled._id }, req);
-                        Stream.update({ object: 'sleds', user: req.api.userId }, req);
-                        Stream.drop(req.api.userId, sled._id);
+                        Stream.update({ object: 'project', project: project._id }, req);
+                        Stream.update({ object: 'projects', user: req.api.userId }, req);
+                        Stream.drop(req.api.userId, project._id);
 
                         res.api.result = { status: 'ok' };
                         next();
@@ -327,19 +327,19 @@ exports.del = function (req, res, next) {
 };
 
 
-// Get list of sled tips
+// Get list of project tips
 
 exports.tips = function (req, res, next) {
 
-    // Get sled
+    // Get project
 
-    exports.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             // Collect tips
 
-            Tips.list(sled, function (results) {
+            Tips.list(project, function (results) {
 
                 res.api.result = results;
                 next();
@@ -354,19 +354,19 @@ exports.tips = function (req, res, next) {
 };
 
 
-// Get list of sled suggestions
+// Get list of project suggestions
 
 exports.suggestions = function (req, res, next) {
 
-    // Get sled
+    // Get project
 
-    exports.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             // Collect tips
 
-            Suggestions.list(sled, req.api.userId, function (results) {
+            Suggestions.list(project, req.api.userId, function (results) {
 
                 res.api.result = results;
                 next();
@@ -381,7 +381,7 @@ exports.suggestions = function (req, res, next) {
 };
 
 
-// Add new participants to a sled
+// Add new participants to a project
 
 exports.participants = function (req, res, next) {
 
@@ -415,9 +415,9 @@ exports.participants = function (req, res, next) {
         if (req.body.participants ||
             req.body.names) {
 
-            exports.load(req.params.id, req.api.userId, true, function (sled, member, err) {
+            exports.load(req.params.id, req.api.userId, true, function (project, member, err) {
 
-                if (sled) {
+                if (project) {
 
                     var change = { $pushAll: { participants: []} };
 
@@ -433,9 +433,9 @@ exports.participants = function (req, res, next) {
 
                         if (req.body.participants === undefined) {
 
-                            // No user accounts to invite, save sled
+                            // No user accounts to invite, save project
 
-                            Db.update('sled', sled._id, change, function (err) {
+                            Db.update('project', project._id, change, function (err) {
 
                                 if (err === null) {
 
@@ -468,7 +468,7 @@ exports.participants = function (req, res, next) {
 
                                     if (err === null) {
 
-                                        var prevParticipants = Utils.map(sled.participants, 'id');
+                                        var prevParticipants = Utils.map(project.participants, 'id');
 
                                         // Check for changes
 
@@ -494,7 +494,7 @@ exports.participants = function (req, res, next) {
                                             }
                                         }
 
-                                        var prevPids = Utils.map(sled.participants, 'email');
+                                        var prevPids = Utils.map(project.participants, 'email');
 
                                         var pids = [];
                                         for (i = 0, il = emailsNotFound.length; i < il; ++i) {
@@ -536,22 +536,22 @@ exports.participants = function (req, res, next) {
                                             });
                                         }
 
-                                        // Update sled participants
+                                        // Update project participants
 
                                         if (change.$pushAll.participants.length > 0) {
 
-                                            Db.update('sled', sled._id, change, function (err) {
+                                            Db.update('project', project._id, change, function (err) {
 
                                                 if (err === null) {
 
                                                     for (var i = 0, il = changedUsers.length; i < il; ++i) {
 
-                                                        Stream.update({ object: 'sleds', user: changedUsers[i]._id }, req);
+                                                        Stream.update({ object: 'projects', user: changedUsers[i]._id }, req);
                                                     }
 
                                                     // Invite new participants
 
-                                                    Email.sledInvite(changedUsers, pids, sled, req.query.message, user);
+                                                    Email.projectInvite(changedUsers, pids, project, req.query.message, user);
 
                                                     // Return success
 
@@ -566,7 +566,7 @@ exports.participants = function (req, res, next) {
                                         }
                                         else {
 
-                                            res.api.error = Err.badRequest('All users are already sled participants');
+                                            res.api.error = Err.badRequest('All users are already project participants');
                                             next();
                                         }
                                     }
@@ -601,15 +601,15 @@ exports.participants = function (req, res, next) {
 
     function reply() {
 
-        Stream.update({ object: 'sled', sled: req.params.id }, req);
+        Stream.update({ object: 'project', project: req.params.id }, req);
 
-        // Reload sled (changed, use direct DB to skip load processing)
+        // Reload project (changed, use direct DB to skip load processing)
 
-        Db.get('sled', req.params.id, function (sled, err) {
+        Db.get('project', req.params.id, function (project, err) {
 
-            if (sled) {
+            if (project) {
 
-                exports.participantsList(sled, function (participants) {
+                exports.participantsList(project, function (participants) {
 
                     var response = { status: 'ok', participants: participants };
 
@@ -627,19 +627,19 @@ exports.participants = function (req, res, next) {
 };
 
 
-// Remove participant from sled
+// Remove participant from project
 
 exports.uninvite = function (req, res, next) {
 
-    // Load sled for write
+    // Load project for write
 
-    exports.load(req.params.id, req.api.userId, true, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, true, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             // Check if owner
 
-            if (exports.isOwner(sled, req.api.userId)) {
+            if (exports.isOwner(project, req.api.userId)) {
 
                 // Check if single delete or batch
 
@@ -651,17 +651,17 @@ exports.uninvite = function (req, res, next) {
 
                         // Lookup user
 
-                        var uninvitedMember = exports.getMember(sled, req.params.user);
+                        var uninvitedMember = exports.getMember(project, req.params.user);
                         if (uninvitedMember) {
 
-                            internals.leave(sled, uninvitedMember, function (err) {
+                            internals.leave(project, uninvitedMember, function (err) {
 
                                 if (err === null) {
 
                                     // Return success
 
-                                    Stream.update({ object: 'sleds', user: req.params.user }, req);
-                                    Stream.drop(req.params.user, sled._id);
+                                    Stream.update({ object: 'projects', user: req.params.user }, req);
+                                    Stream.drop(req.params.user, project._id);
 
                                     reply();
                                 }
@@ -674,7 +674,7 @@ exports.uninvite = function (req, res, next) {
                         }
                         else {
 
-                            res.api.error = Err.notFound('Not a sled participant');
+                            res.api.error = Err.notFound('Not a project participant');
                             next();
                         }
                     }
@@ -699,14 +699,14 @@ exports.uninvite = function (req, res, next) {
 
                             // Lookup user
 
-                            var uninvited = exports.getMember(sled, removeId);
+                            var uninvited = exports.getMember(project, removeId);
                             if (uninvited) {
 
                                 uninvitedMembers.push(uninvited);
                             }
                             else {
 
-                                error = Err.notFound('Not a sled participant: ' + removeId);
+                                error = Err.notFound('Not a project participant: ' + removeId);
                                 break;
                             }
                         }
@@ -726,7 +726,7 @@ exports.uninvite = function (req, res, next) {
 
                         // Batch leave
 
-                        batch(sled, uninvitedMembers, 0, function (err) {
+                        batch(project, uninvitedMembers, 0, function (err) {
 
                             if (err === null) {
 
@@ -766,7 +766,7 @@ exports.uninvite = function (req, res, next) {
         }
     });
 
-    function batch(sled, members, pos, callback) {
+    function batch(project, members, pos, callback) {
 
         if (pos >= members.length) {
 
@@ -774,7 +774,7 @@ exports.uninvite = function (req, res, next) {
         }
         else {
 
-            internals.leave(sled, members[pos], function (err) {
+            internals.leave(project, members[pos], function (err) {
 
                 if (err === null) {
 
@@ -782,11 +782,11 @@ exports.uninvite = function (req, res, next) {
 
                     if (members[pos].id) {
 
-                        Stream.update({ object: 'sleds', user: members[pos].id }, req);
-                        Stream.drop(members[pos].id, sled._id);
+                        Stream.update({ object: 'projects', user: members[pos].id }, req);
+                        Stream.drop(members[pos].id, project._id);
                     }
 
-                    batch(sled, members, pos + 1, callback);
+                    batch(project, members, pos + 1, callback);
                 }
                 else {
 
@@ -798,15 +798,15 @@ exports.uninvite = function (req, res, next) {
 
     function reply() {
 
-        Stream.update({ object: 'sled', sled: req.params.id }, req);
+        Stream.update({ object: 'project', project: req.params.id }, req);
 
-        // Reload sled (changed, use direct DB to skip load processing)
+        // Reload project (changed, use direct DB to skip load processing)
 
-        Db.get('sled', req.params.id, function (sled, err) {
+        Db.get('project', req.params.id, function (project, err) {
 
-            if (sled) {
+            if (project) {
 
-                exports.participantsList(sled, function (participants) {
+                exports.participantsList(project, function (participants) {
 
                     var response = { status: 'ok', participants: participants };
 
@@ -824,27 +824,27 @@ exports.uninvite = function (req, res, next) {
 };
 
 
-// Accept sled invitation
+// Accept project invitation
 
 exports.join = function (req, res, next) {
 
     // The only place allowed to request a non-writable copy for modification
-    exports.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    exports.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
             // Verify user is pending
 
             if (member.isPending) {
 
-                Db.updateCriteria('sled', sled._id, { 'participants.id': req.api.userId }, { $unset: { 'participants.$.isPending': 1} }, function (err) {
+                Db.updateCriteria('project', project._id, { 'participants.id': req.api.userId }, { $unset: { 'participants.$.isPending': 1} }, function (err) {
 
                     if (err === null) {
 
                         // Return success
 
-                        Stream.update({ object: 'sled', sled: sled._id }, req);
-                        Stream.update({ object: 'sleds', user: req.api.userId }, req);
+                        Stream.update({ object: 'project', project: project._id }, req);
+                        Stream.update({ object: 'projects', user: req.api.userId }, req);
 
                         res.api.result = { status: 'ok' };
                         next();
@@ -858,7 +858,7 @@ exports.join = function (req, res, next) {
             }
             else {
 
-                res.api.error = Err.badRequest('Already a member of the sled');
+                res.api.error = Err.badRequest('Already a member of the project');
                 next();
             }
         }
@@ -871,11 +871,11 @@ exports.join = function (req, res, next) {
 };
 
 
-// Load sled from database and check for user rights
+// Load project from database and check for user rights
 
-exports.load = function (sledId, userId, isWritable, callback) {
+exports.load = function (projectId, userId, isWritable, callback) {
 
-    Db.get('sled', sledId, function (item, err) {
+    Db.get('project', projectId, function (item, err) {
 
         if (item) {
 
@@ -905,13 +905,13 @@ exports.load = function (sledId, userId, isWritable, callback) {
                 else {
 
                     // Invitation pending
-                    callback(null, null, Err.forbidden('Must accept sled invitation before making changes'));
+                    callback(null, null, Err.forbidden('Must accept project invitation before making changes'));
                 }
             }
             else {
 
                 // Not allowed
-                callback(null, null, Err.forbidden('Not a sled member'));
+                callback(null, null, Err.forbidden('Not a project member'));
             }
         }
         else {
@@ -931,47 +931,47 @@ exports.load = function (sledId, userId, isWritable, callback) {
 
 // Get participants list
 
-exports.participantsList = function (sled, callback) {
+exports.participantsList = function (project, callback) {
 
     var userIds = [];
-    for (var i = 0, il = sled.participants.length; i < il; ++i) {
+    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-        if (sled.participants[i].id) {
+        if (project.participants[i].id) {
 
-            userIds.push(sled.participants[i].id);
+            userIds.push(project.participants[i].id);
         }
     }
 
-    User.quickList(userIds, function (users, usersMap) {
+    User.expandIds(userIds, function (users, usersMap) {
 
         var participants = [];
-        for (var i = 0, il = sled.participants.length; i < il; ++i) {
+        for (var i = 0, il = project.participants.length; i < il; ++i) {
 
             var participant = null;
 
-            if (sled.participants[i].id) {
+            if (project.participants[i].id) {
 
                 // Registered user participant
 
-                participant = usersMap[sled.participants[i].id];
+                participant = usersMap[project.participants[i].id];
             }
-            else if (sled.participants[i].pid) {
+            else if (project.participants[i].pid) {
 
                 // Non-user participant
 
                 participant = {
 
-                    id: 'pid:' + sled.participants[i].pid,
-                    display: sled.participants[i].display,
+                    id: 'pid:' + project.participants[i].pid,
+                    display: project.participants[i].display,
                     isPid: true
                 };
             }
 
             if (participant) {
 
-                if (sled.participants[i].isPending) {
+                if (project.participants[i].isPending) {
 
-                    participant.isPending = sled.participants[i].isPending;
+                    participant.isPending = project.participants[i].isPending;
                 }
 
                 participants.push(participant);
@@ -985,23 +985,23 @@ exports.participantsList = function (sled, callback) {
 
 // Get participants map
 
-exports.participantsMap = function (sled) {
+exports.participantsMap = function (project) {
 
     var participants = { users: {}, emails: {} };
 
-    for (var i = 0, il = sled.participants.length; i < il; ++i) {
+    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-        if (sled.participants[i].id) {
+        if (project.participants[i].id) {
 
             // Registered user participant
 
-            participants.users[sled.participants[i].id] = true;
+            participants.users[project.participants[i].id] = true;
         }
-        else if (sled.participants[i].email) {
+        else if (project.participants[i].email) {
 
             // Non-user email-invited participant
 
-            participants.emails[sled.participants[i].email] = true;
+            participants.emails[project.participants[i].email] = true;
         }
     }
 
@@ -1011,7 +1011,7 @@ exports.participantsMap = function (sled) {
 
 // Get member
 
-exports.getMember = function (sled, userId) {
+exports.getMember = function (project, userId) {
 
     var isPid = userId.indexOf('pid:') === 0;
     if (isPid) {
@@ -1019,18 +1019,18 @@ exports.getMember = function (sled, userId) {
         userId = userId.substring(4);           // Remove 'pid:' prefix
     }
 
-    for (var i = 0, il = sled.participants.length; i < il; ++i) {
+    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
         if (isPid &&
-            sled.participants[i].pid &&
-            sled.participants[i].pid === userId) {
+            project.participants[i].pid &&
+            project.participants[i].pid === userId) {
 
-            return sled.participants[i];
+            return project.participants[i];
         }
-        else if (sled.participants[i].id &&
-                 sled.participants[i].id === userId) {
+        else if (project.participants[i].id &&
+                 project.participants[i].id === userId) {
 
-            return sled.participants[i];
+            return project.participants[i];
         }
     }
 
@@ -1040,30 +1040,30 @@ exports.getMember = function (sled, userId) {
 
 // Check if member
 
-exports.isMember = function (sled, userId) {
+exports.isMember = function (project, userId) {
 
-    return (exports.getMember(sled, userId) !== null);
+    return (exports.getMember(project, userId) !== null);
 };
 
 
 // Check if owner
 
-exports.isOwner = function (sled, userId) {
+exports.isOwner = function (project, userId) {
 
-    return (sled.participants[0].id && sled.participants[0].id === userId);
+    return (project.participants[0].id && project.participants[0].id === userId);
 };
 
 
-// Leave sled
+// Leave project
 
-internals.leave = function (sled, member, callback) {
+internals.leave = function (project, member, callback) {
 
     var isPid = (member.pid !== null && member.pid !== undefined);
     var userId = (isPid ? member.pid : member.id);
 
     // Check if user is assigned tasks
 
-    Task.userTaskList(sled._id, (isPid ? 'pid:' + userId : userId), function (tasks, err) {
+    Task.userTaskList(project._id, (isPid ? 'pid:' + userId : userId), function (tasks, err) {
 
         if (err === null) {
 
@@ -1079,7 +1079,7 @@ internals.leave = function (sled, member, callback) {
 
                         if (user) {
 
-                            // Add unregistered sled account (pid)
+                            // Add unregistered project account (pid)
 
                             var display = (user.name ? user.name
                                                      : (user.username ? user.username
@@ -1089,21 +1089,21 @@ internals.leave = function (sled, member, callback) {
 
                             // Move any assignments to pid account (not details) and save tasks
 
-                            var taskCriteria = { sled: sled._id, participants: userId };
+                            var taskCriteria = { project: project._id, participants: userId };
                             var taskChange = { $set: { 'participants.$': 'pid:' + participant.pid} };
                             Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
                                 if (err === null) {
 
-                                    // Save sled
+                                    // Save project
 
-                                    Db.updateCriteria('sled', sled._id, { 'participants.id': userId }, { $set: { 'participants.$': participant} }, function (err) {
+                                    Db.updateCriteria('project', project._id, { 'participants.id': userId }, { $set: { 'participants.$': participant} }, function (err) {
 
                                         if (err === null) {
 
                                             // Cleanup last information
 
-                                            Last.delSled(userId, sled._id, function (err) { });
+                                            Last.delProject(userId, project._id, function (err) { });
 
                                             callback(null);
                                         }
@@ -1134,7 +1134,7 @@ internals.leave = function (sled, member, callback) {
                         // Remove invitation from pid
 
                         var participant = { pid: member.pid, display: member.display };
-                        Db.updateCriteria('sled', sled._id, { 'participants.pid': userId }, { $set: { 'participants.$': participant } }, function (err) {
+                        Db.updateCriteria('project', project._id, { 'participants.pid': userId }, { $set: { 'participants.$': participant } }, function (err) {
 
                             callback(err);
                         });
@@ -1150,7 +1150,7 @@ internals.leave = function (sled, member, callback) {
                 var change = { $pull: { participants: {}} };
                 change.$pull.participants[isPid ? 'pid' : 'id'] = userId;
 
-                Db.update('sled', sled._id, change, function (err) {
+                Db.update('project', project._id, change, function (err) {
 
                     if (err === null) {
 
@@ -1158,7 +1158,7 @@ internals.leave = function (sled, member, callback) {
 
                             // Cleanup last information
 
-                            Last.delSled(userId, sled._id, function (err) { });
+                            Last.delProject(userId, project._id, function (err) { });
                         }
 
                         callback(null);
@@ -1180,11 +1180,11 @@ internals.leave = function (sled, member, callback) {
 
 // Replace pid with actual user
 
-exports.replacePid = function (sled, pid, userId, callback) {
+exports.replacePid = function (project, pid, userId, callback) {
 
     // Move any assignments to pid account (not details) and save tasks
 
-    var taskCriteria = { sled: sled._id, participants: 'pid:' + pid };
+    var taskCriteria = { project: project._id, participants: 'pid:' + pid };
     var taskChange = { $set: { 'participants.$': userId} };
     Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
@@ -1192,11 +1192,11 @@ exports.replacePid = function (sled, pid, userId, callback) {
 
             // Check if user already a member
 
-            if (exports.isMember(sled, userId)) {
+            if (exports.isMember(project, userId)) {
 
                 // Remove Pid without adding
 
-                Db.update('sled', sled._id, { $pull: { participants: { pid: pid}} }, function (err) {
+                Db.update('project', project._id, { $pull: { participants: { pid: pid}} }, function (err) {
 
                     if (err === null) {
 
@@ -1212,7 +1212,7 @@ exports.replacePid = function (sled, pid, userId, callback) {
 
                 // Replace pid with user
 
-                Db.updateCriteria('sled', sled._id, { 'participants.pid': pid }, { $set: { 'participants.$': { id: userId}} }, function (err) {
+                Db.updateCriteria('project', project._id, { 'participants.pid': pid }, { $set: { 'participants.$': { id: userId}} }, function (err) {
 
                     if (err === null) {
 
@@ -1237,33 +1237,33 @@ exports.replacePid = function (sled, pid, userId, callback) {
 
 exports.unsortedList = function (userId, callback) {
 
-    Db.query('sled', { 'participants.id': req.api.userId }, function (sleds, err) {
+    Db.query('project', { 'participants.id': req.api.userId }, function (projects, err) {
 
         if (err === null) {
 
-            if (sleds.length > 0) {
+            if (projects.length > 0) {
 
                 var owner = [];
                 var notOwner = [];
 
-                for (var i = 0, il = sleds.length; i < il; ++i) {
+                for (var i = 0, il = projects.length; i < il; ++i) {
 
-                    for (var p = 0, pl = sleds[i].participants.length; p < pl; ++p) {
+                    for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
 
-                        if (sleds[i].participants[p].id &&
-                            sleds[i].participants[p].id === req.api.userId) {
+                        if (projects[i].participants[p].id &&
+                            projects[i].participants[p].id === req.api.userId) {
 
-                            sleds[i]._isPending = sleds[i].participants[p].isPending || false;
+                            projects[i]._isPending = projects[i].participants[p].isPending || false;
 
                             if (i == 0) {
 
-                                sleds[i]._isOwner = true;
-                                owner.push(sleds[i]);
+                                projects[i]._isOwner = true;
+                                owner.push(projects[i]);
                             }
                             else {
 
-                                sleds[i]._isOwner = false;
-                                notOwner.push(sleds[i]);
+                                projects[i]._isOwner = false;
+                                notOwner.push(projects[i]);
                             }
 
                             break;
@@ -1271,7 +1271,7 @@ exports.unsortedList = function (userId, callback) {
                     }
                 }
 
-                callback(sleds, owner, notOwner, null);
+                callback(projects, owner, notOwner, null);
             }
             else {
 
@@ -1286,19 +1286,19 @@ exports.unsortedList = function (userId, callback) {
 };
 
 
-// Delete an empty sled (verified by caller)
+// Delete an empty project (verified by caller)
 
-exports.delEmpty = function (sledId, callback) {
+exports.delEmpty = function (projectId, callback) {
 
     // Delete all tasks
 
-    Task.delSled(sledId, function (err) {
+    Task.delProject(projectId, function (err) {
 
         if (err === null) {
 
-            // Delete sled
+            // Delete project
 
-            Db.remove('sled', sled._id, function (err) {
+            Db.remove('project', project._id, function (err) {
 
                 callback(err);
             });

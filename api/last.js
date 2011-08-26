@@ -8,7 +8,7 @@
 var Db = require('./db');
 var Err = require('./error');
 var Utils = require('./utils');
-var Sled = require('./sled');
+var Project = require('./project');
 var Task = require('./task');
 
 
@@ -17,25 +17,25 @@ var Task = require('./task');
 var internals = {};
 
 
-// Last information for sled (with tasks)
+// Last information for project (with tasks)
 
-exports.getSled = function (req, res, next) {
+exports.getProject = function (req, res, next) {
 
     exports.load(req.api.userId, function (last, err) {
 
         if (last &&
-            last.sleds &&
-            last.sleds[req.params.id]) {
+            last.projects &&
+            last.projects[req.params.id]) {
 
-            var record = { id: last._id, sleds: {} };
-            record.sleds[req.params.id] = last.sleds[req.params.id];
+            var record = { id: last._id, projects: {} };
+            record.projects[req.params.id] = last.projects[req.params.id];
 
             res.api.result = record;
             next();
         }
         else if (err === null) {
 
-            res.api.result = { id: req.api.userId, sleds: {} };
+            res.api.result = { id: req.api.userId, projects: {} };
             next();
         }
         else {
@@ -47,15 +47,15 @@ exports.getSled = function (req, res, next) {
 };
 
 
-// Set last sled timestamp
+// Set last project timestamp
 
-exports.postSled = function (req, res, next) {
+exports.postProject = function (req, res, next) {
 
-    Sled.load(req.params.id, req.api.userId, false, function (sled, member, err) {
+    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
 
-        if (sled) {
+        if (project) {
 
-            exports.setLast(req.api.userId, sled, null, function (err) {
+            exports.setLast(req.api.userId, project, null, function (err) {
 
                 if (err === null) {
 
@@ -82,28 +82,28 @@ exports.postSled = function (req, res, next) {
 
 exports.getTask = function (req, res, next) {
 
-    Task.load(req.params.id, req.api.userId, false, function (task, err, sled) {
+    Task.load(req.params.id, req.api.userId, false, function (task, err, project) {
 
         if (task) {
 
             exports.load(req.api.userId, function (last, err) {
 
                 if (last &&
-                    last.sleds &&
-                    last.sleds[task.sled] &&
-                    last.sleds[task.sled].tasks &&
-                    last.sleds[task.sled].tasks[req.params.id]) {
+                    last.projects &&
+                    last.projects[task.project] &&
+                    last.projects[task.project].tasks &&
+                    last.projects[task.project].tasks[req.params.id]) {
 
-                    var record = { id: last._id, sleds: {} };
-                    record.sleds[task.sled] = { tasks: {} };
-                    record.sleds[task.sled].tasks[req.params.id] = last.sleds[task.sled].tasks[req.params.id];
+                    var record = { id: last._id, projects: {} };
+                    record.projects[task.project] = { tasks: {} };
+                    record.projects[task.project].tasks[req.params.id] = last.projects[task.project].tasks[req.params.id];
 
                     res.api.result = record;
                     next();
                 }
                 else if (err === null) {
 
-                    res.api.result = { id: req.api.userId, sleds: {} };
+                    res.api.result = { id: req.api.userId, projects: {} };
                     next();
                 }
                 else {
@@ -126,11 +126,11 @@ exports.getTask = function (req, res, next) {
 
 exports.postTask = function (req, res, next) {
 
-    Task.load(req.params.id, req.api.userId, false, function (task, err, sled) {
+    Task.load(req.params.id, req.api.userId, false, function (task, err, project) {
 
         if (task) {
 
-            exports.setLast(req.api.userId, sled, task, function (err) {
+            exports.setLast(req.api.userId, project, task, function (err) {
 
                 if (err === null) {
 
@@ -178,18 +178,18 @@ exports.load = function (userId, callback) {
 };
 
 
-// Clear sled last
+// Clear project last
 
-exports.delSled = function (userId, sledId, callback) {
+exports.delProject = function (userId, projectId, callback) {
 
     exports.load(userId, function (last, err) {
 
         if (last &&
-            last.sleds &&
-            last.sleds[sledId]) {
+            last.projects &&
+            last.projects[projectId]) {
 
             var changes = { $unset: {} };
-            changes.$unset['sleds.' + sledId] = 1;
+            changes.$unset['projects.' + projectId] = 1;
 
             Db.update('user.last', last._id, changes, function (err) {
 
@@ -213,7 +213,7 @@ exports.delSled = function (userId, sledId, callback) {
 
 // Set last timestamp
 
-exports.setLast = function (userId, sled, task, callback) {
+exports.setLast = function (userId, project, task, callback) {
 
     var now = Utils.getTimestamp();
 
@@ -229,54 +229,54 @@ exports.setLast = function (userId, sled, task, callback) {
 
                 if (task === null) {
 
-                    // Sled last: last->sleds.{sledId}.last
+                    // Project last: last->projects.{projectId}.last
 
-                    if (last.sleds) {
+                    if (last.projects) {
 
-                        if (last.sleds[sled._id]) {
+                        if (last.projects[project._id]) {
 
-                            changes.$set['sleds.' + sled._id + '.last'] = now;
+                            changes.$set['projects.' + project._id + '.last'] = now;
                         }
                         else {
 
-                            changes.$set['sleds.' + sled._id] = { tasks: {}, last: now };
+                            changes.$set['projects.' + project._id] = { tasks: {}, last: now };
                         }
                     }
                     else {
 
-                        changes.$set.sleds = {};
-                        changes.$set.sleds[sled._id] = { tasks: {}, last: now };
+                        changes.$set.projects = {};
+                        changes.$set.projects[project._id] = { tasks: {}, last: now };
                     }
                 }
                 else {
 
-                    // Task last: last->sleds.{sledId}.tasks.{taskId}
+                    // Task last: last->projects.{projectId}.tasks.{taskId}
 
-                    if (last.sleds) {
+                    if (last.projects) {
 
-                        if (last.sleds[sled._id]) {
+                        if (last.projects[project._id]) {
 
-                            if (last.sleds[sled._id].tasks) {
+                            if (last.projects[project._id].tasks) {
 
-                                changes.$set['sleds.' + sled._id + '.tasks.' + task._id] = now;
+                                changes.$set['projects.' + project._id + '.tasks.' + task._id] = now;
                             }
                             else {
 
-                                changes.$set['sleds.' + sled._id + '.tasks'] = {};
-                                changes.$set['sleds.' + sled._id + '.tasks'][task._id] = now;
+                                changes.$set['projects.' + project._id + '.tasks'] = {};
+                                changes.$set['projects.' + project._id + '.tasks'][task._id] = now;
                             }
                         }
                         else {
 
-                            changes.$set['sleds.' + sled._id] = { tasks: {} };
-                            changes.$set['sleds.' + sled._id].tasks[task._id] = now;
+                            changes.$set['projects.' + project._id] = { tasks: {} };
+                            changes.$set['projects.' + project._id].tasks[task._id] = now;
                         }
                     }
                     else {
 
-                        changes.$set.sleds = {};
-                        changes.$set.sleds[sled._id] = { tasks: {} };
-                        changes.$set.sleds[sled._id].tasks[task._id] = now;
+                        changes.$set.projects = {};
+                        changes.$set.projects[project._id] = { tasks: {} };
+                        changes.$set.projects[project._id].tasks[task._id] = now;
                     }
                 }
 
@@ -289,16 +289,16 @@ exports.setLast = function (userId, sled, task, callback) {
 
                 // First last timestamp
 
-                last = { _id: userId, sleds: {} };
-                last.sleds[sled._id] = { tasks: {} };
+                last = { _id: userId, projects: {} };
+                last.projects[project._id] = { tasks: {} };
 
                 if (task === null) {
 
-                    last.sleds[sled._id].last = now;
+                    last.projects[project._id].last = now;
                 }
                 else {
 
-                    last.sleds[sled._id].tasks[task._id] = now;
+                    last.projects[project._id].tasks[task._id] = now;
                 }
 
                 Db.insert('user.last', last, function (items, err) {

@@ -118,7 +118,7 @@ exports.token = function (req, res, next) {
 
                         break;
 
-                    case 'http://ns.postmile.net/sled':
+                    case 'http://ns.postmile.net/project':
 
                         // Check if client has 'login' scope
 
@@ -135,15 +135,15 @@ exports.token = function (req, res, next) {
                                 }
                                 else {
 
-                                    // Unknown Sled account
-                                    res.api.error = Err.oauth('invalid_grant', 'Unknown Sled account');
+                                    // Unknown local account
+                                    res.api.error = Err.oauth('invalid_grant', 'Unknown local account');
                                     next();
                                 }
                             });
                         }
                         else {
 
-                            // No client scope for Sled access
+                            // No client scope for local account access
                             res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
                             next();
                         }

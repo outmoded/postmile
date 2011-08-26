@@ -16,7 +16,7 @@ exports.normalize = function (rule) {
 
     // {object}.{key}[.{attribute}] {operator} {value} {logical} ...
 
-    // objects: sled
+    // objects: project
     // operators: ===, !==, <, >, <=, >=, contains
     // value: 'string', empty, number
     // logical: &&, ||
