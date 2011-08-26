@@ -209,45 +209,27 @@ preBody = function() {
 
 postYUI = function() {
 
-	var loadModules;
-	var useModules;
-
-	if( !debug ) {
-
-		loadModules = {
-					sled: { 
-						path: 'sled-load-min.js', // yui's ant compression puts gets into minified file
-						requires: [ 'node-base' ], // not sure why the requires in sledtasklist isn't sufficient
-						requires: [ 'substitute' ], // not sure why the requires in templates isn't sufficient
-						requires: [ 'plugin' ], // not sure why ... (and why not just -base)
-						lastIsBogus: null
-					}
-		}
-
-	} else {
-
-		loadModules = {
-					sledtasklist: { path: 'tasklist.js' },
-					sledglobal: { path: 'global.js' },
-					sledhistory: { path: 'history.js' },
-					sledsettings: { path: 'settings.js' },
-					sledsuggestionlist: { path: 'suggestionlist.js' },
-					sledtemplates: { path: 'templates.js' },
-					slednetwork: { path: 'network.js' },
-					sledstream: { path: 'stream.js' },
-					sleddnd: { path: 'dnd.js' },
-					sleduser: { path: 'user.js' },
-					sledsled: { path: 'sled.js' },
-					sledsledlist: { path: 'sledlist.js' },
-					sledcontacts: { path: 'contacts.js' },
-					sledtooltips: { path: 'tooltips.js' },
-					sleduiutils: { path: 'uiutils.js' },
-					sledtips: { path: 'tips.js' },
-					sledtour: { path: 'tour.js' },
-					'sled-calendar': { path: 'calendar.js' },
-					'sled-menu': { path: 'sled-menu.js' },
-					'sled-overlay-extras': { path: 'sled-overlay-extras.js' }
-		};
+	var loadModules = {
+				sledtasklist: { path: 'tasklist.js' },
+				sledglobal: { path: 'global.js' },
+				sledhistory: { path: 'history.js' },
+				sledsettings: { path: 'settings.js' },
+				sledsuggestionlist: { path: 'suggestionlist.js' },
+				sledtemplates: { path: 'templates.js' },
+				slednetwork: { path: 'network.js' },
+				sledstream: { path: 'stream.js' },
+				sleddnd: { path: 'dnd.js' },
+				sleduser: { path: 'user.js' },
+				sledsled: { path: 'sled.js' },
+				sledsledlist: { path: 'sledlist.js' },
+				sledcontacts: { path: 'contacts.js' },
+				sledtooltips: { path: 'tooltips.js' },
+				sleduiutils: { path: 'uiutils.js' },
+				sledtips: { path: 'tips.js' },
+				sledtour: { path: 'tour.js' },
+				'sled-calendar': { path: 'calendar.js' },
+				'sled-menu': { path: 'sled-menu.js' },
+				'sled-overlay-extras': { path: 'sled-overlay-extras.js' }
 	};
 
 	Y = new YUI( {
@@ -340,8 +322,7 @@ postBody = function() {
 	}
 
 	timeLog( "load initial modules YUI modules ", 3 );
-	Y.use( 	// use apply for the array into args Y.use( useModules, function(Y) {
-
+	Y.use(
 			// common
 			'node-base',
 			'json-parse',
