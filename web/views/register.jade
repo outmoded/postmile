@@ -1,10 +1,10 @@
 #two-columns
   .left
     a(href: '/')
-      h1 Postmile
+      h1 #{product.name}
 
   .right
-    h2 Welcome to Postmile!
+    h2 Welcome to #{product.name}!
 
     form#register-form(method: 'post', action: '/signup/register')
 

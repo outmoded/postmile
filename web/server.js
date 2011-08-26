@@ -416,6 +416,7 @@ internals.finalizeResponse = function (req, res) {
         locals.host = Config.host;
         locals.profile = req.api.profile;
         locals.auth = { facebook: Vault.facebook.clientId ? true : false, twitter: Vault.twitter.clientId ? true : false, yahoo: Vault.yahoo.clientId ? true : false };
+        locals.product = Config.product;
 
         // Add crumb
 
@@ -504,7 +505,8 @@ internals.errorPage = function (code, req, res, message, isAPI) {
             code: code === 404 ? 404 : 500,
             message: (code === 404 ? 'the page you were looking for was not found' : 'something went wrong...'),
             env: {},
-            host: Config.host
+            host: Config.host,
+            product: Config.product
         };
 
         res.render('error', locals);

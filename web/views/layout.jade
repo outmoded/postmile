@@ -3,7 +3,7 @@
 html(lang: 'en')
 
   head
-    title Postmile
+    title #{product.name}
     meta(http-equiv: 'Content-Language', content: 'en-us')    meta(http-equiv: 'Content-Type', content: 'text/html; charset=utf-8')    link(rel: 'shortcut icon', href: '/favicon.ico', type: 'image/x-icon')    link(rel: 'stylesheet', href: '/css/base.css', type: 'text/css', media: 'screen', charset: 'utf-8')
     link(rel: 'stylesheet', href: '/css/node-menunav-core.css', type: 'text/css', media: 'screen', charset: 'utf-8')
     script(src:'https://sec.yimg.com/combo?yui-ssl/3.3.0/build/yui/yui-min.js', language: 'javascript', type: 'text/javascript')
@@ -20,9 +20,9 @@ html(lang: 'en')
     #top
       #top-bar
         - if (typeof logo !== 'boolean' || logo !== false)
-          a#logo(href: '/') Postmile
+          a#logo(href: '/') #{product.name}
         - else
-          a#logo.invisible(href: '/') Postmile
+          a#logo.invisible(href: '/') #{product.name}
 
       - if (profile)
           #account.yui3-menu
