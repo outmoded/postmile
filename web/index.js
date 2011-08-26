@@ -58,6 +58,7 @@ Server.create([
     { method: 'POST', path: '/oauth/authorize', handler: Session.oauth, authentication: 'session' },
     { method: 'GET', path: '/oauth/issue', handler: Session.issue },
 
+    { method: 'GET', path: '/socket.io.js', handler: Misc.socketio },
     { method: 'GET', path: '/config.js', handler: Misc.config }]);
 
 

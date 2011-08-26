@@ -93,3 +93,12 @@ exports.config = function (req, res, next) {
     res.api.isAPI = true;
     next();
 };
+
+
+// Socket.IO Script Proxy
+
+exports.socketio = function (req, res, next) {
+
+    res.api.redirect = Config.host.uri('api') + '/socket.io/socket.io.js';
+    next();
+};
