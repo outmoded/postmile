@@ -13,7 +13,7 @@
   #two-columns
     .left
       a(href: '/')
-        h1 Sled
+        h1 Postmile
 
     .right
       h2 Sign in using one of your linked accounts
@@ -42,13 +42,13 @@
       a.close(href: 'javascript: closeOverlay();') x
       h1 Help is on the way!
       #reminder-main
-        .text Enter your email address or your Sled username.
+        .text Enter your email address or your Postmile username.
           br
           |We'll send you an email with a link you can use to sign back in.
         #reminder-form
           button.blue-button(onclick: 'reminder();') Send Request
           input#lookup-account(type: 'text', onkeyup: 'enterCall(event, reminder);', placeholder: 'enter email address or username')
         #reminder-status.error &nbsp;
-      #reminder-post.text Check your email for a message from Sled and follow the instructions to sign-in.
+      #reminder-post.text Check your email for a message from Postmile and follow the instructions to sign-in.
 
 
