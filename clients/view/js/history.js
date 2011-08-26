@@ -11,42 +11,42 @@
 *	eventually keep track of what the user may be doing (back, forward, etc)
 *
 *
-*/ 
+*/
 
-YUI.add('postmile-history', function(Y) {
+YUI.add('postmile-history', function (Y) {
 
-var gpostmile = Y.sled.gpostmile ;
-var hash ;
+    var gpostmile = Y.postmile.gpostmile;
+    var hash;
 
-function setHash() {	
-	history.setHash( hash ) ;
+    function setHash() {
+        history.setHash(hash);
+    }
+
+    function bind() {
+
+        // var history = new Y.History({
+        hash = new Y.HistoryHash({
+        // initialState: { }
+    });
+
+    Y.on('history:change', function (e) {
+
+        var changed = e.changed; // removed = e.removed;
+
+        if (changed.sled && e.src !== 'replace' && Y.postmile.sled) {
+            var ssled = gpostmile.projects[changed.sled.newVal];
+            Y.fire('sled:renderProject', ssled);
+        }
+
+    });
+
 }
 
-function bind() {	
+bind();
 
-	// var history = new Y.History({
-	hash = new Y.HistoryHash({
-		// initialState: { }
-	});
+Y.namespace('postmile').history = {	// export it
+    hash: hash,
+    last: null
+};
 
-	Y.on('history:change', function (e) {
-
-	  var changed = e.changed ;	// removed = e.removed;
-
-		if( changed.sled && e.src !== 'replace' && Y.sled.sled ) {
-			var ssled = gpostmile.projects[ changed.sled.newVal ] ;
-			Y.fire( 'sled:renderProject', ssled ) ;
-		}
-
-	});
-
-}
-
-bind() ;
-
-Y.namespace("sled").history = {	// export it
-	hash: hash,
-	last: null
-} ;
-
-}, "1.0.0" , {requires:['history']} );
+}, "1.0.0", { requires: ['history'] });

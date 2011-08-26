@@ -10,24 +10,24 @@
 *	the root data structure for profile, contacts, all projects, tasks, suggestions, tips, etc.
 *
 *
-*/ 
+*/
 
-YUI.add('postmile-global', function(Y) {
+YUI.add('postmile-global', function (Y) {
 
-Y.namespace("sled");
-Y.namespace("sled.global");
-Y.sled.global = {	// export it
-	// baseObject: {},
-	profile: {},
-	contacts: [],
-	projects: [],
-	sled: null,	// no active/selected sled
-	users: {},
-	tips: {},
-	tip: -1,
-	last: null
-} ;
-Y.namespace("sled.gpostmile");
-Y.sled.gpostmile = Y.sled.global ;
+    Y.namespace('postmile');
+    Y.namespace('postmile.global');
+    Y.postmile.global = {
 
-}, "1.0.0" , {requires:['node']} );
+        profile: {},
+        contacts: [],
+        projects: [],
+        sled: null, // no active/selected sled
+        users: {},
+        tips: {},
+        tip: -1,
+        last: null
+    };
+    Y.namespace('postmile.gpostmile');
+    Y.postmile.gpostmile = Y.postmile.global;
+
+}, "1.0.0", { requires: ['node'] });

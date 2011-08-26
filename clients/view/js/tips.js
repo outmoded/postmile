@@ -12,123 +12,123 @@
 
 YUI.add('postmile-tips', function (Y) {
 
-var gpostmile = Y.sled.gpostmile;
+    var gpostmile = Y.postmile.gpostmile;
 
 
-// renderTips
+    // renderTips
 
-function renderTips(tips, projectId) {
+    function renderTips(tips, projectId) {
 
-	if (!tips || (tips._networkRequestStatusCode && tips._networkRequestStatusCode !== 200)) {
-		return ;
-	}
+        if (!tips || (tips._networkRequestStatusCode && tips._networkRequestStatusCode !== 200)) {
+            return;
+        }
 
-	var sled = gpostmile.projects[projectId];
+        var sled = gpostmile.projects[projectId];
 
-	if (!tips || tips.length <= 0 || !sled) {
-		return;
-	}
+        if (!tips || tips.length <= 0 || !sled) {
+            return;
+        }
 
-	sled.tips = tips;
-	sled.tip = sled.tip || 0;
+        sled.tips = tips;
+        sled.tip = sled.tip || 0;
 
-	var target = Y.all('#tiptext');
-	var html = tips[sled.tip].text;
-	target.setContent(html);
+        var target = Y.all('#tiptext');
+        var html = tips[sled.tip].text;
+        target.setContent(html);
 
-}
-
-
-// increment the tip counter and render the next tip
-
-function nextTip() {
-
-	var sled = gpostmile.sled;
-
-	sled.tip = sled.tip + 1 < sled.tips.length ? sled.tip + 1 : 0;
-
-	renderTips(gpostmile.sled.tips, gpostmile.sled.id);
-
-}
+    }
 
 
-// show the user a context for the tip
+    // increment the tip counter and render the next tip
 
-function showTip() {
+    function nextTip() {
 
-	var sled = gpostmile.sled ;
-	var tip = sled.tips[ sled.tip ] ;
+        var sled = gpostmile.sled;
 
-	// until the API returns context - todo: look up tip.context locally to get node and pos
-	if( !tip.context || tip.context === 'sled.title' ) {
-		tip.context = sled.tip ===  -1 ? '.taskicon' : '.sled-title-box' ;
-		tip.pos = sled.tip ===  -1 ? 10 : [ -10, -10, 50, 20 ] ;
-	}
+        sled.tip = sled.tip + 1 < sled.tips.length ? sled.tip + 1 : 0;
 
-	// if there's a node, point it out, toggle
-	if( tip.context ) {
-		Y.fire( 'sled:pointToNode', '#showtip', tip.context, tip.pos, true ) ;
-	}
+        renderTips(gpostmile.sled.tips, gpostmile.sled.id);
 
-}
+    }
 
 
-//
+    // show the user a context for the tip
 
-function bind() {
+    function showTip() {
 
-	// tips panel - next, close, show, etc
+        var sled = gpostmile.sled;
+        var tip = sled.tips[sled.tip];
 
-	var showTips = Y.one("#showtips");
-	var tips = Y.all('#tips');
-	var closeTip = Y.one("#closetip");
+        // until the API returns context - todo: look up tip.context locally to get node and pos
+        if (!tip.context || tip.context === 'sled.title') {
+            tip.context = sled.tip === -1 ? '.taskicon' : '.sled-title-box';
+            tip.pos = sled.tip === -1 ? 10 : [-10, -10, 50, 20];
+        }
 
-	var showTipNode = Y.one("#showtip");
-	if (showTipNode) {
-		showTipNode.on('click', function (e) {
-			showTip();
-		});
-	}
+        // if there's a node, point it out, toggle
+        if (tip.context) {
+            Y.fire('sled:pointToNode', '#showtip', tip.context, tip.pos, true);
+        }
 
-	var nextTipNode = Y.one("#nexttip");
-	if (nextTipNode) {
-		nextTipNode.on('click', function (e) {
-			nextTip();
-		});
-	}
-
-	if (showTips) {
-		showTips.on('click', function (e) {
-			tips.setStyle("display", "inline");
-			showTips.setStyle("display", "none");
-		});
-	}
-
-	if (tips && closeTip) {
-		closeTip.on('click', function (e) {
-			tips.setStyle("display", "none");
-			// closeTip.setStyle("display", "inline") ;
-			showTips.setStyle("display", "inline");
-		});
-	}
-
-	// event handlers
-
-	Y.on( "sled:renderTips", function( tips, projectId ) {
-		renderTips( tips, projectId ) ;
-	});
-
-}
+    }
 
 
-bind() ;
+    //
+
+    function bind() {
+
+        // tips panel - next, close, show, etc
+
+        var showTips = Y.one("#showtips");
+        var tips = Y.all('#tips');
+        var closeTip = Y.one("#closetip");
+
+        var showTipNode = Y.one("#showtip");
+        if (showTipNode) {
+            showTipNode.on('click', function (e) {
+                showTip();
+            });
+        }
+
+        var nextTipNode = Y.one("#nexttip");
+        if (nextTipNode) {
+            nextTipNode.on('click', function (e) {
+                nextTip();
+            });
+        }
+
+        if (showTips) {
+            showTips.on('click', function (e) {
+                tips.setStyle("display", "inline");
+                showTips.setStyle("display", "none");
+            });
+        }
+
+        if (tips && closeTip) {
+            closeTip.on('click', function (e) {
+                tips.setStyle("display", "none");
+                // closeTip.setStyle("display", "inline") ;
+                showTips.setStyle("display", "inline");
+            });
+        }
+
+        // event handlers
+
+        Y.on("sled:renderTips", function (tips, projectId) {
+            renderTips(tips, projectId);
+        });
+
+    }
 
 
-// export it
-
-Y.namespace("sled").tips = {	
-	last: null
-};
+    bind();
 
 
-}, "1.0.0", {requires:['node']});
+    // export it
+
+    Y.namespace('postmile').tips = {
+        last: null
+    };
+
+
+}, "1.0.0", { requires: ['node'] });

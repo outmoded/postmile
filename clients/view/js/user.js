@@ -13,97 +13,97 @@
 *	render the tips
 *	and manage the next, close, and show tip links
 *
-*/ 
+*/
 
 YUI.add('postmile-user', function (Y) {
 
-	var gpostmile = Y.sled.gpostmile;
+    var gpostmile = Y.postmile.gpostmile;
 
 
-	// login is more of init now that we've got auth
-	// it sets the current sled based on the frag passed in 
-	// gets the profile, list of projects, and contacts
+    // login is more of init now that we've got auth
+    // it sets the current sled based on the frag passed in 
+    // gets the profile, list of projects, and contacts
 
-	function login(fragProject) {
+    function login(fragProject) {
 
-		if (fragProject) {
-			gpostmile.activeProjectId = fragProject;
-		} else {
-			var confirmActiveProject = function(response) {
-				if (response && (response._networkRequestStatusCode && response._networkRequestStatusCode === 200)) {
-					gpostmile.activeProjectId = response.activesled;
-				} else {
-					Y.log('login confirmActiveProject - error: ' + JSON.stringify(response));
-				}
-			} ;
-			getJson("/storage/activesled", confirmActiveProject); // sync these:?
-		}
+        if (fragProject) {
+            gpostmile.activeProjectId = fragProject;
+        } else {
+            var confirmActiveProject = function (response) {
+                if (response && (response._networkRequestStatusCode && response._networkRequestStatusCode === 200)) {
+                    gpostmile.activeProjectId = response.activeProject;
+                } else {
+                    Y.log('login confirmActiveProject - error: ' + JSON.stringify(response));
+                }
+            };
+            getJson("/storage/activeProject", confirmActiveProject); // sync these:?
+        }
 
-		getJson("/profile", renderProfile);
+        getJson("/profile", renderProfile);
 
-		getJson( "/projects", function( projects ){ Y.fire( 'sled:renderProjects', projects, true ) ; } ) ; 
+        getJson("/projects", function (projects) { Y.fire('sled:renderProjects', projects, true); });
 
-		getJson( "/contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
-	}
-
-
-	// renderProfile
-
-	function renderProfile(profile) {
-
-		if (!profile || (profile._networkRequestStatusCode && profile._networkRequestStatusCode !== 200)) {
-			Y.log('renderProfile - no data: ' + JSON.stringify(profile));
-			return;
-		}
-
-		gpostmile.profile = profile;
-
-		// set name wrt precedence: profile name, username, first email addr, and finally 'Account'
-		var target = Y.one('#account #name');		
-		var name;
-		name = name || gpostmile.profile.name;
-		name = name || gpostmile.profile.username;
-		name = name || ( gpostmile.profile.emails && gpostmile.profile.emails.length > 0 && gpostmile.profile.emails[0].address );
-		name = name || 'Account';
-		gpostmile.profile.display = name;
-		target.setContent(name);
-
-		// show the acct menu now that it's loaded
-		var accountmenu = Y.one("#account");
-		accountmenu.removeClass("sled-loading");
-		setTimeout(function () { accountmenu.one('#account-menu').removeClass("sled-loading"); }, 1000);
-
-		Y.fire( 'sled:checkUncover' );
-	}
+        getJson("/contacts", function (contacts) { Y.fire('sled:renderContacts', contacts); });
+    }
 
 
-	// attach UI 
+    // renderProfile
 
-	function bind() {
+    function renderProfile(profile) {
 
-		// event handlers
+        if (!profile || (profile._networkRequestStatusCode && profile._networkRequestStatusCode !== 200)) {
+            Y.log('renderProfile - no data: ' + JSON.stringify(profile));
+            return;
+        }
 
-		Y.on( "sled:renderProfile", function( profile ) {
-			renderProfile( profile ) ;
-		});
+        gpostmile.profile = profile;
 
-	}
+        // set name wrt precedence: profile name, username, first email addr, and finally 'Account'
+        var target = Y.one('#account #name');
+        var name;
+        name = name || gpostmile.profile.name;
+        name = name || gpostmile.profile.username;
+        name = name || (gpostmile.profile.emails && gpostmile.profile.emails.length > 0 && gpostmile.profile.emails[0].address);
+        name = name || 'Account';
+        gpostmile.profile.display = name;
+        target.setContent(name);
+
+        // show the acct menu now that it's loaded
+        var accountmenu = Y.one("#account");
+        accountmenu.removeClass("sled-loading");
+        setTimeout(function () { accountmenu.one('#account-menu').removeClass("sled-loading"); }, 1000);
+
+        Y.fire('sled:checkUncover');
+    }
 
 
-	// main - start
+    // attach UI 
 
-	bind() ;
+    function bind() {
+
+        // event handlers
+
+        Y.on("sled:renderProfile", function (profile) {
+            renderProfile(profile);
+        });
+
+    }
 
 
-	// main - kick it all off, get token et al
+    // main - start
 
-	loadCredentials( function () { login(fragment); } );
+    bind();
 
 
-	// exports
+    // main - kick it all off, get token et al
 
-	Y.namespace("sled").user = {	
-	} ;
+    loadCredentials(function () { login(fragment); });
+
+
+    // exports
+
+    Y.namespace('postmile').user = {
+};
 
 
 }, "1.0.0", { requires: ["'postmile-projects-list'", "postmile-global", 'postmile-network', 'postmile-contacts', 'node'] });

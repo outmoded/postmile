@@ -14,1444 +14,1444 @@
 *	participants icon (rendering, w and w/o 'Me', menu of sled participants with checkbox state, delete)
 *
 *
-*/ 
+*/
 
 // tasks module - perhaps should factor-out details since that may become sophisticated on its own
 
-YUI.add('postmile-tasks-list', function(Y) {
+YUI.add('postmile-tasks-list', function (Y) {
 
-var gpostmile = Y.sled.gpostmile ;
-var taskList = Y.one( "#tasks" ) ;
-var exitKey = -1 ;	// key last typed when exiting dialog
+    var gpostmile = Y.postmile.gpostmile;
+    var taskList = Y.one("#tasks");
+    var exitKey = -1; // key last typed when exiting dialog
 
-// tri-states in task checkbox for css, api, and ui
-var checkStates = [
+    // tri-states in task checkbox for css, api, and ui
+    var checkStates = [
 	{ css: 'default', api: 'open', ui: 'open' },
 	{ css: 'in-progress', api: 'pending', ui: 'pending' },
 	{ css: 'completed', api: 'close', ui: 'closed' }
-] ;
-
-
-// render
-
-function render( tasks, projectId ) {
-
-	if (!tasks || ( tasks._networkRequestStatusCode && tasks._networkRequestStatusCode !== 200 ) ) {
-		// it's okay for thre to be no tasks (still need to render none/blank)
-		// tho if it's a net err, perhaps could retry (but that'd be at a lower level)
-	}
-
-	// may sometimes not have sled yet
-	if( gpostmile && gpostmile.projects ) {
-		var sled = gpostmile.projects[projectId] ;
-		if( sled ) {
-			sled.tasks = tasks ;
-		}
-	}
-
-	// generate the html for the given task data
-	var html = "" ;
-	if( tasks ) {	// && isArray && length > 0
-		var i,l ;
-		for (/*var*/ i=0, l=tasks.length; i < l; ++i) {
-			var task = tasks[i] ;
-			task.index = i ;	// for convenience if we have only key and want to find place in array
-			tasks[task.id] = task ;	
-			html += Y.sled.templates.taskListHtml( task ) ;
-		}
-	}
-	html += "" ;
-
-	// try to stop setContent from barfing
-	try {
-		taskNodes = taskList.all('>li');
-		taskNodes.remove() ;
-	} catch( err ) {
-		Y.log( 'error replacing tasklist content' ) ;
-	}
-
-	// set the html of the task data into the list
-	taskList.setContent(html);
-	
-	// do things like turn off 'updated ago' on long titles 
-	// (perhaps we should make this a func and do this also for adding and dropping suggestions)
-	// manageLongTitles() ;
-	var liNodes = taskList.all("li");
-	liNodes.each( showUpdatedAgo );
-
-	// append the 'Click to Enter' task
-	addAddTask( taskList ) ;
-
-	sync() ;
-
-	timeLog( "done rendering tasks " ) ;
-}
-
-
-// check to see if title's updatedAgo has wrapped back around
-
-function showEllipses( liTarget ) {
-	
-	var text = liTarget.one( '.measureText' ) ;
-	var title = liTarget.one( '.tasktitle' ) ;
-	
-	if( text && title ) {
-		
-		text.set( 'value', title.get( 'value' ) ) ;
-	
-		var container = liTarget.one( '.titlearea' ) ;
-		// count =  node.get('value','').split( '\n' ).length ;
-		// node.setAttribute("rows",count);
-		// text.style.height = text.scrollHeight+'px';
-		var sw = text.get( 'scrollWidth' ) ;
-
-		var ow = parseInt( container.getStyle("width") ) ;
-		var lw = parseInt( liTarget.getStyle("width") ) ;
-		var tow = lw - 84 - 5 ;	// target/max width from liTarget down to span
-		var tsw = tow - 36 - 5 ;	// target/max width from span to text
-		// var cw = container.get("clientWidth") ;
-		// var padLeft = parseInt( text.getStyle( 'padding-left' ) ) ;
-		// var padRight = parseInt( text.getStyle( 'padding-right' ) ) ;
-		var editing = liTarget.hasClass( 'editing' ) ;
-		var open = liTarget.hasClass( 'open' ) ;
-
-		if( false ) {
-			;
-		} else if( open ) {
-		
-			// if( sw <= ow || editing ) {
-			if( sw < tsw || ow < tow || editing ) {
-					title.setAttribute("rows", "1") ;
-					title.setAttribute("wrap", "off") ;
-				} else {
-					title.setAttribute("rows", "") ;
-					title.setAttribute("wrap", "") ;
-				}
-			
-			liTarget.removeClass( 'long-title' ) ;
-			liTarget.addClass( 'short-title' ) ;
-			title.setStyle("width", (sw/*-padLeft-padRight*/)+'px') ;
-		
-		} else if( editing ) {
-		
-			liTarget.removeClass( 'long-title' ) ;
-			liTarget.addClass( 'short-title' ) ;
-			title.setStyle("width", '') ;
-		
-		// } else if( sw <= ow || editing ) {
-		} else if( sw < tsw || ow < tow || editing ) {
-		
-			liTarget.removeClass( 'long-title' ) ;
-			liTarget.addClass( 'short-title' ) ;
-			title.setStyle("width", (sw/*-padLeft-padRight*/)+'px') ;
-		
-		} else {
-		
-			liTarget.removeClass( 'short-title' ) ;
-			liTarget.addClass( 'long-title' ) ;
-			title.setStyle("width", '') ;
-		
-		}
-
-		container.setStyle("width", (tow)+'px') ;
-		title.setStyle("width", (tsw)+'px') ;
-
-	}
-
-}
-
-function showUpdatedAgo( liTarget, doSync ) {
-
-	// presume scroll bar for calculations
-	// better to grow task width than to shrink task width
-	var tasks = document.getElementById('tasks').style;
-	tasks.overflowY = 'scroll';
-
-	var titleNode = liTarget.one( ".tasktitle" ) ;
-	var updatedAgoNode = liTarget.one( ".updatedAgo" ) ;
-	// var measureSpan = liTarget.one( '.measureSpan' ) ;
-	var measureText = liTarget.one( '.measureText' ) ;
-	
-	if( titleNode && updatedAgoNode && measureText ) {
-		
-		var display = updatedAgoNode.getStyle( 'display' ) ;
-
-		// measureSpan.setContent( titleNode.get( 'value' ) ) ;
-		measureText.set( 'value', titleNode.get( 'value' ) ) ;
-		
-		liTarget.removeClass( 'updatedago-would-wrap' ) ;	// node wrapped, hide it
+];
+
+
+    // render
+
+    function render(tasks, projectId) {
+
+        if (!tasks || (tasks._networkRequestStatusCode && tasks._networkRequestStatusCode !== 200)) {
+            // it's okay for thre to be no tasks (still need to render none/blank)
+            // tho if it's a net err, perhaps could retry (but that'd be at a lower level)
+        }
+
+        // may sometimes not have sled yet
+        if (gpostmile && gpostmile.projects) {
+            var sled = gpostmile.projects[projectId];
+            if (sled) {
+                sled.tasks = tasks;
+            }
+        }
+
+        // generate the html for the given task data
+        var html = "";
+        if (tasks) {	// && isArray && length > 0
+            var i, l;
+            for (/*var*/i = 0, l = tasks.length; i < l; ++i) {
+                var task = tasks[i];
+                task.index = i; // for convenience if we have only key and want to find place in array
+                tasks[task.id] = task;
+                html += Y.postmile.templates.taskListHtml(task);
+            }
+        }
+        html += "";
 
-		var x = titleNode.getX() ;
-		// var w = parseInt( measureSpan.getStyle("width") ) ;
-		var w = measureText.get( 'scrollWidth' ) ;
+        // try to stop setContent from barfing
+        try {
+            taskNodes = taskList.all('>li');
+            taskNodes.remove();
+        } catch (err) {
+            Y.log('error replacing tasklist content');
+        }
 
-		updatedAgoNode.setX( x + w ) ;
-	
-	}
+        // set the html of the task data into the list
+        taskList.setContent(html);
 
-	showEllipses( liTarget ) ;
+        // do things like turn off 'updated ago' on long titles 
+        // (perhaps we should make this a func and do this also for adding and dropping suggestions)
+        // manageLongTitles() ;
+        var liNodes = taskList.all("li");
+        liNodes.each(showUpdatedAgo);
 
-	if( doSync ) {
-		sync() ;
-	}
-}
+        // append the 'Click to Enter' task
+        addAddTask(taskList);
 
+        sync();
 
-// when tasks are changed, need to ensure they have the correctly generated states
-// for DnD and tooltips
+        timeLog("done rendering tasks ");
+    }
 
-function sync() {
 
-	if( Y.sled.dnd && Y.sled.dnd.tasksDndDelegate ) {
-		Y.sled.dnd.tasksDndDelegate.syncTargets() ; // gpostmile.tasksSortable.delegate.syncTargets() ;
-	}
+    // check to see if title's updatedAgo has wrapped back around
 
-	if( Y.sled.tooltips && Y.sled.tooltips.tasktip ) {
-		Y.sled.tooltips.tasktip.set( "triggerNodes", ".yui3-hastooltip" ) ;
-		Y.sled.tooltips.tasktip.syncUI() ;
-	}
+    function showEllipses(liTarget) {
 
-}
+        var text = liTarget.one('.measureText');
+        var title = liTarget.one('.tasktitle');
 
+        if (text && title) {
 
-// reorder
+            text.set('value', title.get('value'));
 
-function reorder( dragNode ) {
+            var container = liTarget.one('.titlearea');
+            // count =  node.get('value','').split( '\n' ).length ;
+            // node.setAttribute("rows",count);
+            // text.style.height = text.scrollHeight+'px';
+            var sw = text.get('scrollWidth');
 
-	var projectId = gpostmile.sled.id ;
-	var sled = gpostmile.projects[projectId] ;
-	var tasks = sled.tasks ;
+            var ow = parseInt(container.getStyle("width"));
+            var lw = parseInt(liTarget.getStyle("width"));
+            var tow = lw - 84 - 5; // target/max width from liTarget down to span
+            var tsw = tow - 36 - 5; // target/max width from span to text
+            // var cw = container.get("clientWidth") ;
+            // var padLeft = parseInt( text.getStyle( 'padding-left' ) ) ;
+            // var padRight = parseInt( text.getStyle( 'padding-right' ) ) ;
+            var editing = liTarget.hasClass('editing');
+            var open = liTarget.hasClass('open');
 
-	var dropNode = dragNode.get( 'nextSibling' ) ;
-	var dropIndex = tasks.length ;
-	if( dropNode ) {
-		var dropId = dropNode.getAttribute('task') ;
-		if( dropId ) {	// might've been on addnewtask
-			var dropTask = tasks[dropId] ;
-			dropIndex = dropTask.index ;
-		}
-	}
+            if (false) {
+                ;
+            } else if (open) {
 
-	var dragId = dragNode.getAttribute('task') ;
-	var dragTask = tasks[dragId] ;
-	var dragIndex = dragTask.index ;
+                // if( sw <= ow || editing ) {
+                if (sw < tsw || ow < tow || editing) {
+                    title.setAttribute("rows", "1");
+                    title.setAttribute("wrap", "off");
+                } else {
+                    title.setAttribute("rows", "");
+                    title.setAttribute("wrap", "");
+                }
 
-	if( dragIndex < dropIndex ) {
-		dropIndex--;
-	}
+                liTarget.removeClass('long-title');
+                liTarget.addClass('short-title');
+                title.setStyle("width", (sw/*-padLeft-padRight*/) + 'px');
 
-	if( dragTask.index !== dropIndex ) {
+            } else if (editing) {
 
-		// post new order
-		var confirmTaskOrder = function( response, myarg ) {
+                liTarget.removeClass('long-title');
+                liTarget.addClass('short-title');
+                title.setStyle("width", '');
 
-			if( response.status === 'ok' ) {
-				// task.rev = response.rev ;
+                // } else if( sw <= ow || editing ) {
+            } else if (sw < tsw || ow < tow || editing) {
 
-				// change array order
-				var dragSplice = tasks.splice( dragIndex, 1 ) ;
-				tasks.splice( dropIndex, 0, dragSplice[0] ) ;
+                liTarget.removeClass('long-title');
+                liTarget.addClass('short-title');
+                title.setStyle("width", (sw/*-padLeft-padRight*/) + 'px');
 
-				// update index fields
-				if( tasks ) {	// just update all indecies
-					var i,l ;
-					for (/*var*/ i=0, l=tasks.length; i < l; ++i) {
-						var task = tasks[i] ;
-						task.index = i ;	// for convenience if we have only key and want to find place in array
-						Y.assert( tasks[task.id] === task ) ;	
-					}
-				}
+            } else {
 
-				Y.fire( 'sled:statusMessage', 'Item reordered' ) ;
+                liTarget.removeClass('short-title');
+                liTarget.addClass('long-title');
+                title.setStyle("width", '');
 
-			} else {
+            }
 
-				Y.fire( 'sled:renderProject', Y.sled.gpostmile.sled ) ;
+            container.setStyle("width", (tow) + 'px');
+            title.setStyle("width", (tsw) + 'px');
 
-				Y.fire( 'sled:errorMessage',  'Item reorder failed' ) ;
+        }
 
-			}
-		} ;
+    }
 
-		postJson( "/task/" + dragTask.id + "?position=" + dropIndex, "", confirmTaskOrder ) ;
-	}
+    function showUpdatedAgo(liTarget, doSync) {
 
-}
+        // presume scroll bar for calculations
+        // better to grow task width than to shrink task width
+        var tasks = document.getElementById('tasks').style;
+        tasks.overflowY = 'scroll';
 
+        var titleNode = liTarget.one(".tasktitle");
+        var updatedAgoNode = liTarget.one(".updatedAgo");
+        // var measureSpan = liTarget.one( '.measureSpan' ) ;
+        var measureText = liTarget.one('.measureText');
 
-// util to add an addNewTask (aka 'Click to Enter') to the list
+        if (titleNode && updatedAgoNode && measureText) {
 
-function addAddTask( taskList ) {
+            var display = updatedAgoNode.getStyle('display');
 
-	var html = Y.sled.templates.listAddTaskTemplate ;
+            // measureSpan.setContent( titleNode.get( 'value' ) ) ;
+            measureText.set('value', titleNode.get('value'));
 
-	if( !taskList ) {
-		taskList = Y.one('#tasks');
-	}
+            liTarget.removeClass('updatedago-would-wrap'); // node wrapped, hide it
 
-	taskList.append(html);	// it'd be nice if appened returned appended node
+            var x = titleNode.getX();
+            // var w = parseInt( measureSpan.getStyle("width") ) ;
+            var w = measureText.get('scrollWidth');
 
-	// don't let the 'Click to Enter' task be drag or drop able
-	var addTaskLi = taskList.one( ".addnewtask" ) ;
-	addTaskLi.removeClass( 'yui3-dd-drop' ) ;
+            updatedAgoNode.setX(x + w);
 
-}
+        }
 
+        showEllipses(liTarget);
 
-// dropSuggestion 
+        if (doSync) {
+            sync();
+        }
+    }
 
-function dropSuggestion( dragNode ) {
 
-	var projectId = gpostmile.sled.id ;
-	var tasks = gpostmile.sled.tasks ;
-	var suggestions = gpostmile.sled.suggestions ;
-	var dragId = dragNode.getAttribute('suggestion') ;
-	var dragSuggestion = suggestions[dragId] ;
-	// var dragIndex = dragSuggestion.index ;
-	var dropNode = dragNode.get( 'nextSibling' ) ;
-	var dropIndex = tasks.length ;
+    // when tasks are changed, need to ensure they have the correctly generated states
+    // for DnD and tooltips
 
-	if( dropNode ) {
-		var dropId = dropNode.getAttribute('task') ;
-		if( dropId ) {	// might've been on addnewtask
-			var dropTask = tasks[dropId] ;
-			dropIndex = dropTask.index ;
-		}
-	}
+    function sync() {
 
-	var title = dragSuggestion.title ;	// copy?
-	// var json = '{"title":"' + title + '"}'  ;
-	var task = {"title":title, "participantsCount":0}  ;
-	var html = Y.sled.templates.taskInnerHtml( task ) ;
-	dragNode.setContent( html ) ;
+        if (Y.postmile.dnd && Y.postmile.dnd.tasksDndDelegate) {
+            Y.postmile.dnd.tasksDndDelegate.syncTargets(); // gpostmile.tasksSortable.delegate.syncTargets() ;
+        }
 
-	showUpdatedAgo( dragNode, true ) ;
+        if (Y.postmile.tooltips && Y.postmile.tooltips.tasktip) {
+            Y.postmile.tooltips.tasktip.set("triggerNodes", ".yui3-hastooltip");
+            Y.postmile.tooltips.tasktip.syncUI();
+        }
 
-	addSuggestionToServer( dragSuggestion, gpostmile.sled, tasks, task, dropIndex, dragNode ) ;
+    }
 
-}
 
+    // reorder
 
-// addSuggestion
+    function reorder(dragNode) {
 
-function addSuggestion( suggestion ) {
+        var projectId = gpostmile.sled.id;
+        var sled = gpostmile.projects[projectId];
+        var tasks = sled.tasks;
 
-	var projectId = gpostmile.sled.id ;
-	var tasks = gpostmile.sled.tasks ;
+        var dropNode = dragNode.get('nextSibling');
+        var dropIndex = tasks.length;
+        if (dropNode) {
+            var dropId = dropNode.getAttribute('task');
+            if (dropId) {	// might've been on addnewtask
+                var dropTask = tasks[dropId];
+                dropIndex = dropTask.index;
+            }
+        }
 
-	var title = suggestion.title ;
-	var task = {"title":title, "participantsCount":0}  ;
+        var dragId = dragNode.getAttribute('task');
+        var dragTask = tasks[dragId];
+        var dragIndex = dragTask.index;
 
-	var html = Y.sled.templates.taskListHtml( task ) ;
-	var newNode = Y.Node.create( html ) ;
+        if (dragIndex < dropIndex) {
+            dropIndex--;
+        }
 
-	// append to task list
-	var tasklistNode = Y.one( '#tasks' ) ;
-	var lastNode = tasklistNode.one( 'li:last-child' ) ;
+        if (dragTask.index !== dropIndex) {
 
-	// just before addAddTask 'Click to Enter'
-	lastNode.insertBefore( newNode, lastNode ) ;
+            // post new order
+            var confirmTaskOrder = function (response, myarg) {
 
-	showUpdatedAgo( newNode, true ) ;
+                if (response.status === 'ok') {
+                    // task.rev = response.rev ;
 
-	// scroll / animate to end of list
-	scrollNodeToBottom( newNode ) ;
+                    // change array order
+                    var dragSplice = tasks.splice(dragIndex, 1);
+                    tasks.splice(dropIndex, 0, dragSplice[0]);
 
-	addSuggestionToServer( suggestion, gpostmile.sled, tasks, task, tasks.length, newNode ) ;
-}
+                    // update index fields
+                    if (tasks) {	// just update all indecies
+                        var i, l;
+                        for (/*var*/i = 0, l = tasks.length; i < l; ++i) {
+                            var task = tasks[i];
+                            task.index = i; // for convenience if we have only key and want to find place in array
+                            Y.assert(tasks[task.id] === task);
+                        }
+                    }
 
+                    Y.fire('sled:statusMessage', 'Item reordered');
 
-// addSuggestionToServer
+                } else {
 
-function addSuggestionToServer( suggestion, sled, tasks, task, index, node ) {
+                    Y.fire('sled:renderProject', Y.postmile.gpostmile.sled);
 
-	function confirmDroppedSuggestionTaskAdded( response, myarg ) { // response has id, rev, status
+                    Y.fire('sled:errorMessage', 'Item reorder failed');
 
-		if( response.status === 'ok' ) {
+                }
+            };
 
-			task.rev = response.rev ;
-			task.id = response.id ;
+            postJson("/task/" + dragTask.id + "?position=" + dropIndex, "", confirmTaskOrder);
+        }
 
-			task.index = index ;
-			tasks.splice( index, 0, task ) ;	// tasks[index] = task would just replace / stomp
+    }
 
 
-			tasks[task.id] = task ;
+    // util to add an addNewTask (aka 'Click to Enter') to the list
 
-			node.setAttribute("task",task.id);
+    function addAddTask(taskList) {
 
-			Y.fire( 'sled:statusMessage', 'Suggestion added' ) ;
+        var html = Y.postmile.templates.listAddTaskTemplate;
 
-		} else {
+        if (!taskList) {
+            taskList = Y.one('#tasks');
+        }
 
-			// todo: undelete/regen suggesitons list, renderSuggestions
+        taskList.append(html); // it'd be nice if appened returned appended node
 
-			Y.fire( 'sled:renderProject', sled ) ;
+        // don't let the 'Click to Enter' task be drag or drop able
+        var addTaskLi = taskList.one(".addnewtask");
+        addTaskLi.removeClass('yui3-dd-drop');
 
-			Y.fire( 'sled:errorMessage',  'Suggestion add failed' ) ;
+    }
 
-		}
-	}
 
-	putJson('/project/' + sled.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index, 
-		'', 
-		confirmDroppedSuggestionTaskAdded ) ;
+    // dropSuggestion 
 
-	sync() ;
+    function dropSuggestion(dragNode) {
 
-}
+        var projectId = gpostmile.sled.id;
+        var tasks = gpostmile.sled.tasks;
+        var suggestions = gpostmile.sled.suggestions;
+        var dragId = dragNode.getAttribute('suggestion');
+        var dragSuggestion = suggestions[dragId];
+        // var dragIndex = dragSuggestion.index ;
+        var dropNode = dragNode.get('nextSibling');
+        var dropIndex = tasks.length;
 
+        if (dropNode) {
+            var dropId = dropNode.getAttribute('task');
+            if (dropId) {	// might've been on addnewtask
+                var dropTask = tasks[dropId];
+                dropIndex = dropTask.index;
+            }
+        }
 
-// renderDetails
+        var title = dragSuggestion.title; // copy?
+        // var json = '{"title":"' + title + '"}'  ;
+        var task = { "title": title, "participantsCount": 0 };
+        var html = Y.postmile.templates.taskInnerHtml(task);
+        dragNode.setContent(html);
 
-function renderDetails( details, task ) {
-	task.details = details ;
-	
-	var html = Y.sled.templates.taskDetailsHtml( task ) ;
-	task.liDetailsTextTarget.setContent(html);
-	
-	html = Y.sled.templates.taskEditedByHtml( task ) ;
-	task.liEditedByTarget.setContent(html);
-}
+        showUpdatedAgo(dragNode, true);
 
+        addSuggestionToServer(dragSuggestion, gpostmile.sled, tasks, task, dropIndex, dragNode);
 
-// manage size of details input
+    }
 
-function shrinkDetails( node ) {
-	node.setStyle("height", '5px') ;	// nominal size for empty line
-}
-function expandDetails( node ) {	// could do this on delete as well
-	// count =  node.get('value','').split( '\n' ).length ;
-	// node.setAttribute("rows",count);
-	// text.style.height = text.scrollHeight+'px';
-	var sh = node.get( 'scrollHeight' ) ;
-	// var oh = node.getStyle("height") ;
-	// var ch = node.get("clientHeight") ;
-	var padTop = parseInt( node.getStyle( 'padding-top' ) ) ;
-	var padBot = parseInt( node.getStyle( 'padding-bottom' ) ) ;
-	node.setStyle("height", (sh-padTop-padBot)+'px') ;
-}
-function resizeDetails( node ) {
-	shrinkDetails( node ) ;
-	expandDetails( node ) ;
-}
 
+    // addSuggestion
 
-// close all details
+    function addSuggestion(suggestion) {
 
-function closeAllDetails() {
+        var projectId = gpostmile.sled.id;
+        var tasks = gpostmile.sled.tasks;
 
-	var liNodes = taskList.all("li");
-	// var liTextareaNodes = taskList.all("textarea");
+        var title = suggestion.title;
+        var task = { "title": title, "participantsCount": 0 };
 
-	liNodes.removeClass("open") ;
-	liNodes.removeClass("active") ;
-	liNodes.removeClass("participantsMenu") ;
+        var html = Y.postmile.templates.taskListHtml(task);
+        var newNode = Y.Node.create(html);
 
-	var liAnchorTargets = taskList.all( ".tasktitle" ) ;
-	liAnchorTargets.setStyle("white-space", "nowrap") ;
-	liAnchorTargets.setAttribute("rows", "1") ;
-	liAnchorTargets.setAttribute("wrap", "off") ;
-	
-}
+        // append to task list
+        var tasklistNode = Y.one('#tasks');
+        var lastNode = tasklistNode.one('li:last-child');
 
+        // just before addAddTask 'Click to Enter'
+        lastNode.insertBefore(newNode, lastNode);
 
-// scroll / animate to end of list
+        showUpdatedAgo(newNode, true);
 
-function checkNodeOverTop( node, msg ) {
-	
-	var tasklistNode = Y.one( '#tasks' ) ;
-	
-	var oldScrollTop = tasklistNode.get( 'scrollTop' ) ;
-	var clientHeight = tasklistNode.get( 'scrollHeight' ) ;
-	var containerHeight = tasklistNode.get( 'clientHeight' ) ;
-	var containerY = tasklistNode.getXY()[1] ;
-	var nodeHeight = parseInt( node.getStyle( 'height' ), 10 ) ;
-	var nodeY = node.getXY()[1] ;
-	// var scrollTop = clientHeight - containerHeight ;
-	var containerBottom = containerY + containerHeight ;
-	var nodeBottom = nodeY + nodeHeight ;
-	
-	if( nodeBottom > containerBottom || ( nodeY < containerY && nodeHeight > containerHeight ) ) {
-		var overTop = nodeBottom - containerBottom ;
-		var newScrollTop = oldScrollTop + overTop ;
-		scrollTo( newScrollTop ) ;
-	} else if( nodeY < containerY ) {
-		var overTop = containerY - nodeY ;
-		var newScrollTop = oldScrollTop - overTop ;
-		scrollTo( newScrollTop ) ;
-	}
+        // scroll / animate to end of list
+        scrollNodeToBottom(newNode);
 
-}
+        addSuggestionToServer(suggestion, gpostmile.sled, tasks, task, tasks.length, newNode);
+    }
 
 
-// scroll / animate to end of list
+    // addSuggestionToServer
 
-function scrollNodeToBottom( node ) {
-	
-	var tasklistNode = Y.one( '#tasks' ) ;
-	
-	var clientHeight = tasklistNode.get( 'scrollHeight' ) ;
-	var containerHeight = tasklistNode.get( 'clientHeight' ) ;
-	var scrollTop = clientHeight - containerHeight ;
+    function addSuggestionToServer(suggestion, sled, tasks, task, index, node) {
 
-	scrollTo( scrollTop ) ;
-	
-}
+        function confirmDroppedSuggestionTaskAdded(response, myarg) { // response has id, rev, status
 
-function scrollTo( scrollTop ) {
+            if (response.status === 'ok') {
 
-	var tasklistNode = Y.one( '#tasks' ) ;
+                task.rev = response.rev;
+                task.id = response.id;
 
-	var oldScrollTop = tasklistNode.get( 'scrollTop' ) ;
+                task.index = index;
+                tasks.splice(index, 0, task); // tasks[index] = task would just replace / stomp
 
-	// todo: protect against Anim not being loaded yet
-	var scrollAnim = new Y.Anim({
-		node: tasklistNode,
-		to: {	// width: 0, height: 0
-			scrollTop: scrollTop
-		}
-	});
 
-	var scrollTime = Math.abs( scrollTop - oldScrollTop ) / 1000 + 0.1 ;
+                tasks[task.id] = task;
 
-	scrollAnim.set('duration', scrollTime );
-	scrollAnim.set('easing', Y.Easing.easeOut);
-	scrollAnim.run() ;
-	scrollAnim.on('end', function() {} ) ;
-	
-}
+                node.setAttribute("task", task.id);
 
+                Y.fire('sled:statusMessage', 'Suggestion added');
 
-// open details
+            } else {
 
-function openDetails(e) {
+                // todo: undelete/regen suggesitons list, renderSuggestions
 
-	var liTarget = e.currentTarget.ancestor("li", true ) ;
-	var taskId = liTarget.getAttribute('task') ;
-	var task = gpostmile.sled.tasks[taskId] ;
-	var liTitleTarget = liTarget.one( ".tasktitle" ) ;
-	var newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
-	var liDetailsDivTarget = liTarget.one("div.messages") ;
-	var liDetailsTextTarget = liDetailsDivTarget ;
-	var liEditedByTarget = liTarget.one("div.edited-by").ancestor() ;	// parent div
+                Y.fire('sled:renderProject', sled);
 
-	// were the details currently open when we clicked on them?
-	var current = liTarget.hasClass("open");
+                Y.fire('sled:errorMessage', 'Suggestion add failed');
 
-	// cut out spans and divs
-	if( !e.target.test( 'li' ) && !e.target.test( '.taskicon' ) && !e.target.test( '.collapseDetails' ) ) {
-		return ;
-	}
+            }
+        }
 
-	if( !task ) {
-		return ;
-	}
+        putJson('/project/' + sled.id + '/task' + '?suggestion=' + suggestion.id + '&position=' + index,
+		'',
+		confirmDroppedSuggestionTaskAdded);
 
-	if( newInput ) {
-		if( e.target === newInput ) {
-			return ;
-		} else {
-			newInput.blur() ;
-		}	
-	}
+        sync();
 
-	// remember for rendering
-	task.liDetailsTextTarget = liDetailsTextTarget ;
-	task.liEditedByTarget = liEditedByTarget ;
+    }
 
-	// mark it as read
-	task.last = task.detailsModified + 1 ;
 
-	var liTaskIconTarget = liTarget.one( ".taskicon" ) ;
+    // renderDetails
 
-	// if the note was new, now that it's read, replcace icon w just content
-	if( liTaskIconTarget && liTaskIconTarget.hasClass( 'noteNew' ) ) {
-		liTaskIconTarget.removeClass( 'noteNew' ) ;
-		liTaskIconTarget.addClass( 'noteContent' ) ;
-	}
+    function renderDetails(details, task) {
+        task.details = details;
 
-	// need to do the same thing on the list node as it looks different with a new note
-	if( liTarget && liTarget.hasClass( 'noteNew' ) ) {
-		liTarget.removeClass( 'noteNew' ) ;
-		liTarget.addClass( 'noteContent' ) ;
-	}
+        var html = Y.postmile.templates.taskDetailsHtml(task);
+        task.liDetailsTextTarget.setContent(html);
 
-	// and clear the updatedAgo comment appended after the title
-	liTarget.one( '.updatedAgo' ).setContent( '' ) ;
+        html = Y.postmile.templates.taskEditedByHtml(task);
+        task.liEditedByTarget.setContent(html);
+    }
 
-	// do this after getting the current state, but before setting node state
-	if( !Y.sled.settings || !Y.sled.settings.multipleDetails() ) {
-		closeAllDetails() ;
-	}
 
-	// show same as hover (border, etc)
-	liTarget.addClass("active") ;
+    // manage size of details input
 
-	// toggle showing of details
-	var liAnchorTitleTarget = liTarget.one( ".tasktitle" ) ;
-	if( !current ) {
+    function shrinkDetails(node) {
+        node.setStyle("height", '5px'); // nominal size for empty line
+    }
+    function expandDetails(node) {	// could do this on delete as well
+        // count =  node.get('value','').split( '\n' ).length ;
+        // node.setAttribute("rows",count);
+        // text.style.height = text.scrollHeight+'px';
+        var sh = node.get('scrollHeight');
+        // var oh = node.getStyle("height") ;
+        // var ch = node.get("clientHeight") ;
+        var padTop = parseInt(node.getStyle('padding-top'));
+        var padBot = parseInt(node.getStyle('padding-bottom'));
+        node.setStyle("height", (sh - padTop - padBot) + 'px');
+    }
+    function resizeDetails(node) {
+        shrinkDetails(node);
+        expandDetails(node);
+    }
 
-		// finally, when we hear from server that the new details were put...
-		function renderDetailsAndSetFocus( response, task ) {
 
-			if( response && response._networkRequestStatusCode === 200 ) {
+    // close all details
 
-				// rerender
-				renderDetails( response, task ) ;
+    function closeAllDetails() {
 
-				// scroll to show both input and most details
-				// give the opened node's height time to be recalculated
-				// checkNodeOverTop( liTarget, "pre" ) ;
-				setTimeout( function() { checkNodeOverTop( liTarget, "post" ) ; }, 10 ) ;
-				// checkNodeOverTop will also call the scrolling function as needed
-				// scrollTasks( liTarget ) ;
+        var liNodes = taskList.all("li");
+        // var liTextareaNodes = taskList.all("textarea");
 
-				// and prompt user for more details
-				var liDetailsInputTarget = liTarget.one("textarea.taskdetails") ;
-				task.liDetailsInputTarget = liDetailsInputTarget ;
-				liDetailsInputTarget.focus() ;
+        liNodes.removeClass("open");
+        liNodes.removeClass("active");
+        liNodes.removeClass("participantsMenu");
 
-			} else {
+        var liAnchorTargets = taskList.all(".tasktitle");
+        liAnchorTargets.setStyle("white-space", "nowrap");
+        liAnchorTargets.setAttribute("rows", "1");
+        liAnchorTargets.setAttribute("wrap", "off");
 
-				Y.log( 'tasklist module: get details failed ' + JSON.stringify( response ) ) ;
+    }
 
-			}
-		}
 
-		// only fetch details if we hadn't before (streams will provide us with updates)
-		if( !task.requestedDetails && taskId !== "" ) {
+    // scroll / animate to end of list
 
-			task.requestedDetails = true ;
-			getJson( "/task/" + taskId + "/details", renderDetailsAndSetFocus, task ) ;
+    function checkNodeOverTop(node, msg) {
 
-		} else {
+        var tasklistNode = Y.one('#tasks');
 
-			renderDetailsAndSetFocus( task.details, task ) ;
+        var oldScrollTop = tasklistNode.get('scrollTop');
+        var clientHeight = tasklistNode.get('scrollHeight');
+        var containerHeight = tasklistNode.get('clientHeight');
+        var containerY = tasklistNode.getXY()[1];
+        var nodeHeight = parseInt(node.getStyle('height'), 10);
+        var nodeY = node.getXY()[1];
+        // var scrollTop = clientHeight - containerHeight ;
+        var containerBottom = containerY + containerHeight;
+        var nodeBottom = nodeY + nodeHeight;
 
-		}
+        if (nodeBottom > containerBottom || (nodeY < containerY && nodeHeight > containerHeight)) {
+            var overTop = nodeBottom - containerBottom;
+            var newScrollTop = oldScrollTop + overTop;
+            scrollTo(newScrollTop);
+        } else if (nodeY < containerY) {
+            var overTop = containerY - nodeY;
+            var newScrollTop = oldScrollTop - overTop;
+            scrollTo(newScrollTop);
+        }
 
-		// open task to show details
-		liTarget.addClass("open") ;
+    }
 
-		// show entire task title
-		if( liAnchorTitleTarget ) {
-			liAnchorTitleTarget.setStyle("white-space", "normal") ;
-			liAnchorTitleTarget.setAttribute("rows", "") ;
-			liAnchorTitleTarget.setAttribute("wrap", "") ;			
-		} else {
-		}
 
-	} else {
+    // scroll / animate to end of list
 
-		// hide details
-		liTarget.removeClass("open") ;
+    function scrollNodeToBottom(node) {
 
-		// show ellipse if task title too long
-		liAnchorTitleTarget.setStyle("white-space", "nowrap") ;
-		liAnchorTitleTarget.setAttribute("rows", "1") ;
-		liAnchorTitleTarget.setAttribute("wrap", "off") ;
+        var tasklistNode = Y.one('#tasks');
 
-	}
+        var clientHeight = tasklistNode.get('scrollHeight');
+        var containerHeight = tasklistNode.get('clientHeight');
+        var scrollTop = clientHeight - containerHeight;
 
-	function confirmLastPost( response, myarg ) {
+        scrollTo(scrollTop);
 
-		if( response.status === 'ok' ) {
+    }
 
-			task.last = task.detailsModified + 1 ;
+    function scrollTo(scrollTop) {
 
-		} else {
+        var tasklistNode = Y.one('#tasks');
 
-			Y.log( 'tasklist module: confirmLastPost failed ' + JSON.stringify( response ) ) ;
+        var oldScrollTop = tasklistNode.get('scrollTop');
 
-		}
+        // todo: protect against Anim not being loaded yet
+        var scrollAnim = new Y.Anim({
+            node: tasklistNode,
+            to: {	// width: 0, height: 0
+                scrollTop: scrollTop
+            }
+        });
 
-	}
+        var scrollTime = Math.abs(scrollTop - oldScrollTop) / 1000 + 0.1;
 
-	showUpdatedAgo( liTarget ) ;
+        scrollAnim.set('duration', scrollTime);
+        scrollAnim.set('easing', Y.Easing.easeOut);
+        scrollAnim.run();
+        scrollAnim.on('end', function () { });
 
-	postJson( '/task/' + task.id + '/last', "", confirmLastPost ) ;
+    }
 
-}
 
+    // open details
 
-// blur details
-//	note that this is not called when details are closed/hidden
-//	leaving users typing in the input field
-//	(lack of visibility doesn't cause a blur event)
+    function openDetails(e) {
 
-function blurDetails(e) {
+        var liTarget = e.currentTarget.ancestor("li", true);
+        var taskId = liTarget.getAttribute('task');
+        var task = gpostmile.sled.tasks[taskId];
+        var liTitleTarget = liTarget.one(".tasktitle");
+        var newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
+        var liDetailsDivTarget = liTarget.one("div.messages");
+        var liDetailsTextTarget = liDetailsDivTarget;
+        var liEditedByTarget = liTarget.one("div.edited-by").ancestor(); // parent div
 
-	var liDetailsInputTarget = e.currentTarget ;
-	var detailsText = liDetailsInputTarget.get('value') ;
-	
-	setTimeout( function() { resizeDetails( liDetailsInputTarget )  }, 0 ) ;
+        // were the details currently open when we clicked on them?
+        var current = liTarget.hasClass("open");
 
-	setTimeout( function() { checkNodeOverTop( liTarget ) ; }, 0 ) ;
+        // cut out spans and divs
+        if (!e.target.test('li') && !e.target.test('.taskicon') && !e.target.test('.collapseDetails')) {
+            return;
+        }
 
-	if( !detailsText ) {
-		return ;
-	}
+        if (!task) {
+            return;
+        }
 
-	// var json = '{ "type":"text", "content":"' + encodeURIComponent(detailsText) + '"}' ;	// todo: just stringify
-	// var json = '{ "type":"text", "content":' + JSON.stringify(detailsText) + '}' ;
-	// var json = '{ "type":"text", "content":"' + detailsText + '"}' ;
-	// var detailsObject = { "type":"text", "content": detailsText, "user": { id: gpostmile.profile.id, display: gpostmile.profile.name }, "created": ((new Date()).getTime()) } ;
-	var detailsObject = { "type":"text", "content": detailsText } ;
-	var json = JSON.stringify( detailsObject ) ;	// escapes newlines too
-	detailsObject.user = { id: gpostmile.profile.id, display: gpostmile.profile.name } ;
-	detailsObject.created = new Date().getTime() ;
-	
-	var liTarget = liDetailsInputTarget.ancestor("li") ;
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gpostmile.sled.tasks[taskId] ;
+        if (newInput) {
+            if (e.target === newInput) {
+                return;
+            } else {
+                newInput.blur();
+            }
+        }
 
-	liDetailsInputTarget.set('value','') ;
+        // remember for rendering
+        task.liDetailsTextTarget = liDetailsTextTarget;
+        task.liEditedByTarget = liEditedByTarget;
 
-	function confirmTaskDetails( response, myarg ) {
+        // mark it as read
+        task.last = task.detailsModified + 1;
 
-		if( response.status === 'ok' ) {
+        var liTaskIconTarget = liTarget.one(".taskicon");
 
-			task.rev = response.rev ;
+        // if the note was new, now that it's read, replcace icon w just content
+        if (liTaskIconTarget && liTaskIconTarget.hasClass('noteNew')) {
+            liTaskIconTarget.removeClass('noteNew');
+            liTaskIconTarget.addClass('noteContent');
+        }
 
-			task.details.thread[ task.details.thread.length ] = detailsObject ;
+        // need to do the same thing on the list node as it looks different with a new note
+        if (liTarget && liTarget.hasClass('noteNew')) {
+            liTarget.removeClass('noteNew');
+            liTarget.addClass('noteContent');
+        }
 
-			// set new state for task note/detail icon as well as whole list node
-			// first, clear state / classes
-			var liTaskIconTarget = liTarget.one( ".taskicon" ) ;
-			liTaskIconTarget.removeClass( 'noteNew' ) ;
-			liTaskIconTarget.removeClass( 'noteContent' ) ;
-			liTaskIconTarget.removeClass( 'noteEmpty' ) ;
-			liTarget.removeClass( 'noteNew' ) ;
-			liTarget.removeClass( 'noteContent' ) ;
-			liTarget.removeClass( 'noteEmpty' ) ;
-			// then check details thread for content, or empty - can't be 'new' as user already viewed it upon typing
-			// detailsModified is from server - now we can look at details
-			var addClass = task.details.thread.length ? 'noteContent' : 'noteEmpty' ;
-			liTaskIconTarget.addClass( addClass ) ;
-			liTarget.addClass( addClass ) ;
+        // and clear the updatedAgo comment appended after the title
+        liTarget.one('.updatedAgo').setContent('');
 
-			// prompt user for more details by giving focus back to details input field
-			task.liDetailsInputTarget.focus() ;
+        // do this after getting the current state, but before setting node state
+        if (!Y.postmile.settings || !Y.postmile.settings.multipleDetails()) {
+            closeAllDetails();
+        }
 
-			// and set the time viewed to just after it was modified (avoiding it to be marked as new)
-			// task.detailsModified = task.detailsModified || 1 ;
-			task.detailsModified = ((new Date()).getTime()) ;
-			task.detailsModifiedBy = detailsObject.user ;
-			task.last = task.detailsModified + 1 ;
+        // show same as hover (border, etc)
+        liTarget.addClass("active");
 
-			renderDetails( task.details, task ) ;
+        // toggle showing of details
+        var liAnchorTitleTarget = liTarget.one(".tasktitle");
+        if (!current) {
 
-			Y.fire( 'sled:statusMessage',  'Details added' ) ;
+            // finally, when we hear from server that the new details were put...
+            function renderDetailsAndSetFocus(response, task) {
 
-			var confirmLastPost = function( response, myarg ) { 
-				if( response.status === 'ok' ) {
-					// we may have already done this in response to posting the details
-					task.last = task.detailsModified + 1 ;
-				} else {
-					Y.log( 'tasklist module: confirmLastPost failed ' + JSON.stringify( response ) ) ;
-				}
-			} ;
+                if (response && response._networkRequestStatusCode === 200) {
 
-			postJson( '/task/' + task.id + '/last', "", confirmLastPost ) ;
+                    // rerender
+                    renderDetails(response, task);
 
-		} else {
+                    // scroll to show both input and most details
+                    // give the opened node's height time to be recalculated
+                    // checkNodeOverTop( liTarget, "pre" ) ;
+                    setTimeout(function () { checkNodeOverTop(liTarget, "post"); }, 10);
+                    // checkNodeOverTop will also call the scrolling function as needed
+                    // scrollTasks( liTarget ) ;
 
-			Y.fire( 'sled:errorMessage',  'Addition to details failed' ) ;
+                    // and prompt user for more details
+                    var liDetailsInputTarget = liTarget.one("textarea.taskdetails");
+                    task.liDetailsInputTarget = liDetailsInputTarget;
+                    liDetailsInputTarget.focus();
 
-		}
-	}
+                } else {
 
-	postJson( '/task/' + task.id + '/detail', json, confirmTaskDetails ) ;
+                    Y.log('tasklist module: get details failed ' + JSON.stringify(response));
 
-}
+                }
+            }
 
+            // only fetch details if we hadn't before (streams will provide us with updates)
+            if (!task.requestedDetails && taskId !== "") {
 
-// nextState 
-//	for the checkbox of a given list node, 
-//	set the next state of the check box 
-//	in both the checkbox and list node
-//  as well as update the task data
-//	and return the current state and the next state
+                task.requestedDetails = true;
+                getJson("/task/" + taskId + "/details", renderDetailsAndSetFocus, task);
 
-function nextState( liTarget, newState ) {
+            } else {
 
-	var liCheckTarget = liTarget.one(".check") ;
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gpostmile.sled.tasks[taskId] ;
+                renderDetailsAndSetFocus(task.details, task);
 
-	var oldState ;
+            }
 
-	var ci ;
-	for( /*var*/ ci = 0 ; ci < checkStates.length ; ci++ ) {
+            // open task to show details
+            liTarget.addClass("open");
 
-		var css = checkStates[ci].css ;
-		var nci = (ci+1) % checkStates.length ;
+            // show entire task title
+            if (liAnchorTitleTarget) {
+                liAnchorTitleTarget.setStyle("white-space", "normal");
+                liAnchorTitleTarget.setAttribute("rows", "");
+                liAnchorTitleTarget.setAttribute("wrap", "");
+            } else {
+            }
 
-		if( liCheckTarget.hasClass( css ) ) {
+        } else {
 
-			newState = (typeof newState === 'undefined' ) ? nci : newState ;
-			oldState = ci ;
+            // hide details
+            liTarget.removeClass("open");
 
-		}
+            // show ellipse if task title too long
+            liAnchorTitleTarget.setStyle("white-space", "nowrap");
+            liAnchorTitleTarget.setAttribute("rows", "1");
+            liAnchorTitleTarget.setAttribute("wrap", "off");
 
-		liCheckTarget.removeClass( css ) ;
+        }
 
-	}
+        function confirmLastPost(response, myarg) {
 
-	liCheckTarget.addClass( checkStates[ newState ].css ) ;
-	task.status = checkStates[ newState ].api ;
-	if( checkStates[ newState ].css === 'completed' ) {
-		liTarget.addClass( 'completed' ) ;
-	} else {
-		liTarget.removeClass( 'completed' ) ;
-	}
+            if (response.status === 'ok') {
 
-	return { oldState : oldState, newState : newState } ;
-}
+                task.last = task.detailsModified + 1;
 
+            } else {
 
-// check task 
-//	handle a click on the checkbox of a task
-//	both the data and the UI
+                Y.log('tasklist module: confirmLastPost failed ' + JSON.stringify(response));
 
-function checkTask(e) {
+            }
 
-	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
-	var liCheckTarget = liTarget.one(".check") ;
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gpostmile.sled.tasks[taskId] ;
-	var state = nextState( liTarget ) ;
-	var jsonObject = { status : task.status }  ;
-	var json = JSON.stringify( jsonObject )  ;
+        }
 
-	// mark task as active, as if were being hovered or opened
-	liTarget.addClass("active") ;
+        showUpdatedAgo(liTarget);
 
-	function confirmTaskCheck( response, myarg ) { // response has id, rev, status
+        postJson('/task/' + task.id + '/last', "", confirmLastPost);
 
-		if( response.status === "ok" ) {
+    }
 
-			Y.fire( 'sled:statusMessage',  'Task ' + checkStates[ state.newState ].ui ) ;
 
-		} else {
+    // blur details
+    //	note that this is not called when details are closed/hidden
+    //	leaving users typing in the input field
+    //	(lack of visibility doesn't cause a blur event)
 
-			nextState( liTarget, state.oldState ) ;
+    function blurDetails(e) {
 
-			Y.fire( 'sled:errorMessage',  'Task ' + 'check' + ' failed' ) ;
+        var liDetailsInputTarget = e.currentTarget;
+        var detailsText = liDetailsInputTarget.get('value');
 
-		}
+        setTimeout(function () { resizeDetails(liDetailsInputTarget) }, 0);
 
-	}
+        setTimeout(function () { checkNodeOverTop(liTarget); }, 0);
 
-	postJson( "/task/" + task.id, json, confirmTaskCheck ) ;
+        if (!detailsText) {
+            return;
+        }
 
-}
+        // var json = '{ "type":"text", "content":"' + encodeURIComponent(detailsText) + '"}' ;	// todo: just stringify
+        // var json = '{ "type":"text", "content":' + JSON.stringify(detailsText) + '}' ;
+        // var json = '{ "type":"text", "content":"' + detailsText + '"}' ;
+        // var detailsObject = { "type":"text", "content": detailsText, "user": { id: gpostmile.profile.id, display: gpostmile.profile.name }, "created": ((new Date()).getTime()) } ;
+        var detailsObject = { "type": "text", "content": detailsText };
+        var json = JSON.stringify(detailsObject); // escapes newlines too
+        detailsObject.user = { id: gpostmile.profile.id, display: gpostmile.profile.name };
+        detailsObject.created = new Date().getTime();
 
+        var liTarget = liDetailsInputTarget.ancestor("li");
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = gpostmile.sled.tasks[taskId];
 
-// askDeleteTask - ask before deleting
+        liDetailsInputTarget.set('value', '');
 
-function askDeleteTask(e) {
-	if( Y.sled.settings.confirmDelete() ) {
-		Y.fire( 'sled:confirm', 'Delete item?', 'This will permanently delete the item and all its details.', fadeDeleteTask, e);
-	} else {
-		fadeDeleteTask( e ) ;
-	}
-}
+        function confirmTaskDetails(response, myarg) {
 
-// fadeDeleteTask - start fade anim and request delete from API, 
-//	wait until fade done before collapsing deleted node and removing from list
+            if (response.status === 'ok') {
 
-function fadeDeleteTask(e) {
+                task.rev = response.rev;
 
-	var liCloseTarget = e.currentTarget ;
-	var liTarget = liCloseTarget.ancestor("li", true) ;
-	var taskId = liTarget.getAttribute('task') ;
-	var tasks = gpostmile.sled.tasks ;
-	var task = gpostmile.sled.tasks[taskId] ;
-	var fadeAnim = new Y.Anim({
-		node: liTarget,
-		to: {
-			opacity: 0
-		}
-	});
+                task.details.thread[task.details.thread.length] = detailsObject;
 
-	fadeAnim.set('duration', 0.75);
-	fadeAnim.set('easing', Y.Easing.easeOut);
-	fadeAnim.run() ;
-	fadeAnim.on('end', function() {
-		var activeTask = taskList.one( ".active" ) ;
-		if( !activeTask ) {
-			var nextLiTarget = liTarget.next() ;
-		}
+                // set new state for task note/detail icon as well as whole list node
+                // first, clear state / classes
+                var liTaskIconTarget = liTarget.one(".taskicon");
+                liTaskIconTarget.removeClass('noteNew');
+                liTaskIconTarget.removeClass('noteContent');
+                liTaskIconTarget.removeClass('noteEmpty');
+                liTarget.removeClass('noteNew');
+                liTarget.removeClass('noteContent');
+                liTarget.removeClass('noteEmpty');
+                // then check details thread for content, or empty - can't be 'new' as user already viewed it upon typing
+                // detailsModified is from server - now we can look at details
+                var addClass = task.details.thread.length ? 'noteContent' : 'noteEmpty';
+                liTaskIconTarget.addClass(addClass);
+                liTarget.addClass(addClass);
 
-	liTarget.remove() ;
-	});
+                // prompt user for more details by giving focus back to details input field
+                task.liDetailsInputTarget.focus();
 
-	function confirmTaskDelete( response, myarg ) {
+                // and set the time viewed to just after it was modified (avoiding it to be marked as new)
+                // task.detailsModified = task.detailsModified || 1 ;
+                task.detailsModified = ((new Date()).getTime());
+                task.detailsModifiedBy = detailsObject.user;
+                task.last = task.detailsModified + 1;
 
-		if( response.status === 'ok' ) {
+                renderDetails(task.details, task);
 
-			task.rev = response.rev ;
+                Y.fire('sled:statusMessage', 'Details added');
 
-			delete tasks[ task.id ] ;	// remove from task dictionary
-			tasks.splice( task.index, 1 ) ;	// remove from task sequence
+                var confirmLastPost = function (response, myarg) {
+                    if (response.status === 'ok') {
+                        // we may have already done this in response to posting the details
+                        task.last = task.detailsModified + 1;
+                    } else {
+                        Y.log('tasklist module: confirmLastPost failed ' + JSON.stringify(response));
+                    }
+                };
 
-			// update all indicies
-			if( tasks ) {
-				var i,l ;
-				for (/*var*/ i=0, l=tasks.length; i < l; ++i) {
-					tasks[i].index = i ;
-				}
-			}
+                postJson('/task/' + task.id + '/last', "", confirmLastPost);
 
-			Y.fire( 'sled:statusMessage',  'Item deleted' ) ;
+            } else {
 
-		} else {
+                Y.fire('sled:errorMessage', 'Addition to details failed');
 
-			Y.fire( 'sled:renderProject', Y.sled.gpostmile.sled ) ;
+            }
+        }
 
-			Y.fire( 'sled:errorMessage',  'Item deletion failed' ) ;
+        postJson('/task/' + task.id + '/detail', json, confirmTaskDetails);
 
-		}
-	}
+    }
 
-	deleteJson( "/task/" + task.id, null, confirmTaskDelete ) ;
 
-}
+    // nextState 
+    //	for the checkbox of a given list node, 
+    //	set the next state of the check box 
+    //	in both the checkbox and list node
+    //  as well as update the task data
+    //	and return the current state and the next state
 
+    function nextState(liTarget, newState) {
 
-// show participants menu
-//	get task, check menu bounds, call contacts code
+        var liCheckTarget = liTarget.one(".check");
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = gpostmile.sled.tasks[taskId];
 
-function showParticipants(e) {
+        var oldState;
 
-	var sled = gpostmile.sled ;
-	var tasks = sled.tasks ;
+        var ci;
+        for ( /*var*/ci = 0; ci < checkStates.length; ci++) {
 
-	var liTarget = e.currentTarget.ancestor("li", true) ;
+            var css = checkStates[ci].css;
+            var nci = (ci + 1) % checkStates.length;
 
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gpostmile.sled.tasks[taskId] ;
+            if (liCheckTarget.hasClass(css)) {
 
-	var scrollWindowNode = Y.one("#tasks");
-	var maxY = scrollWindowNode.getY() + parseInt(scrollWindowNode.getComputedStyle('height'), 10) ;
+                newState = (typeof newState === 'undefined') ? nci : newState;
+                oldState = ci;
 
-	if( Y.sled.contacts ) {
-		var showingNow = Y.sled.contacts.toggleTaskParticipants( e.currentTarget, task, maxY ) ;
-		if( showingNow ) {
-			liTarget.addClass( 'participantsMenu' ) ;
-		} else {
-			liTarget.removeClass( 'participantsMenu' ) ;
-		}
-	}
+            }
 
-}
+            liCheckTarget.removeClass(css);
 
+        }
 
-// activate hovered tasks
-//	add 'active' class to show border (background, etc)
+        liCheckTarget.addClass(checkStates[newState].css);
+        task.status = checkStates[newState].api;
+        if (checkStates[newState].css === 'completed') {
+            liTarget.addClass('completed');
+        } else {
+            liTarget.removeClass('completed');
+        }
 
-function onHover(e) {
+        return { oldState: oldState, newState: newState };
+    }
 
-	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = null ;
 
-	if( gpostmile.sled && gpostmile.sled.tasks && taskId ) {
-		task = gpostmile.sled.tasks[taskId] ;
-	}
+    // check task 
+    //	handle a click on the checkbox of a task
+    //	both the data and the UI
 
-	liTarget.addClass("active") ;
+    function checkTask(e) {
 
-	// prefetch participants for quicker response/interactivity on the person icon
-	if( task && !task.participants ) {
+        var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
+        var liCheckTarget = liTarget.one(".check");
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = gpostmile.sled.tasks[taskId];
+        var state = nextState(liTarget);
+        var jsonObject = { status: task.status };
+        var json = JSON.stringify(jsonObject);
 
-		var gotTaskParticipants = function( response, myarg ) {
+        // mark task as active, as if were being hovered or opened
+        liTarget.addClass("active");
 
-			if( response._networkRequestStatusCode === 200 ) {
+        function confirmTaskCheck(response, myarg) { // response has id, rev, status
 
-				task.created = response.modified ;
-				task.modified = response.created ;
-				task.participants = response.participants || [] ;
-				task.sled = response.sled ;
-				task.status = response.status ;
-				task.title = response.title ;
+            if (response.status === "ok") {
 
-			} else {
-				Y.log( 'tasklist module: gotTaskParticipants failed ' + JSON.stringify( response ) ) ;
-			}
+                Y.fire('sled:statusMessage', 'Task ' + checkStates[state.newState].ui);
 
-		} ;
+            } else {
 
-		getJson( "/task/" + task.id, gotTaskParticipants ) ;
-	}
+                nextState(liTarget, state.oldState);
 
-}
+                Y.fire('sled:errorMessage', 'Task ' + 'check' + ' failed');
 
+            }
 
-// deactivate after hover
+        }
 
-function endHover(e) {
+        postJson("/task/" + task.id, json, confirmTaskCheck);
 
-	var liTarget = e.currentTarget.ancestor("li", true ) ;
-	var liTitleTarget = liTarget.one( ".tasktitle" ) ;
-	var taskId = liTarget.getAttribute('task') ;
-	var newInput ;
-	var detailsOpen ;
-	var participantsOpen ;
+    }
 
-	if( liTitleTarget ) {
-		newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
-		detailsOpen = liTarget.hasClass("open");
-	}
 
-	if( Y.sled.contacts ) {
-		participantsOpen = Y.sled.contacts.isTaskParticipantsOpen( taskId ) ;
-	}
+    // askDeleteTask - ask before deleting
 
-	if( !( newInput && newInput._node === document.activeElement ) 
-			&& ( !detailsOpen ) 
-			&& ( !participantsOpen ) ) {
-		liTarget.removeClass("active") ;
-	}
-}
+    function askDeleteTask(e) {
+        if (Y.postmile.settings.confirmDelete()) {
+            Y.fire('sled:confirm', 'Delete item?', 'This will permanently delete the item and all its details.', fadeDeleteTask, e);
+        } else {
+            fadeDeleteTask(e);
+        }
+    }
 
+    // fadeDeleteTask - start fade anim and request delete from API, 
+    //	wait until fade done before collapsing deleted node and removing from list
 
-// called when done typing in task title (blur, return, escape)
-//	includes typing on 'Click to Add' title (todo: factor that out to simplify and shorten this func)
+    function fadeDeleteTask(e) {
 
-function titleTyped(e) {
-	showUpdatedAgo( e.currentTarget.ancestor("li", true ) ) ;
-}
+        var liCloseTarget = e.currentTarget;
+        var liTarget = liCloseTarget.ancestor("li", true);
+        var taskId = liTarget.getAttribute('task');
+        var tasks = gpostmile.sled.tasks;
+        var task = gpostmile.sled.tasks[taskId];
+        var fadeAnim = new Y.Anim({
+            node: liTarget,
+            to: {
+                opacity: 0
+            }
+        });
 
-function titleEntered(e) {
+        fadeAnim.set('duration', 0.75);
+        fadeAnim.set('easing', Y.Easing.easeOut);
+        fadeAnim.run();
+        fadeAnim.on('end', function () {
+            var activeTask = taskList.one(".active");
+            if (!activeTask) {
+                var nextLiTarget = liTarget.next();
+            }
 
-	var sled = gpostmile.sled ;
-	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
+            liTarget.remove();
+        });
 
-	if( !liTarget ) {
-		return ;
-	}
+        function confirmTaskDelete(response, myarg) {
 
-	var taskId = liTarget.getAttribute('task') ;
-	var task = null ;
+            if (response.status === 'ok') {
 
-	var liTitleTarget = liTarget.one( ".tasktitle" ) ;
-	var newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
-	var title = newInput.get('value') ;
-	var jsonObject = { title : title }  ;
-	var json = JSON.stringify( jsonObject )  ;
+                task.rev = response.rev;
 
-	var liNodes = taskList.all("li");
+                delete tasks[task.id]; // remove from task dictionary
+                tasks.splice(task.index, 1); // remove from task sequence
 
-	// remove highlighting (we don't get a hover out event when input field is focussed)
-	if( !liTarget.hasClass( 'open' ) ) {
-		liNodes.removeClass("active") ;
-	}
+                // update all indicies
+                if (tasks) {
+                    var i, l;
+                    for (/*var*/i = 0, l = tasks.length; i < l; ++i) {
+                        tasks[i].index = i;
+                    }
+                }
 
-	liNodes.removeClass("editing") ;
+                Y.fire('sled:statusMessage', 'Item deleted');
 
-	if( taskId ) {
-		task = gpostmile.sled.tasks[taskId] ;
-	}
+            } else {
 
-	if( task ) {
-		wasTitle = task.title ;
-	} else {
-		if( !title || exitKey === 27 ) {	// empty or escape
-			Y.one('#tasks').all( ".addnewtask" ).remove( true ) ;				
-			addAddTask( taskList ) ;
-			liTarget = null ;
-		}
-	}
+                Y.fire('sled:renderProject', Y.postmile.gpostmile.sled);
 
-	if( liTarget ) {	// may be null - if user hit escape or blank
+                Y.fire('sled:errorMessage', 'Item deletion failed');
 
-		if( !task ) {
-			task = {"title":title, "participantsCount":0}  ;
-		}
+            }
+        }
 
-		// todo: don't redo text
-		// set the new task title to gen off the template, revert to old, the back to new when net req confirmed
-		var oldTaskTitle = task.title ;
-		task.title = title ;
-		var html = Y.sled.templates.taskInnerHtml( task ) ;
-		task.title = oldTaskTitle ;
-		liTarget.setContent(html);	// via closure; todo: make this text temp
-		showUpdatedAgo( liTarget, true ) ;
+        deleteJson("/task/" + task.id, null, confirmTaskDelete);
 
-		var confirmTask = function( response, myarg ) { // response has id, rev, status
+    }
 
-			if( response.status === 'ok' ) {
 
-				task.rev = response.rev ;
-				task.title = title ;
+    // show participants menu
+    //	get task, check menu bounds, call contacts code
 
-				// if it's a newly added task
-				if( !task.id ) { 
-					task.id = response.id ;
-					liTarget.setAttribute("task",task.id);
-					sled.tasks[task.id] = task ; 
-				}
+    function showParticipants(e) {
 
-				Y.fire( 'sled:statusMessage',  'Task ' + ( taskId ? 'changed' : 'added' ) ) ;
+        var sled = gpostmile.sled;
+        var tasks = sled.tasks;
 
-			} else {
+        var liTarget = e.currentTarget.ancestor("li", true);
 
-				html = Y.sled.templates.taskInnerHtml( task ) ;
-				liTarget.setContent(html);
-				showUpdatedAgo( liTarget, true ) ;
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = gpostmile.sled.tasks[taskId];
 
-				Y.fire( 'sled:errorMessage',  'Task ' + ( taskId ? 'change' : 'add' ) + ' failed' ) ;
-			}
-		} ;
+        var scrollWindowNode = Y.one("#tasks");
+        var maxY = scrollWindowNode.getY() + parseInt(scrollWindowNode.getComputedStyle('height'), 10);
 
-		if( !taskId ) {	// if( liTarget.name === "addnewtask" ) 
+        if (Y.postmile.contacts) {
+            var showingNow = Y.postmile.contacts.toggleTaskParticipants(e.currentTarget, task, maxY);
+            if (showingNow) {
+                liTarget.addClass('participantsMenu');
+            } else {
+                liTarget.removeClass('participantsMenu');
+            }
+        }
 
-			var confirmAddTask = function( response, myarg ) { // response has id, rev, status
+    }
 
-				if( response.status === 'ok' ) {
 
-					task.index = sled.tasks.length ;	// will be added to the end, last in the array
-					sled.tasks[sled.tasks.length] = task ;
+    // activate hovered tasks
+    //	add 'active' class to show border (background, etc)
 
-					liTarget.removeClass("addnewtask");
-					liTarget.addClass( 'task' ) ;
+    function onHover(e) {
 
-					addAddTask( taskList ) ;
+        var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = null;
 
-					// works best after we add the task (otherwise li is still hovered/highlighted)
-					liTarget.removeClass("active") ;	
+        if (gpostmile.sled && gpostmile.sled.tasks && taskId) {
+            task = gpostmile.sled.tasks[taskId];
+        }
 
-					var newLi = taskList.one( ".addnewtask" ) ;
-					if( exitKey === 13 ) {
-						taskTitleClick( { currentTarget: newLi } ) ;
-					}
+        liTarget.addClass("active");
 
-					// do not need to rerender anymore of task as title set
-					confirmTask( response, myarg ) ;
+        // prefetch participants for quicker response/interactivity on the person icon
+        if (task && !task.participants) {
 
-					sync() ;
+            var gotTaskParticipants = function (response, myarg) {
 
-				} else {
+                if (response._networkRequestStatusCode === 200) {
 
-					Y.one('#tasks').all( ".addnewtask" ).remove( true ) ;				
-					addAddTask( taskList ) ;
-					// liTarget = null ;
+                    task.created = response.modified;
+                    task.modified = response.created;
+                    task.participants = response.participants || [];
+                    task.sled = response.sled;
+                    task.status = response.status;
+                    task.title = response.title;
 
-					// rerender to sync UI w unchanged data
-					render( sled.tasks, sled.id ) ;
+                } else {
+                    Y.log('tasklist module: gotTaskParticipants failed ' + JSON.stringify(response));
+                }
 
-					Y.fire( 'sled:errorMessage',  'Task ' + ( taskId ? 'change' : 'add' ) + ' failed' ) ;
-				}
+            };
 
-			} ;
+            getJson("/task/" + task.id, gotTaskParticipants);
+        }
 
-			putJson( "/project/" + sled.id + "/task", json, confirmAddTask ) ;
+    }
 
-		} else {
 
-			if( title && title !== oldTaskTitle ) {
-				postJson( "/task/" + task.id, json, confirmTask ) ;
-			}
+    // deactivate after hover
 
-		}
+    function endHover(e) {
 
-	}
+        var liTarget = e.currentTarget.ancestor("li", true);
+        var liTitleTarget = liTarget.one(".tasktitle");
+        var taskId = liTarget.getAttribute('task');
+        var newInput;
+        var detailsOpen;
+        var participantsOpen;
 
-	sync() ;	// to ensure we've got tooltrip trigger back on title
-}
+        if (liTitleTarget) {
+            newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
+            detailsOpen = liTarget.hasClass("open");
+        }
 
-/*
- * listen to mouse to disambiguate selection vs dragging
- *	if moves more than five pixels horz, before any selection occurs (was vert move < 5 px)
- *	then treat as selection instead of drag (don't resend mouse down to start drag)
- */
+        if (Y.postmile.contacts) {
+            participantsOpen = Y.postmile.contacts.isTaskParticipantsOpen(taskId);
+        }
 
-function bindDragVsSelect() {
-	var mdh ;
-	var muh ;
-	var mmh ;
-	var ssh ;
-	var ssc ;
-	var mde ;
-	var mdXY ;
+        if (!(newInput && newInput._node === document.activeElement)
+			&& (!detailsOpen)
+			&& (!participantsOpen)) {
+            liTarget.removeClass("active");
+        }
+    }
 
-	function listenForSuperfluousSelection( e ) {
-		if( ssh ) {
-			ssh.detach() ;	// only needs to be done once
-		}	
-		ssh = Y.on('selectstart', abortSuperfluousSelection, 'body' ) ;
-		ssc = 0 ;
-	}
-	function abortSuperfluousSelection( e ) {
-		window.getSelection().empty() ;
-		if( ssc++ > 3 ) {	// only needs to be done a few times
-			if( ssh ) {
-				ssh.detach() ;
-			}	
-			ssh = null ;
-		}
-	}
 
-	function taskMouseDown( e ) {
-		if( mmh ) {
-			mmh.detach() ;
-		}
-		mmh = taskList.delegate('mousemove', taskMouseMove, 'li .tasktitle' ) ;
-		mde = e ;
-		mdXY = [ e.clientX, e.clientY ] ;
-		// e.stopPropagation() ;
-	}
+    // called when done typing in task title (blur, return, escape)
+    //	includes typing on 'Click to Add' title (todo: factor that out to simplify and shorten this func)
 
-	function taskMouseUp( e ) {
-		dragging = 0 ;
-		if( mmh ) {
-			mmh.detach() ;
-		}
-		mmh = null ;
-	}
+    function titleTyped(e) {
+        showUpdatedAgo(e.currentTarget.ancestor("li", true));
+    }
 
-	function taskMouseMove( e ) {
+    function titleEntered(e) {
 
-		if( Math.abs( mdXY[1] - e.clientY ) > 5 && !window.getSelection().toString() ) {
+        var sled = gpostmile.sled;
+        var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
 
-			if( mde ) {
+        if (!liTarget) {
+            return;
+        }
 
-				// mde.currentTarget.simulate( mde.type, mde ) ;  will not work with DnD
+        var taskId = liTarget.getAttribute('task');
+        var task = null;
 
-				var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
+        var liTitleTarget = liTarget.one(".tasktitle");
+        var newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
+        var title = newInput.get('value');
+        var jsonObject = { title: title };
+        var json = JSON.stringify(jsonObject);
 
-				// try in vain to avoid superfluous selection
-				// ... simulate( 'mouseup', 'click' on various nodes
-				// ... delay setTimeout( startDrag, 1000 ) ;
-				listenForSuperfluousSelection();
+        var liNodes = taskList.all("li");
 
-				liTarget.simulate( 'mousedown', { clientX : mde.clientX, clientY : mde.clientY } ) ;
+        // remove highlighting (we don't get a hover out event when input field is focussed)
+        if (!liTarget.hasClass('open')) {
+            liNodes.removeClass("active");
+        }
 
-				mde = null ;			
+        liNodes.removeClass("editing");
 
-				if( mmh ) {
-					mmh.detach() ;
-				}
-				mmh = null ;
-			}			
-		}
-	}
+        if (taskId) {
+            task = gpostmile.sled.tasks[taskId];
+        }
 
-	mdh = taskList.delegate('mousedown', taskMouseDown, 'li .tasktitle' ) ;
-	muh = taskList.delegate('mouseup', taskMouseUp, 'li .tasktitle' ) ;
-}
+        if (task) {
+            wasTitle = task.title;
+        } else {
+            if (!title || exitKey === 27) {	// empty or escape
+                Y.one('#tasks').all(".addnewtask").remove(true);
+                addAddTask(taskList);
+                liTarget = null;
+            }
+        }
 
+        if (liTarget) {	// may be null - if user hit escape or blank
 
-// click on task (outside of title)
+            if (!task) {
+                task = { "title": title, "participantsCount": 0 };
+            }
 
-function taskSingleClick(e) {
+            // todo: don't redo text
+            // set the new task title to gen off the template, revert to old, the back to new when net req confirmed
+            var oldTaskTitle = task.title;
+            task.title = title;
+            var html = Y.postmile.templates.taskInnerHtml(task);
+            task.title = oldTaskTitle;
+            liTarget.setContent(html); // via closure; todo: make this text temp
+            showUpdatedAgo(liTarget, true);
 
-	var sled = gpostmile.sled ;
-	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
-	var liTitleTarget = liTarget.one( ".tasktitle" ) ;	// choses first one, with ttile (not span of right icons)
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = null ;
+            var confirmTask = function (response, myarg) { // response has id, rev, status
 
-	// no longer treat task click outside of title as a title click
-	if( e.target.get('tagName').toLowerCase() === 'li' ) {
-		document.activeElement.blur() ;
-	}
+                if (response.status === 'ok') {
 
-	// do treat task click outside of title as a title click
-	// taskTitleClick( e ) ;
-	// liTarget.one('input.tasktitle').focus() ;
+                    task.rev = response.rev;
+                    task.title = title;
 
-	// newInput = liTitleTarget.one("input") ;	// it'd be nice if we could just get this from setContent
-	// showUpdatedAgo( liTarget ) ;
-	// Y.assert( newInput ) ;
-	// newInput.focus();
-}
+                    // if it's a newly added task
+                    if (!task.id) {
+                        task.id = response.id;
+                        liTarget.setAttribute("task", task.id);
+                        sled.tasks[task.id] = task;
+                    }
 
+                    Y.fire('sled:statusMessage', 'Task ' + (taskId ? 'changed' : 'added'));
 
-// click on task (on title)
+                } else {
 
-function taskTitleClick(e) {
+                    html = Y.postmile.templates.taskInnerHtml(task);
+                    liTarget.setContent(html);
+                    showUpdatedAgo(liTarget, true);
 
-	// don't immediately add active and editing classes 
-	// because the forthcoming focus causes a blur which will remove editing
+                    Y.fire('sled:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
+                }
+            };
 
-	var sled = gpostmile.sled ;
-	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
-	var liTitleTarget = liTarget.one( ".tasktitle" ) ;	// choses first one, with ttile (not span of right icons)
-	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = null ;
-	var newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
-	var sel = window.getSelection();
+            if (!taskId) {	// if( liTarget.name === "addnewtask" ) 
 
-	if( sel.toString() && liTitleTarget.contains( sel.anchorNode ) ) {
-		return ;
-	}
+                var confirmAddTask = function (response, myarg) { // response has id, rev, status
 
-	if( taskId ) {
-		task = gpostmile.sled.tasks[taskId] ;
-	}
+                    if (response.status === 'ok') {
 
-	// do this now after focus as caused blur and removed 'editing' class from all LI nodes
-	liTarget.addClass("active") ;
-	liTarget.addClass("editing") ;
+                        task.index = sled.tasks.length; // will be added to the end, last in the array
+                        sled.tasks[sled.tasks.length] = task;
 
-	// do this after adding 'editing' class so that can be used to correctly show task state
-	showUpdatedAgo( liTarget, true ) ;
+                        liTarget.removeClass("addnewtask");
+                        liTarget.addClass('task');
 
-	if( newInput && e.type === 'click' && e.target === newInput ) {
-		return ;
-	} else {
-		// setTimeout( Y.bind( newInput.focus, newInput ), 100 )  ;	// don't let li node steal focus
-		newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
-		newInput.focus();	// this causes a blur event which can remove the editing class
-		// window.getSelection().empty() ;	//  - also, try to clear selection
-		Y.sled.uiutils.setCursor( newInput, 999 ) ;	// move cursor to end
-	}
+                        addAddTask(taskList);
 
-} 
+                        // works best after we add the task (otherwise li is still hovered/highlighted)
+                        liTarget.removeClass("active");
 
+                        var newLi = taskList.one(".addnewtask");
+                        if (exitKey === 13) {
+                            taskTitleClick({ currentTarget: newLi });
+                        }
 
-// bind UI
+                        // do not need to rerender anymore of task as title set
+                        confirmTask(response, myarg);
 
-function bind( ) {
+                        sync();
 
-	function tasklistKeypress(e){
+                    } else {
 
-		e.currentTarget.removeClass("addnewitem");
+                        Y.one('#tasks').all(".addnewtask").remove(true);
+                        addAddTask(taskList);
+                        // liTarget = null ;
 
-		exitKey = e.keyCode ;
+                        // rerender to sync UI w unchanged data
+                        render(sled.tasks, sled.id);
 
-		if( e.keyCode===13 ) {	// return
-			e.currentTarget.blur();
-		}
+                        Y.fire('sled:errorMessage', 'Task ' + (taskId ? 'change' : 'add') + ' failed');
+                    }
 
-		if( e.keyCode===27 ) {	// escape
-			var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
-			var taskId = liTarget.getAttribute('task') ;	// get does not always work
-			var task = gpostmile.sled.tasks[taskId] ;
-			if( task ) {
-				e.currentTarget.set('value',task.title) ;
-			}
-			e.currentTarget.blur();
-		}
+                };
 
-	}
+                putJson("/project/" + sled.id + "/task", json, confirmAddTask);
 
-	taskList.delegate('keydown', tasklistKeypress, '.tasktitle' ) ;
+            } else {
 
-	// just text 
-	// taskList.delegate('click', taskTitleClick, '.tasktitle' ) ;
+                if (title && title !== oldTaskTitle) {
+                    postJson("/task/" + task.id, json, confirmTask);
+                }
 
-	// cilck anywhere on width of title area
-	taskList.delegate('click', taskTitleClick, '.titlearea' ) ;
+            }
 
-	// click on add new item
-	taskList.delegate('click', taskTitleClick, '.addnewtask' ) ;
+        }
 
-	taskList.delegate( 'click', checkTask, '.check' ) ;	// 'li > .check'
+        sync(); // to ensure we've got tooltrip trigger back on title
+    }
 
-	taskList.delegate( 'click', showParticipants, '.participants' ) ;	// does a toggle
+    /*
+    * listen to mouse to disambiguate selection vs dragging
+    *	if moves more than five pixels horz, before any selection occurs (was vert move < 5 px)
+    *	then treat as selection instead of drag (don't resend mouse down to start drag)
+    */
 
-	taskList.delegate( 'click', askDeleteTask, '.deleteTask' ) ;
+    function bindDragVsSelect() {
+        var mdh;
+        var muh;
+        var mmh;
+        var ssh;
+        var ssc;
+        var mde;
+        var mdXY;
 
-	taskList.delegate('hover', onHover, endHover, 'li' ) ;	// easier / better than mouse over
+        function listenForSuperfluousSelection(e) {
+            if (ssh) {
+                ssh.detach(); // only needs to be done once
+            }
+            ssh = Y.on('selectstart', abortSuperfluousSelection, 'body');
+            ssc = 0;
+        }
+        function abortSuperfluousSelection(e) {
+            window.getSelection().empty();
+            if (ssc++ > 3) {	// only needs to be done a few times
+                if (ssh) {
+                    ssh.detach();
+                }
+                ssh = null;
+            }
+        }
 
-	taskList.delegate( 'click', openDetails, '.taskicon' ) ;
-	// nah taskList.delegate( 'dblclick', openDetails, 'li' ) ;	// incl task title
-	taskList.delegate( 'click', taskSingleClick, 'li' ) ;
-	taskList.delegate( 'click', openDetails, '.collapseDetails' ) ;	// will toggle close when open
+        function taskMouseDown(e) {
+            if (mmh) {
+                mmh.detach();
+            }
+            mmh = taskList.delegate('mousemove', taskMouseMove, 'li .tasktitle');
+            mde = e;
+            mdXY = [e.clientX, e.clientY];
+            // e.stopPropagation() ;
+        }
 
-	// should also be called when details are closed/hidden (lack of visibility doesn't cause a blur event)
-	function detailsKeypress(e){
-		
-		if( e.keyCode===13 ) {	// return
-			// no longer listening to blur event, but logic is same, so just ensure current target is same / valid
-			// e.currentTarget.blur() ;
-			
-			if( !e.shiftKey ) {	// if( !Y.sled.settings.multilineDetails() )
-				
-				// try to truncate newline, but it's too early
-				// var value = e.currentTarget.get('value') ;
-				// e.currentTarget.set('value', value.substring(0,length-1) ) ;
-				// this stops the chars from getting into text value: e.halt() ;
-				
-				// not on this thread - wait until after we've resized the text box
-				// blurDetails( e ) ;	
-				setTimeout( function() { blurDetails( e ) }, 0 ) ;
-			}
-			
-		}
-		
-		if( e.keyCode===27 ) {	// escape
-			e.currentTarget.set('value','') ;
-			// e.currentTarget.blur() ;
-		}
-		
-		// backspace or delete - might make it smaller - and delay until this keystroke is included
-		if( e.keyCode===8 || e.keyCode===127 || e.keyCode===27 ) {	
-			setTimeout( function() { resizeDetails( e.currentTarget ) }, 0 ) ;
-		} else {
-			setTimeout( function() { expandDetails( e.currentTarget ) }, 0 ) ;
-		}
-		
-	}
-	taskList.delegate('keyup', detailsKeypress, '.taskdetails textarea' ) ;	// keyup ensures the char is in the field
+        function taskMouseUp(e) {
+            dragging = 0;
+            if (mmh) {
+                mmh.detach();
+            }
+            mmh = null;
+        }
 
-	// should also be called when details are closed/hidden (lack of visibility doesn't cause a blur event)
-	function detailsFocus(e){
-		var ct = e.currentTarget ;
-		setTimeout( function() { resizeDetails( ct ) }, 0 ) ;
-	}
-	taskList.delegate('focus', detailsFocus, '.taskdetails textarea' ) ;	// was textarea
+        function taskMouseMove(e) {
 
-	function addTaskDetailClicked(e){
-		// no longer listening to blur event, but logic is same, so just ensure current target is same / valid
-		// e.currentTarget.ancestor().one('textarea.taskdetails').blur() ;	// better way to get input sib?
-		e.currentTarget = e.currentTarget.ancestor().one('textarea.taskdetails') ;
-		blurDetails( e ) ;	
-		// no longer listening to blur event, but logic is same, so just ensure current target is same / valid
-	}
-	taskList.delegate('click', addTaskDetailClicked, '.addTaskDetail' ) ;
+            if (Math.abs(mdXY[1] - e.clientY) > 5 && !window.getSelection().toString()) {
 
-	// details input
-	taskList.delegate('focus', function(e) { e.currentTarget.set( 'value', '' ) ; e.currentTarget.removeClass( 'addnewitem' ) ; }, '.addnewitem' ) ;
+                if (mde) {
 
-	taskList.delegate('blur', function(e) { titleEntered( e ) ; }, '.tasktitle' ) ;
-	taskList.delegate('keyup', function(e) { titleTyped( e ) ; }, '.tasktitle' ) ;
+                    // mde.currentTarget.simulate( mde.type, mde ) ;  will not work with DnD
 
+                    var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
 
-	// handle detecting a drag for selection vs dnd
-	bindDragVsSelect() ;
+                    // try in vain to avoid superfluous selection
+                    // ... simulate( 'mouseup', 'click' on various nodes
+                    // ... delay setTimeout( startDrag, 1000 ) ;
+                    listenForSuperfluousSelection();
 
+                    liTarget.simulate('mousedown', { clientX: mde.clientX, clientY: mde.clientY });
 
-	// event handlers
+                    mde = null;
 
-	Y.on( "sled:dropSuggestion", function( proxy ) {
-		dropSuggestion( proxy ) ;
-	});
+                    if (mmh) {
+                        mmh.detach();
+                    }
+                    mmh = null;
+                }
+            }
+        }
 
-	Y.on( "sled:addSuggestion", function( suggestion ) {
-		addSuggestion( suggestion ) ;
-	});
+        mdh = taskList.delegate('mousedown', taskMouseDown, 'li .tasktitle');
+        muh = taskList.delegate('mouseup', taskMouseUp, 'li .tasktitle');
+    }
 
-	Y.on( "sled:taskReorder", function( node ) {
-		reorder( node ) ;
-	});
 
-	Y.on( "sled:renderTasks", function( tasks, projectId ) {
-		render( tasks, projectId ) ;
-	});
+    // click on task (outside of title)
 
-}
+    function taskSingleClick(e) {
 
-Y.namespace("sled.tasklist");
-Y.sled.tasklist = {
-	showUpdatedAgo: showUpdatedAgo
-} ;
+        var sled = gpostmile.sled;
+        var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
+        var liTitleTarget = liTarget.one(".tasktitle"); // choses first one, with ttile (not span of right icons)
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = null;
 
-bind() ;
+        // no longer treat task click outside of title as a title click
+        if (e.target.get('tagName').toLowerCase() === 'li') {
+            document.activeElement.blur();
+        }
 
-}, "1.0.0", {requires:['postmile-global', 'postmile-templates', 'postmile-suggestions-list', 'postmile-settings', 'postmile-dnd', 'event-key', 'node', 'anim' ]} );
+        // do treat task click outside of title as a title click
+        // taskTitleClick( e ) ;
+        // liTarget.one('input.tasktitle').focus() ;
+
+        // newInput = liTitleTarget.one("input") ;	// it'd be nice if we could just get this from setContent
+        // showUpdatedAgo( liTarget ) ;
+        // Y.assert( newInput ) ;
+        // newInput.focus();
+    }
+
+
+    // click on task (on title)
+
+    function taskTitleClick(e) {
+
+        // don't immediately add active and editing classes 
+        // because the forthcoming focus causes a blur which will remove editing
+
+        var sled = gpostmile.sled;
+        var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
+        var liTitleTarget = liTarget.one(".tasktitle"); // choses first one, with ttile (not span of right icons)
+        var taskId = liTarget.getAttribute('task'); // get does not always work
+        var task = null;
+        var newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
+        var sel = window.getSelection();
+
+        if (sel.toString() && liTitleTarget.contains(sel.anchorNode)) {
+            return;
+        }
+
+        if (taskId) {
+            task = gpostmile.sled.tasks[taskId];
+        }
+
+        // do this now after focus as caused blur and removed 'editing' class from all LI nodes
+        liTarget.addClass("active");
+        liTarget.addClass("editing");
+
+        // do this after adding 'editing' class so that can be used to correctly show task state
+        showUpdatedAgo(liTarget, true);
+
+        if (newInput && e.type === 'click' && e.target === newInput) {
+            return;
+        } else {
+            // setTimeout( Y.bind( newInput.focus, newInput ), 100 )  ;	// don't let li node steal focus
+            newInput = liTitleTarget; // liTitleTarget.one("input.tasktitle") ;
+            newInput.focus(); // this causes a blur event which can remove the editing class
+            // window.getSelection().empty() ;	//  - also, try to clear selection
+            Y.postmile.uiutils.setCursor(newInput, 999); // move cursor to end
+        }
+
+    }
+
+
+    // bind UI
+
+    function bind() {
+
+        function tasklistKeypress(e) {
+
+            e.currentTarget.removeClass("addnewitem");
+
+            exitKey = e.keyCode;
+
+            if (e.keyCode === 13) {	// return
+                e.currentTarget.blur();
+            }
+
+            if (e.keyCode === 27) {	// escape
+                var liTarget = e.currentTarget.ancestor("li", true); // true == scans/tests self
+                var taskId = liTarget.getAttribute('task'); // get does not always work
+                var task = gpostmile.sled.tasks[taskId];
+                if (task) {
+                    e.currentTarget.set('value', task.title);
+                }
+                e.currentTarget.blur();
+            }
+
+        }
+
+        taskList.delegate('keydown', tasklistKeypress, '.tasktitle');
+
+        // just text 
+        // taskList.delegate('click', taskTitleClick, '.tasktitle' ) ;
+
+        // cilck anywhere on width of title area
+        taskList.delegate('click', taskTitleClick, '.titlearea');
+
+        // click on add new item
+        taskList.delegate('click', taskTitleClick, '.addnewtask');
+
+        taskList.delegate('click', checkTask, '.check'); // 'li > .check'
+
+        taskList.delegate('click', showParticipants, '.participants'); // does a toggle
+
+        taskList.delegate('click', askDeleteTask, '.deleteTask');
+
+        taskList.delegate('hover', onHover, endHover, 'li'); // easier / better than mouse over
+
+        taskList.delegate('click', openDetails, '.taskicon');
+        // nah taskList.delegate( 'dblclick', openDetails, 'li' ) ;	// incl task title
+        taskList.delegate('click', taskSingleClick, 'li');
+        taskList.delegate('click', openDetails, '.collapseDetails'); // will toggle close when open
+
+        // should also be called when details are closed/hidden (lack of visibility doesn't cause a blur event)
+        function detailsKeypress(e) {
+
+            if (e.keyCode === 13) {	// return
+                // no longer listening to blur event, but logic is same, so just ensure current target is same / valid
+                // e.currentTarget.blur() ;
+
+                if (!e.shiftKey) {	// if( !Y.postmile.settings.multilineDetails() )
+
+                    // try to truncate newline, but it's too early
+                    // var value = e.currentTarget.get('value') ;
+                    // e.currentTarget.set('value', value.substring(0,length-1) ) ;
+                    // this stops the chars from getting into text value: e.halt() ;
+
+                    // not on this thread - wait until after we've resized the text box
+                    // blurDetails( e ) ;	
+                    setTimeout(function () { blurDetails(e) }, 0);
+                }
+
+            }
+
+            if (e.keyCode === 27) {	// escape
+                e.currentTarget.set('value', '');
+                // e.currentTarget.blur() ;
+            }
+
+            // backspace or delete - might make it smaller - and delay until this keystroke is included
+            if (e.keyCode === 8 || e.keyCode === 127 || e.keyCode === 27) {
+                setTimeout(function () { resizeDetails(e.currentTarget) }, 0);
+            } else {
+                setTimeout(function () { expandDetails(e.currentTarget) }, 0);
+            }
+
+        }
+        taskList.delegate('keyup', detailsKeypress, '.taskdetails textarea'); // keyup ensures the char is in the field
+
+        // should also be called when details are closed/hidden (lack of visibility doesn't cause a blur event)
+        function detailsFocus(e) {
+            var ct = e.currentTarget;
+            setTimeout(function () { resizeDetails(ct) }, 0);
+        }
+        taskList.delegate('focus', detailsFocus, '.taskdetails textarea'); // was textarea
+
+        function addTaskDetailClicked(e) {
+            // no longer listening to blur event, but logic is same, so just ensure current target is same / valid
+            // e.currentTarget.ancestor().one('textarea.taskdetails').blur() ;	// better way to get input sib?
+            e.currentTarget = e.currentTarget.ancestor().one('textarea.taskdetails');
+            blurDetails(e);
+            // no longer listening to blur event, but logic is same, so just ensure current target is same / valid
+        }
+        taskList.delegate('click', addTaskDetailClicked, '.addTaskDetail');
+
+        // details input
+        taskList.delegate('focus', function (e) { e.currentTarget.set('value', ''); e.currentTarget.removeClass('addnewitem'); }, '.addnewitem');
+
+        taskList.delegate('blur', function (e) { titleEntered(e); }, '.tasktitle');
+        taskList.delegate('keyup', function (e) { titleTyped(e); }, '.tasktitle');
+
+
+        // handle detecting a drag for selection vs dnd
+        bindDragVsSelect();
+
+
+        // event handlers
+
+        Y.on("sled:dropSuggestion", function (proxy) {
+            dropSuggestion(proxy);
+        });
+
+        Y.on("sled:addSuggestion", function (suggestion) {
+            addSuggestion(suggestion);
+        });
+
+        Y.on("sled:taskReorder", function (node) {
+            reorder(node);
+        });
+
+        Y.on("sled:renderTasks", function (tasks, projectId) {
+            render(tasks, projectId);
+        });
+
+    }
+
+    Y.namespace("sled.tasklist");
+    Y.postmile.tasklist = {
+        showUpdatedAgo: showUpdatedAgo
+    };
+
+    bind();
+
+}, "1.0.0", { requires: ['postmile-global', 'postmile-templates', 'postmile-suggestions-list', 'postmile-settings', 'postmile-dnd', 'event-key', 'node', 'anim'] });

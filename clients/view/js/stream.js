@@ -8,491 +8,491 @@
 * stream module to manage streaming sockets, subscriptions, and updates
 *
 *
-*/ 
+*/
 
 
-YUI.add('postmile-stream', function(Y) {
+YUI.add('postmile-stream', function (Y) {
 
-// module vars
-var socketMessage = {} ;
-var socket ;
+    // module vars
+    var socketMessage = {};
+    var socket;
 
 
-// subscribe allow us to listen and receieve updates to a particular sled
-// although we could subscribe to multiple projects, try to limit our subscription to just the current sled
-// we automatically receive user/profile events
+    // subscribe allow us to listen and receieve updates to a particular sled
+    // although we could subscribe to multiple projects, try to limit our subscription to just the current sled
+    // we automatically receive user/profile events
 
-function subscribe( sled ) {
+    function subscribe(sled) {
 
-	if( sled && !sled.subscribed && socketMessage.session ) {
+        if (sled && !sled.subscribed && socketMessage.session) {
 
-		var confirmPostStream = function( response, myarg ) {
-			if( response.status === 'ok' ) {
-				sled.subscribed = true ;
-			} else {
-				Y.log( "post " + response.status + " for " + sled.title  + ' ' + JSON.stringify(response) ) ;
-			}
-		} ;
+            var confirmPostStream = function (response, myarg) {
+                if (response.status === 'ok') {
+                    sled.subscribed = true;
+                } else {
+                    Y.log("post " + response.status + " for " + sled.title + ' ' + JSON.stringify(response));
+                }
+            };
 
-		// keep subscribed so we can get updates for previously loaded projects
-		// unsubscribeAll() ;
+            // keep subscribed so we can get updates for previously loaded projects
+            // unsubscribeAll() ;
 
-		// it's okay to subscribe even before we get an ok reply to unsubribes
-		postJson( '/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmPostStream ) ;
-	}
+            // it's okay to subscribe even before we get an ok reply to unsubribes
+            postJson('/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmPostStream);
+        }
 
-}
+    }
 
 
-// unsubscribe to all projects with delete
+    // unsubscribe to all projects with delete
 
-function unsubscribeAll( ) {
+    function unsubscribeAll() {
 
-	if( socketMessage.session ) {
+        if (socketMessage.session) {
 
-		var confirmDeleteStream = function( response, sled ) {
-			if( response.status === 'ok' ) {
-				sled.subscribed = false ;
-			} else {
-				Y.log( "delete " + response.status + " for " + sled.title  + ' ' + JSON.stringify(response) ) ;
-			}
-		} ;
+            var confirmDeleteStream = function (response, sled) {
+                if (response.status === 'ok') {
+                    sled.subscribed = false;
+                } else {
+                    Y.log("delete " + response.status + " for " + sled.title + ' ' + JSON.stringify(response));
+                }
+            };
 
-		var i,l ;
-		for (/*var*/ i=0, l=Y.sled.gpostmile.projects.length; i < l; ++i) {
-			var sled = Y.sled.gpostmile.projects[i] ;
-			if( sled.subscribed ) {
-				deleteJson( '/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmDeleteStream, sled ) ;
-				sled.subscribed = false ;	// presume this works (we'd not do anything differently anyways)
-			}
-		}
-	}
-}
+            var i, l;
+            for (/*var*/i = 0, l = Y.postmile.gpostmile.projects.length; i < l; ++i) {
+                var sled = Y.postmile.gpostmile.projects[i];
+                if (sled.subscribed) {
+                    deleteJson('/stream/' + socketMessage.session + '/project/' + sled.id, null, confirmDeleteStream, sled);
+                    sled.subscribed = false; // presume this works (we'd not do anything differently anyways)
+                }
+            }
+        }
+    }
 
 
-// handle message coming in on stream socket
+    // handle message coming in on stream socket
 
-function handleStreamMessage( message ) {
+    function handleStreamMessage(message) {
 
-	Y.log( 'stream update ' + JSON.stringify( message ) ) ;
+        Y.log('stream update ' + JSON.stringify(message));
 
-	if (message.type === 'connect') {
+        if (message.type === 'connect') {
 
-		socket.send({ type: 'initialize', id: session.id, mac: MAC.macMessage(message.session, session) });
-		socketMessage.session = message.session ;
+            socket.send({ type: 'initialize', id: session.id, mac: MAC.macMessage(message.session, session) });
+            socketMessage.session = message.session;
 
-	}
+        }
 
-	else if (message.type === 'initialize') {
+        else if (message.type === 'initialize') {
 
-		if( message.status === 'ok' ) {
+            if (message.status === 'ok') {
 
-			socketMessage.status = message.status ;
+                socketMessage.status = message.status;
 
-			// unsubscribeAll is probably too heavy, even if it's a reconnect - just reset the subscription status
-			var i,l ;
-			for (/*var*/ i=0, l=Y.sled.gpostmile.projects.length; i < l; ++i) {
-				var sled = Y.sled.gpostmile.projects[i] ;
-				sled.subscribed = false ;	// presume this works (we'd not do anything differently anyways)
-			}
+                // unsubscribeAll is probably too heavy, even if it's a reconnect - just reset the subscription status
+                var i, l;
+                for (/*var*/i = 0, l = Y.postmile.gpostmile.projects.length; i < l; ++i) {
+                    var sled = Y.postmile.gpostmile.projects[i];
+                    sled.subscribed = false; // presume this works (we'd not do anything differently anyways)
+                }
 
-			if( Y.sled && Y.sled.gpostmile && Y.sled.gpostmile.sled ) {
-				subscribe( Y.sled.gpostmile.sled ) ;
-			}
+                if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.sled) {
+                    subscribe(Y.postmile.gpostmile.sled);
+                }
 
-		}
+            }
 
-	}
+        }
 
-	else if (message.type === 'subscribe') {
-	}
+        else if (message.type === 'subscribe') {
+        }
 
-	else if (message.type === 'disconnect') {
+        else if (message.type === 'disconnect') {
 
-		Y.log( 'socket message disconnect ' + JSON.stringify(message)  + ' ' + JSON.stringify(message) ) ;
+            Y.log('socket message disconnect ' + JSON.stringify(message) + ' ' + JSON.stringify(message));
 
-		// perhaps reconnect, reinitialize again
+            // perhaps reconnect, reinitialize again
 
-		if( Y.sled && Y.sled.gpostmile && Y.sled.gpostmile.sled ) {
-			subscribe( Y.sled.gpostmile.sled ) ;
-		}
+            if (Y.postmile && Y.postmile.gpostmile && Y.postmile.gpostmile.sled) {
+                subscribe(Y.postmile.gpostmile.sled);
+            }
 
-	}
+        }
 
-	else if( message.type === 'update' ) {
+        else if (message.type === 'update') {
 
-		handleStreamUpate( message ) ;
+            handleStreamUpate(message);
 
-	} else {
+        } else {
 
-		Y.log( 'socket message else ' + ' ' + JSON.stringify(message) ) ;
+            Y.log('socket message else ' + ' ' + JSON.stringify(message));
 
-	}
+        }
 
-}
+    }
 
 
-// handle update message from stream socket
+    // handle update message from stream socket
 
-function handleStreamUpate( message ) {
+    function handleStreamUpate(message) {
 
-	// check to see if this update is from us in this session
-	// the first 8 bytes of the ID is sent in the message, so compare against just those bytes
-	if( session.id.indexOf( message.macId ) === 0 ) {
+        // check to see if this update is from us in this session
+        // the first 8 bytes of the ID is sent in the message, so compare against just those bytes
+        if (session.id.indexOf(message.macId) === 0) {
 
-		// update by my own self in this browser - no op
+            // update by my own self in this browser - no op
 
-	} else {
-		
-		switch( message.object ) {
-			
-			case 'projects':
-			case 'sledlist': // not used
-				updateProjects( message ) ;
-				break ;
-			
-			case 'sled':
-				updateProject( message ) ;
-				break ;
-			
-			case 'tasks':
-				updateTasks( message ) ;
-				break ;
-			
-			case 'task':
-				updateTask( message ) ;
-				break ;
-			
-			case 'details':
-				updateDetails( message ) ;
-				break ;
-			
-			case 'profile':
-			case 'user':
-				updateProfile( message ) ;
-				break ;
-			
-			case 'contacts':
-				updateContacts( message ) ;
-				break ;
+        } else {
 
-			case 'tips':
-				updateTips( message ) ;
-				break ;
+            switch (message.object) {
 
-			case 'suggestions':
-				updateSuggestions( message ) ;
-				break ;
+                case 'projects':
+                case 'sledlist': // not used
+                    updateProjects(message);
+                    break;
 
-			// also not used 'storage', 'prefs' ...   
-			
-		}
+                case 'sled':
+                    updateProject(message);
+                    break;
 
-	}
+                case 'tasks':
+                    updateTasks(message);
+                    break;
 
-}
+                case 'task':
+                    updateTask(message);
+                    break;
 
+                case 'details':
+                    updateDetails(message);
+                    break;
 
-// render updated sled/projectlist
+                case 'profile':
+                case 'user':
+                    updateProfile(message);
+                    break;
 
-function updateProjects( message ) {
+                case 'contacts':
+                    updateContacts(message);
+                    break;
 
-		function gotProjects( response, myArg ) {
+                case 'tips':
+                    updateTips(message);
+                    break;
 
-			if( response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200 ) {
+                case 'suggestions':
+                    updateSuggestions(message);
+                    break;
 
-				Y.fire( 'sled:renderProjects', response ) ;
+                // also not used 'storage', 'prefs' ...    
 
-				Y.fire( 'sled:changedBy', 'Projects changed', message.by, '.sled-title-box' ) ;
+            }
 
-			} else {
+        }
 
-				Y.log( 'error getting projects for stream update ' + JSON.stringify( response ) ) ;
+    }
 
-			}
 
-		}
+    // render updated sled/projectlist
 
-		getJson( "/projects", gotProjects ) ;
+    function updateProjects(message) {
 
-	}
-	
-	
-// updateProject
+        function gotProjects(response, myArg) {
 
-function updateProject( message ) {
+            if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-	// don't set sled object as it will be replaced w subsequent net req for new sled data
-	// var projectId = Y.sled.gpostmile.projects[ message.sled ].id ;	
-	var projectId = message.sled ;	
+                Y.fire('sled:renderProjects', response);
 
-	function gotProject( response, myArg ) {
+                Y.fire('sled:changedBy', 'Projects changed', message.by, '.sled-title-box');
 
-		if( response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200 ) {
+            } else {
 
-			// this will redraw what should already be the current sled
-			Y.fire( 'sled:renderProject', response, myArg ) ;
+                Y.log('error getting projects for stream update ' + JSON.stringify(response));
 
-			// if title changed, should also rerender sled titles in sledlist
-			// note: we might not be subscribed to a sled when it's title is changed
-			Y.fire( 'sled:renderProjects', Y.sled.gpostmile.projects ) ;
+            }
 
-			// Y.sled.gpostmile.sled has now changed as a result of network request
-			// but should still have same id to indicate if user is logically on same sled
-			// when that is confirmed, let the user know (where) the sled was updated
-			if( projectId === Y.sled.gpostmile.sled.id ) {	// it's still acticve on the UI
+        }
 
-				Y.fire( 'sled:changedBy', 'Project changed', message.by, '#main-box' ) ;
+        getJson("/projects", gotProjects);
 
-			} else {
+    }
 
-				// var sled = Y.sled.gpostmile.projects[ projectId ] ;
-				// sled.dirty = true ;
 
-			}
+    // updateProject
 
-		} else {
+    function updateProject(message) {
 
-			Y.log( 'error getting sled for stream update ' + JSON.stringify( response ) ) ;
+        // don't set sled object as it will be replaced w subsequent net req for new sled data
+        // var projectId = Y.postmile.gpostmile.projects[ message.sled ].id ;	
+        var projectId = message.sled;
 
-		}
+        function gotProject(response, myArg) {
 
-	}
+            if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-	getJson( "/project/" + message.sled, gotProject ) ;
+                // this will redraw what should already be the current sled
+                Y.fire('sled:renderProject', response, myArg);
 
-}
+                // if title changed, should also rerender sled titles in sledlist
+                // note: we might not be subscribed to a sled when it's title is changed
+                Y.fire('sled:renderProjects', Y.postmile.gpostmile.projects);
 
+                // Y.postmile.gpostmile.sled has now changed as a result of network request
+                // but should still have same id to indicate if user is logically on same sled
+                // when that is confirmed, let the user know (where) the sled was updated
+                if (projectId === Y.postmile.gpostmile.sled.id) {	// it's still acticve on the UI
 
-// render updated tasks and highlight
+                    Y.fire('sled:changedBy', 'Project changed', message.by, '#main-box');
 
-function updateTasks( message ) {
+                } else {
 
-	function gotTasks( tasks ) {	// response includes a myArg
+                    // var sled = Y.postmile.gpostmile.projects[ projectId ] ;
+                    // sled.dirty = true ;
 
-		if( tasks && tasks._networkRequestStatusCode && tasks._networkRequestStatusCode === 200 ) {
+                }
 
-			var sled = Y.sled.gpostmile.projects[ message.sled ] ;
+            } else {
 
-			// if it's acticve on the UI
-			if( sled.id === Y.sled.gpostmile.sled.id ) {	
+                Y.log('error getting sled for stream update ' + JSON.stringify(response));
 
-				Y.fire( 'sled:renderTasks', tasks, message.sled ) ;	
+            }
 
-				Y.fire( 'sled:changedBy', 'Tasks changed', message.by, '#bluebox' ) ;
+        }
 
-			} else {
+        getJson("/project/" + message.sled, gotProject);
 
-				// update the data in leiu of having it done via rendering
-				// (could also use a dirty flag such as sled.dirty = true)
-				
-				sled.tasks = tasks ;	
+    }
 
-				if( tasks ) {	// && isArray && length > 0
-					var i,l ;
-					for (/*var*/ i=0, l=tasks.length; i < l; ++i) {
-						var task = tasks[i] ;
-						task.index = i ;	// for convenience if we have only key and want to find place in array
-						tasks[task.id] = task ;	
-					}
-				}
 
-			}
+    // render updated tasks and highlight
 
-		} else {
+    function updateTasks(message) {
 
-			Y.log( 'error getting tasks for stream update ' + JSON.stringify( tasks ) ) ;
+        function gotTasks(tasks) {	// response includes a myArg
 
-		}
+            if (tasks && tasks._networkRequestStatusCode && tasks._networkRequestStatusCode === 200) {
 
-	}
-	
-	getJson( "/project/" + message.sled + "/tasks", gotTasks ) ;
-}
+                var sled = Y.postmile.gpostmile.projects[message.sled];
 
+                // if it's acticve on the UI
+                if (sled.id === Y.postmile.gpostmile.sled.id) {
 
-// render updated task and highlight
+                    Y.fire('sled:renderTasks', tasks, message.sled);
 
-function updateTask( message ) {
+                    Y.fire('sled:changedBy', 'Tasks changed', message.by, '#bluebox');
 
-	var sled = Y.sled.gpostmile.projects[ message.sled ] ;
-	var task = sled.tasks[ message.task ] ;
-	Y.assert( task.id === message.task ) ;
+                } else {
 
-	function gotTask( response, myArg ) {
+                    // update the data in leiu of having it done via rendering
+                    // (could also use a dirty flag such as sled.dirty = true)
 
-		if( response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200 ) {
+                    sled.tasks = tasks;
 
-			// can't wholesale replace task as there's other fields such as details
-			// (or repoint task we'd have to go back and repoint other objects and arrays w refs)
-			task.created = response.modified ;
-			task.modified = response.created ;
-			task.participants = response.participants || [] ;
-			Y.assert( !task.sled || task.sled === response.sled ) ;
-			task.status = response.status ;
-			task.title = response.title ;
-			Y.assert( task.id === response.id ) ;
-			// leave other fields alone, like task.details
-			// got to process to get some fields that come with GET TASKS like participantCount and isParticipant
-			task.participantsCount = task.participants.length ;
-			task.isParticipant = false ;
-			var c,l ;
-			for (/*var*/ c=0, l=task.participants.length; c < l; c++) {
-				if( task.participants[c] === Y.sled.gpostmile.profile.id ) {
-					task.isMe = true ;
-					break ;
-				}
-			}
+                    if (tasks) {	// && isArray && length > 0
+                        var i, l;
+                        for (/*var*/i = 0, l = tasks.length; i < l; ++i) {
+                            var task = tasks[i];
+                            task.index = i; // for convenience if we have only key and want to find place in array
+                            tasks[task.id] = task;
+                        }
+                    }
 
-			if( sled.id === Y.sled.gpostmile.sled.id ) {	// it's acticve on the UI
+                }
 
-				var tasksNode = Y.one( '#tasks' ) ;
-				var taskNode = tasksNode.one( '.task[task="' + task.id + '"]' ) ;
-				var html = Y.sled.templates.taskListHtml( task, taskNode ) ;
-				taskNode.replace( html ) ;
-				taskNode = tasksNode.one( '.task[task="' + task.id + '"]' ) ;	// need to reget the node after replace
-				Y.sled.tasklist.showUpdatedAgo( taskNode, true ) ;
-				Y.fire( 'sled:changedBy', 'Task changed', message.by, taskNode ) ;
-			}
+            } else {
 
-		} else {
+                Y.log('error getting tasks for stream update ' + JSON.stringify(tasks));
 
-			Y.log( 'error getting task for stream update ' + JSON.stringify( response ) ) ;
+            }
 
-		}
+        }
 
-	}
+        getJson("/project/" + message.sled + "/tasks", gotTasks);
+    }
 
-	getJson( "/task/" + task.id, gotTask ) ;
 
-}
+    // render updated task and highlight
 
+    function updateTask(message) {
 
-// render updated details and highlight
+        var sled = Y.postmile.gpostmile.projects[message.sled];
+        var task = sled.tasks[message.task];
+        Y.assert(task.id === message.task);
 
-function updateDetails( message ) {
+        function gotTask(response, myArg) {
 
-	var sled = Y.sled.gpostmile.projects[ message.sled ] ;
-	var task = sled.tasks[ message.task ] ;
+            if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-	function gotDetails( response, myArg ) {
+                // can't wholesale replace task as there's other fields such as details
+                // (or repoint task we'd have to go back and repoint other objects and arrays w refs)
+                task.created = response.modified;
+                task.modified = response.created;
+                task.participants = response.participants || [];
+                Y.assert(!task.sled || task.sled === response.sled);
+                task.status = response.status;
+                task.title = response.title;
+                Y.assert(task.id === response.id);
+                // leave other fields alone, like task.details
+                // got to process to get some fields that come with GET TASKS like participantCount and isParticipant
+                task.participantsCount = task.participants.length;
+                task.isParticipant = false;
+                var c, l;
+                for (/*var*/c = 0, l = task.participants.length; c < l; c++) {
+                    if (task.participants[c] === Y.postmile.gpostmile.profile.id) {
+                        task.isMe = true;
+                        break;
+                    }
+                }
 
-		if( response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200 ) {
+                if (sled.id === Y.postmile.gpostmile.sled.id) {	// it's acticve on the UI
 
-			task.details = response ;
-			
-			if( task.details.thread.length > 0 ) {	// in case we have update other than add, such as delete
-				var detailsObject = task.details.thread[ task.details.thread.length-1 ] ;	
-				task.detailsModified = detailsObject.created ;
-				task.detailsModifiedBy = detailsObject.user ;
-			}
+                    var tasksNode = Y.one('#tasks');
+                    var taskNode = tasksNode.one('.task[task="' + task.id + '"]');
+                    var html = Y.postmile.templates.taskListHtml(task, taskNode);
+                    taskNode.replace(html);
+                    taskNode = tasksNode.one('.task[task="' + task.id + '"]'); // need to reget the node after replace
+                    Y.postmile.tasklist.showUpdatedAgo(taskNode, true);
+                    Y.fire('sled:changedBy', 'Task changed', message.by, taskNode);
+                }
 
-			if( sled.id === Y.sled.gpostmile.sled.id ) {	// it's acticve on the UI
-			
-				var tasksNode = Y.one( '#tasks' ) ;
-				var taskNode = tasksNode.one( '.task[task="' + task.id + '"]' ) ;
-				
-				// do this just for 'updated ago' behavior
-				var html = Y.sled.templates.taskListHtml( task, taskNode ) ;
-				taskNode.replace( html ) ;
-				taskNode = tasksNode.one( '.task[task="' + task.id + '"]' ) ;	// need to reget the node after replace
-				Y.sled.tasklist.showUpdatedAgo( taskNode, true ) ;
-								
-				// now update the details
-				html = Y.sled.templates.taskDetailsHtml( task ) ;
-				var detailsNode = taskNode.one('.messages') ;
-				detailsNode.setContent(html);
-				
-				Y.fire( 'sled:changedBy', 'Item details added', message.by, taskNode ) ;
-			}
+            } else {
 
-		} else {
+                Y.log('error getting task for stream update ' + JSON.stringify(response));
 
-			Y.log( 'error getting task details for stream update ' + JSON.stringify( response ) ) ;
+            }
 
-		}
-	}
+        }
 
-	getJson( "/task/" + task.id + "/details", gotDetails, task ) ;
-}
+        getJson("/task/" + task.id, gotTask);
 
+    }
 
-// render updated profile/user
 
-function updateProfile( message ) {
+    // render updated details and highlight
 
-	// just rerender whole tasklist - todo: global list of tasks, and export detail render
-	getJson( "/profile", function( profile ){ Y.fire( 'sled:renderProfile', profile ) ; } ) ; 
+    function updateDetails(message) {
 
-}
+        var sled = Y.postmile.gpostmile.projects[message.sled];
+        var task = sled.tasks[message.task];
 
+        function gotDetails(response, myArg) {
 
-// just render updated contacts - not currently highlighting any node
+            if (response && response._networkRequestStatusCode && response._networkRequestStatusCode === 200) {
 
-function updateContacts( message ) {
+                task.details = response;
 
-	// get new contacts when updated
-	// can be caused by ourselves when inviting someone to a sled
-	// just rerender updated contacts - not currently highlighting any node
-	getJson( "/contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
+                if (task.details.thread.length > 0) {	// in case we have update other than add, such as delete
+                    var detailsObject = task.details.thread[task.details.thread.length - 1];
+                    task.detailsModified = detailsObject.created;
+                    task.detailsModifiedBy = detailsObject.user;
+                }
 
-}
+                if (sled.id === Y.postmile.gpostmile.sled.id) {	// it's acticve on the UI
 
+                    var tasksNode = Y.one('#tasks');
+                    var taskNode = tasksNode.one('.task[task="' + task.id + '"]');
 
-// just render updated tips - not currently highlighting any node
+                    // do this just for 'updated ago' behavior
+                    var html = Y.postmile.templates.taskListHtml(task, taskNode);
+                    taskNode.replace(html);
+                    taskNode = tasksNode.one('.task[task="' + task.id + '"]'); // need to reget the node after replace
+                    Y.postmile.tasklist.showUpdatedAgo(taskNode, true);
 
-function updateTips( message ) {
+                    // now update the details
+                    html = Y.postmile.templates.taskDetailsHtml(task);
+                    var detailsNode = taskNode.one('.messages');
+                    detailsNode.setContent(html);
 
-	if( Y.sled && Y.sled.user ) {
-		getJson( "/project/" + message.id + "/tips", function( tips, projectId ){ Y.fire( 'sled:renderTips', tips, projectId ) ; }, message.id ) ;
-	}
+                    Y.fire('sled:changedBy', 'Item details added', message.by, taskNode);
+                }
 
-}
+            } else {
 
+                Y.log('error getting task details for stream update ' + JSON.stringify(response));
 
-// just render updated suggestions - not currently highlighting any node
+            }
+        }
 
-function updateSuggestions( message ) {
+        getJson("/task/" + task.id + "/details", gotDetails, task);
+    }
 
-	if( Y.sled && Y.sled.suggestionlist ) {
-		getJson( "/project/" + message.id + "/suggestions", function( suggestions, projectId ){ Y.fire( 'sled:renderSuggestions', suggestions, projectId ) ; }, message.id ) ;
-	}
 
-}
+    // render updated profile/user
 
+    function updateProfile(message) {
 
-// bind actions such as events
+        // just rerender whole tasklist - todo: global list of tasks, and export detail render
+        getJson("/profile", function (profile) { Y.fire('sled:renderProfile', profile); });
 
-function bind( ) {
+    }
+
+
+    // just render updated contacts - not currently highlighting any node
+
+    function updateContacts(message) {
+
+        // get new contacts when updated
+        // can be caused by ourselves when inviting someone to a sled
+        // just rerender updated contacts - not currently highlighting any node
+        getJson("/contacts", function (contacts) { Y.fire('sled:renderContacts', contacts); });
+
+    }
+
+
+    // just render updated tips - not currently highlighting any node
+
+    function updateTips(message) {
+
+        if (Y.postmile && Y.postmile.user) {
+            getJson("/project/" + message.id + "/tips", function (tips, projectId) { Y.fire('sled:renderTips', tips, projectId); }, message.id);
+        }
+
+    }
+
+
+    // just render updated suggestions - not currently highlighting any node
+
+    function updateSuggestions(message) {
+
+        if (Y.postmile && Y.postmile.suggestionlist) {
+            getJson("/project/" + message.id + "/suggestions", function (suggestions, projectId) { Y.fire('sled:renderSuggestions', suggestions, projectId); }, message.id);
+        }
+
+    }
+
+
+    // bind actions such as events
+
+    function bind() {
 
         socket = new io.Socket(postmile.api.domain, { port: postmile.api.port, rememberTransport: false });
-		
-		socket.on('connect', function () {
-			Y.log( 'Connected!' ) ;
-		});
 
-		socket.on('message', function (message) {
-			handleStreamMessage( message ) ;
-		});
+        socket.on('connect', function () {
+            Y.log('Connected!');
+        });
 
-		socket.connect();
+        socket.on('message', function (message) {
+            handleStreamMessage(message);
+        });
 
-		Y.on( "sled:subscribeProject", function( sled ) {
-			subscribe( sled ) ;
-		});
+        socket.connect();
 
-	}
+        Y.on("sled:subscribeProject", function (sled) {
+            subscribe(sled);
+        });
+
+    }
 
 
-// any exports
+    // any exports
 
-Y.namespace("sled").stream = {
-} ;
+    Y.namespace('postmile').stream = {
+};
 
 
 // start binding when module loaded
 
-bind() ;
+bind();
 
 
-}, "1.0.0", {requires:['node']} );
+}, "1.0.0", { requires: ['node'] });

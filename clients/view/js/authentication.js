@@ -1,18 +1,18 @@
 /*
- * Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
- * See LICENSE file included with this code project for license terms.
- */
+* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* See LICENSE file included with this code project for license terms.
+*/
 
 // Globals
 
 var options = {
 
-	nativeDomain: postmile.web.domain,
-	nativeClientId: 'postmile.view',
-	clientProfileURI: 'client.json',
-	loginURI: postmile.web.uri + '/login',
-	authorizationEndpointURI: postmile.web.uri + '/oauth/authorize',
-	issueEndpointURI: postmile.web.uri + '/oauth/issue'
+    nativeDomain: postmile.web.domain,
+    nativeClientId: 'postmile.view',
+    clientProfileURI: 'client.json',
+    loginURI: postmile.web.uri + '/login',
+    authorizationEndpointURI: postmile.web.uri + '/oauth/authorize',
+    issueEndpointURI: postmile.web.uri + '/oauth/issue'
 };
 
 
@@ -218,48 +218,48 @@ getCredentials = function (callback, isRefresh) {
 
 refreshCredentials = function () {
 
-	getCredentials(function () {}, true);
+    getCredentials(function () { }, true);
 }
 
 
 // Get client profile (client.json)
 
-getClientProfile = function(callback) {	// make this gloabl for ext ref - not a func decl, not a var
+getClientProfile = function (callback) {	// make this gloabl for ext ref - not a func decl, not a var
 
-	var request = new XMLHttpRequest();
-	request.onreadystatechange = function () {
+    var request = new XMLHttpRequest();
+    request.onreadystatechange = function () {
 
-		if (request.readyState === 4) {
+        if (request.readyState === 4) {
 
-			if (request.status === 200) {
+            if (request.status === 200) {
 
-				var msg;
+                var msg;
 
-				try {
+                try {
 
-					msg = JSON.parse(request.responseText);
-				}
-				catch (e) {}
+                    msg = JSON.parse(request.responseText);
+                }
+                catch (e) { }
 
-				if (msg &&
+                if (msg &&
 					msg.id) {
 
-					callback(msg, null);
-				}
-				else {
+                    callback(msg, null);
+                }
+                else {
 
-					callback(null, 'Received invalid client.json');
-				}
-			}
-			else {
+                    callback(null, 'Received invalid client.json');
+                }
+            }
+            else {
 
-				callback(null, 'Failed obtaining client.json: ' + request.status);
-			}
-		}
-	};
+                callback(null, 'Failed obtaining client.json: ' + request.status);
+            }
+        }
+    };
 
-	request.open('GET', options.clientProfileURI);
-	request.send();
+    request.open('GET', options.clientProfileURI);
+    request.send();
 }
 
 

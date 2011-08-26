@@ -16,115 +16,115 @@ var isAnchor = function (node) {
 
 var isMenuItem = function (node) {
 
-	return node.hasClass('menuitem');
+    return node.hasClass('menuitem');
 };
 
 var isMenuLabel = function (node) {
 
-	return node.hasClass('menu-label');
+    return node.hasClass('menu-label');
 };
 
 var hasVisibleSubmenu = function (menuLabel) {
 
-	return menuLabel.hasClass('menu-label-menuvisible');
+    return menuLabel.hasClass('menu-label-menuvisible');
 
 };
 
 var getItemAnchor = function (node) {
 
-	return isAnchor(node) ? node : node.one('a');
+    return isAnchor(node) ? node : node.one('a');
 };
 
 var getNodeWithClass = function (node, className, searchAncestors) {
 
-	var oItem;
+    var oItem;
 
-	if (node) {
+    if (node) {
 
-		if (node.hasClass(className)) {
-			oItem = node;
-		}
+        if (node.hasClass(className)) {
+            oItem = node;
+        }
 
-		if (!oItem && searchAncestors) {
-			oItem = node.ancestor(('.' + className));
-		}
-	}
+        if (!oItem && searchAncestors) {
+            oItem = node.ancestor(('.' + className));
+        }
+    }
 
-	return oItem;
+    return oItem;
 };
 
 var getParentMenu = function (node) {
 
-	return node.ancestor('.menu');
+    return node.ancestor('.menu');
 };
 
 var getMenu = function (node, searchAncestors) {
 
-	return getNodeWithClass(node, 'menu', searchAncestors);
+    return getNodeWithClass(node, 'menu', searchAncestors);
 };
 
 var getMenuItem = function (node, searchAncestors) {
 
-	var oItem;
+    var oItem;
 
-	if (node) {
-		oItem = getNodeWithClass(node, 'menuitem', searchAncestors);
-	}
+    if (node) {
+        oItem = getNodeWithClass(node, 'menuitem', searchAncestors);
+    }
 
-	return oItem;
+    return oItem;
 };
 
 var getMenuLabel = function (node, searchAncestors) {
 
-	var oItem;
+    var oItem;
 
-	if (node) {
+    if (node) {
 
-		if (searchAncestors) {
-			oItem = getNodeWithClass(node, 'menu-label', searchAncestors);
-		}
-		else {
-			oItem = getNodeWithClass(node, 'menu-label') || node.one(('.' + 'menu-label'));
-		}
-	}
+        if (searchAncestors) {
+            oItem = getNodeWithClass(node, 'menu-label', searchAncestors);
+        }
+        else {
+            oItem = getNodeWithClass(node, 'menu-label') || node.one(('.' + 'menu-label'));
+        }
+    }
 
-	return oItem;
+    return oItem;
 };
 
 var getItem = function (node, searchAncestors) {
 
-	var oItem;
+    var oItem;
 
-	if (node) {
-		oItem = getMenuItem(node, searchAncestors) || getMenuLabel(node, searchAncestors);
-	}
+    if (node) {
+        oItem = getMenuItem(node, searchAncestors) || getMenuLabel(node, searchAncestors);
+    }
 
-	return oItem;	
+    return oItem;
 };
 
 var getFirstItem = function (menu) {
 
-	return getItem(menu.one('li'));
+    return getItem(menu.one('li'));
 };
 
 var getActiveClass = function (node) {
 
-	return isMenuItem(node) ? 'menuitem-active' : 'menu-label-active';
+    return isMenuItem(node) ? 'menuitem-active' : 'menu-label-active';
 };
 
 var handleMouseOverForNode = function (node, target) {
 
-	return node && !node['handledMouseOver'] && (node.compareTo(target) || node.contains(target));
+    return node && !node['handledMouseOver'] && (node.compareTo(target) || node.contains(target));
 };
 
 var handleMouseOutForNode = function (node, relatedTarget) {
 
-	return node && !node['handledMouseOut'] && (!node.compareTo(relatedTarget) && !node.contains(relatedTarget));
+    return node && !node['handledMouseOut'] && (!node.compareTo(relatedTarget) && !node.contains(relatedTarget));
 };
 
 var NodeMenuNav = function () {
 
-	NodeMenuNav.superclass.constructor.apply(this, arguments);
+    NodeMenuNav.superclass.constructor.apply(this, arguments);
 };
 
 NodeMenuNav.NAME = 'nodeMenuNav';
@@ -132,10 +132,10 @@ NodeMenuNav.NS = 'menuNav';
 
 NodeMenuNav.ATTRS = {
 
-	mouseOutHideDelay: {
+    mouseOutHideDelay: {
 
-		value: 250
-	}
+        value: 250
+    }
 };
 
 

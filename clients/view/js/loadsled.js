@@ -95,10 +95,10 @@ function resizeListBox() {
     footer.style.bottom = null;
     footer.style.minWidth = width - 150 + 'px';
 
-    if (Y && Y.sled && Y.sled.tasklist) {
+    if (Y && Y.postmile && Y.postmile.tasklist) {
         var taskList = Y.one("#tasks");
         var liNodes = taskList.all("li");
-        liNodes.each(Y.sled.tasklist.showUpdatedAgo);
+        liNodes.each(Y.postmile.tasklist.showUpdatedAgo);
     }
 
 }
@@ -147,8 +147,8 @@ hideSuggestionsLoading = function () {
     // Lauch guided tour if first time
 
     getJson("/storage/showtour", function (json) {
-        Y.sled.gpostmile.showTour = (json.showtour ? (json.showtour === 'true') : true);
-        if (Y.sled.gpostmile.showTour) {
+        Y.postmile.gpostmile.showTour = (json.showtour ? (json.showtour === 'true') : true);
+        if (Y.postmile.gpostmile.showTour) {
             Y.fire('sled:launchTour');
             postJson('/storage/showtour', '{"value":"false"}', function (response, myarg) { });
         }
@@ -164,7 +164,7 @@ preBody = function () {
 
         function confirmActiveProject(json) {
 
-            initialProjectId = json.activesled;
+            initialProjectId = json.activeProject;
 
             function gotTasks(tasks) {
 
@@ -193,9 +193,9 @@ preBody = function () {
         }
 
         if (fragProject) {
-            confirmActiveProject({ activesled: fragProject });
+            confirmActiveProject({ activeProject: fragProject });
         } else {
-            getJson("/storage/activesled", confirmActiveProject); // sync these:?
+            getJson("/storage/activeProject", confirmActiveProject); // sync these:?
         }
 
     }
@@ -271,8 +271,8 @@ postBody = function () {
 
     function initialTaskRender() {
 
-        Y.sled.initialProjectId = initialProjectId;
-        Y.sled.initialTasks = initialTasks;
+        Y.postmile.initialProjectId = initialProjectId;
+        Y.postmile.initialTasks = initialTasks;
 
         if (initialTasks && initialProject) {
 
@@ -286,12 +286,12 @@ postBody = function () {
 
     function initialProjectRender() {
 
-        Y.sled.initialProjectId = initialProjectId;
-        Y.sled.initialProject = initialProject;
+        Y.postmile.initialProjectId = initialProjectId;
+        Y.postmile.initialProject = initialProject;
 
         if (initialProject) {
 
-            Y.sled.gpostmile.projects[initialProjectId] = initialProject; // doesn't help much as sledsList just wipes it out again
+            Y.postmile.gpostmile.projects[initialProjectId] = initialProject; // doesn't help much as sledsList just wipes it out again
 
             initialProject.tasks = initialTasks;
 

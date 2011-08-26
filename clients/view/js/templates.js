@@ -11,27 +11,27 @@
 YUI.add('postmile-templates', function (Y) {
 
 
-/**
- * local data
- *
- */
+    /**
+    * local data
+    *
+    */
 
-	var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-	var units = { minute: 60000, hour: 3600000, day: 86400000 };
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var units = { minute: 60000, hour: 3600000, day: 86400000 };
 
 
-/**
- * html / markup strings
- *
- */
+    /**
+    * html / markup strings
+    *
+    */
 
-	var taskEditedByTemplate = ' '
+    var taskEditedByTemplate = ' '
 		+ '<div class="edited-by {showEditedBy}">'
-			+ 'Edited by <em>{editedBy}</em>, {editedTime}'	
+			+ 'Edited by <em>{editedBy}</em>, {editedTime}'
 		+ '</div>'
 	;
 
-	var taskDetailsTemplate = ' '
+    var taskDetailsTemplate = ' '
 		+ '<div class="message {odd}">'
 			+ '<p class="details-meta">'
 				+ '<em>{user}</em>'
@@ -45,19 +45,19 @@ YUI.add('postmile-templates', function (Y) {
 		+ '</div>'
 	;
 
-	var rawTaskTemplate = ' '
+    var rawTaskTemplate = ' '
 
 		+ '<span class="tab"></span>'
 		+ '<span class="check-boxes check {boxChecked}">{boxChecked}</span>'
 		+ '<span class="notes taskicon {noteClass}"></span>'
 
 		+ '<span class="titlearea">'
-			/* + '<span class="titletext tasktitle yui3-hastooltip">{escapedTitle}</span>' */
+    /* + '<span class="titletext tasktitle yui3-hastooltip">{escapedTitle}</span>' */
 			+ '<textarea class="titletext tasktitle yui3-hastooltip" wrap=off rows=1>{escapedTitle}</textarea>'
 			+ '<span class="ellipses">...</span>'
 			+ '<span class="updatedAgo">{updatedAgo}</span>'
 			+ '<textarea class="measureText" wrap=off rows=1>{escapedTitle}</textarea>'
-			// + '<input class="measureSpan">{escapedTitle}</input>'
+    // + '<input class="measureSpan">{escapedTitle}</input>'
 		+ '</span>'
 
 		+ '<span class="iconsright">'
@@ -86,25 +86,25 @@ YUI.add('postmile-templates', function (Y) {
 		+ '<div class="clearfix"></div>'
 	;
 
-	var listTaskTemplate = ' '
+    var listTaskTemplate = ' '
 		+ '<li class="task {liChecked} {noteClass} {showDetails} {participantsExtent} {me} {extraClasses}" task={id} {extraAttrs}>'
 		+ rawTaskTemplate
 		+ '{extraContent}'
 		+ '</li>'
 	;
 
-	var rawAddTaskTemplate = ' '
+    var rawAddTaskTemplate = ' '
 		+ '<textarea class="titletext tasktitle addnewitem">Click to add a new item</textarea>'
 		+ '<div class="clearfix"></div>'
 	;
 
-	var listAddTaskTemplate = ' '
+    var listAddTaskTemplate = ' '
 		+ '<li class="addnewtask">'
 			+ rawAddTaskTemplate
 		+ '</li>'
 	;
 
-	var suggestionTemplate = ' '
+    var suggestionTemplate = ' '
 		+ '<li suggestion="{id}" class="suggestion">'
 			+ '<a class="add">'
 				+ '<span class="arrow"></span>'
@@ -116,218 +116,218 @@ YUI.add('postmile-templates', function (Y) {
 	;
 
 
-/**
- * local helper functinos
- *
- */
+    /**
+    * local helper functinos
+    *
+    */
 
-	// find a better way
-	function htmlEncode( s ) {
-		s = s.replace( /</g, '&lt;' ) ;
-		s = s.replace( />/g, '&gt;' ) ;
-		return s ;
-	}
+    // find a better way
+    function htmlEncode(s) {
+        s = s.replace(/</g, '&lt;');
+        s = s.replace(/>/g, '&gt;');
+        return s;
+    }
 
-	function modifiedString(timestamp) {
-		var modified = new Date(timestamp);
-		var now = new Date();
-		var elapsedMSec = now - modified;
+    function modifiedString(timestamp) {
+        var modified = new Date(timestamp);
+        var now = new Date();
+        var elapsedMSec = now - modified;
 
-		if (elapsedMSec >= 3 * units.day || elapsedMSec < 0) {
-			// 3 days or more, or bad clock sync
-			return 'on ' + months[modified.getMonth()] + ' ' + modified.getDate();
-		}
-		else if (elapsedMSec >= units.day) {
-			// 1-2 days
-			var days = Math.round(elapsedMSec / units.day);
-			return (days === 1 ? 'yesterday' : days.toString() + ' days ago');
-		}
-		else if (elapsedMSec >= units.hour) {
-			// 1-23 hours
-			var hours = Math.round(elapsedMSec / units.hour);
-			return (hours === 1 ? 'an hour ago' : hours.toString() + ' hours ago');
-		}
-		else if (elapsedMSec >= units.minute) {
-			// 1-59 minutes
-			var minutes = Math.round(elapsedMSec / units.minute);
-			return (minutes === 1 ? 'a minute ago' : minutes.toString() + ' minutes ago');
-		}
-		else {
-			// Less than a minute
-			return 'just now';
-		}
-	}
+        if (elapsedMSec >= 3 * units.day || elapsedMSec < 0) {
+            // 3 days or more, or bad clock sync
+            return 'on ' + months[modified.getMonth()] + ' ' + modified.getDate();
+        }
+        else if (elapsedMSec >= units.day) {
+            // 1-2 days
+            var days = Math.round(elapsedMSec / units.day);
+            return (days === 1 ? 'yesterday' : days.toString() + ' days ago');
+        }
+        else if (elapsedMSec >= units.hour) {
+            // 1-23 hours
+            var hours = Math.round(elapsedMSec / units.hour);
+            return (hours === 1 ? 'an hour ago' : hours.toString() + ' hours ago');
+        }
+        else if (elapsedMSec >= units.minute) {
+            // 1-59 minutes
+            var minutes = Math.round(elapsedMSec / units.minute);
+            return (minutes === 1 ? 'a minute ago' : minutes.toString() + ' minutes ago');
+        }
+        else {
+            // Less than a minute
+            return 'just now';
+        }
+    }
 
-	function taskHtml(template, task, extraClasses, extraAttrs, extraContent) {
+    function taskHtml(template, task, extraClasses, extraAttrs, extraContent) {
 
-		task.escapedTitle = htmlEncode( task.title ) ;
+        task.escapedTitle = htmlEncode(task.title);
 
-		task.extraClasses = extraClasses || "";
-		task.extraAttrs = extraAttrs || "";
-		task.extraContent = extraContent || "";
+        task.extraClasses = extraClasses || "";
+        task.extraAttrs = extraAttrs || "";
+        task.extraContent = extraContent || "";
 
-		switch (task.status) {
-			case 'close':
-				task.boxChecked = 'completed';
-				task.liChecked = 'completed';
-				break;
-			case 'pending':
-				task.boxChecked = 'in-progress';
-				task.liChecked = '';
-				break;
-			case 'open':
-				task.boxChecked = 'default';
-				task.liChecked = '';
-				break;
-			default:
-				task.boxChecked = 'default';
-				task.liChecked = '';
-				break;
-		}
+        switch (task.status) {
+            case 'close':
+                task.boxChecked = 'completed';
+                task.liChecked = 'completed';
+                break;
+            case 'pending':
+                task.boxChecked = 'in-progress';
+                task.liChecked = '';
+                break;
+            case 'open':
+                task.boxChecked = 'default';
+                task.liChecked = '';
+                break;
+            default:
+                task.boxChecked = 'default';
+                task.liChecked = '';
+                break;
+        }
 
-		task.noteClass = task.detailsModified ? (task.last >= task.detailsModified ? "noteContent" : "noteNew") : "noteEmpty";
+        task.noteClass = task.detailsModified ? (task.last >= task.detailsModified ? "noteContent" : "noteNew") : "noteEmpty";
 
-		switch (task.participantsCount) {
-			case 0:
-				task.participantsExtent = 'none';
-				break;
-			case 1:
-				task.participantsExtent = 'single';
-				break;
-			default:
-				task.participantsExtent = 'multiple';
-				break;
-		}
+        switch (task.participantsCount) {
+            case 0:
+                task.participantsExtent = 'none';
+                break;
+            case 1:
+                task.participantsExtent = 'single';
+                break;
+            default:
+                task.participantsExtent = 'multiple';
+                break;
+        }
 
-		task.me = task.isMe ? "me" : "not-me";
+        task.me = task.isMe ? "me" : "not-me";
 
-		// task.updatedAgo = ( task.detailsModified && ( task.detailsModified > task.last ) ) ? modifiedString(task.detailsModified) : '';
-		// task.updatedAgo = ( task.detailsModified && !( task.detailsModified <= task.last ) ) ? modifiedString(task.detailsModified) : '';
-		task.updatedAgo = ( task.detailsModified && ( !task.last || task.detailsModified > task.last ) ) ? modifiedString(task.detailsModified) : '';
+        // task.updatedAgo = ( task.detailsModified && ( task.detailsModified > task.last ) ) ? modifiedString(task.detailsModified) : '';
+        // task.updatedAgo = ( task.detailsModified && !( task.detailsModified <= task.last ) ) ? modifiedString(task.detailsModified) : '';
+        task.updatedAgo = (task.detailsModified && (!task.last || task.detailsModified > task.last)) ? modifiedString(task.detailsModified) : '';
 
-		task.editedByHtml = taskEditedByHtml(task);
-		
-		task.detailsHtml = taskDetailsHtml(task);
+        task.editedByHtml = taskEditedByHtml(task);
 
-		var html = Y.substitute(template, task);
+        task.detailsHtml = taskDetailsHtml(task);
 
-		return html;
-	}
+        var html = Y.substitute(template, task);
+
+        return html;
+    }
 
 
-/**
- * public functions for returning html / markup
- *
- */
+    /**
+    * public functions for returning html / markup
+    *
+    */
 
-	function sledTitle( title ) {
-		return htmlEncode( title ) ;
-	}
+    function sledTitle(title) {
+        return htmlEncode(title);
+    }
 
-	function taskEditedByHtml(task) {
-		task.showEditedBy = (task.detailsModifiedBy) ? '' : 'remove';
-		task.editedBy = (task.detailsModifiedBy) ? task.detailsModifiedBy.display.split(" ")[0] : '';
-		task.editedTime = (task.detailsModified) ? modifiedString(task.detailsModified) : '';
-		task.editedByHtml = Y.substitute(taskEditedByTemplate, task) ;
-		return task.editedByHtml ;
-	}
-	
-	function taskDetailsHtml(task) {
+    function taskEditedByHtml(task) {
+        task.showEditedBy = (task.detailsModifiedBy) ? '' : 'remove';
+        task.editedBy = (task.detailsModifiedBy) ? task.detailsModifiedBy.display.split(" ")[0] : '';
+        task.editedTime = (task.detailsModified) ? modifiedString(task.detailsModified) : '';
+        task.editedByHtml = Y.substitute(taskEditedByTemplate, task);
+        return task.editedByHtml;
+    }
 
-		var i,l ;
-		var detailsHtml = '';
+    function taskDetailsHtml(task) {
 
-		if (task.details && task.details.thread) {
+        var i, l;
+        var detailsHtml = '';
 
-			var details = [];
+        if (task.details && task.details.thread) {
 
-			for (i=0, l=task.details.thread.length; i < l; ++i) {
-				if (i > 0 &&
+            var details = [];
+
+            for (i = 0, l = task.details.thread.length; i < l; ++i) {
+                if (i > 0 &&
 					task.details.thread[i].user.id === task.details.thread[i - 1].user.id &&
 					(task.details.thread[i].created - task.details.thread[i - 1].created) <= (10 * units.minute)) {
 
-					details[details.length - 1].content += '<span class="break"></span>' + htmlEncode(task.details.thread[i].content);
-				}
-				else {
-					details.push({
-						user: (task.details.thread[i].user && task.details.thread[i].user.display) ? task.details.thread[i].user.display.split(" ")[0] : 'Someone',
-						created: modifiedString(task.details.thread[i].created),
-						content: htmlEncode(task.details.thread[i].content)
-					});
-				}
-			}
+                    details[details.length - 1].content += '<span class="break"></span>' + htmlEncode(task.details.thread[i].content);
+                }
+                else {
+                    details.push({
+                        user: (task.details.thread[i].user && task.details.thread[i].user.display) ? task.details.thread[i].user.display.split(" ")[0] : 'Someone',
+                        created: modifiedString(task.details.thread[i].created),
+                        content: htmlEncode(task.details.thread[i].content)
+                    });
+                }
+            }
 
-			for (i=0, l=details.length; i < l; ++i) {
-				task.user = details[i].user;
-				task.dateAndTime = details[i].created;
-				task.content = details[i].content;
-				task.odd = (i % 2 === 0 ? 'even' : 'odd'); /* todo: use css's even/odd child psuedo-class */
-				detailsHtml += Y.substitute(taskDetailsTemplate, task);
-			}
-		}
+            for (i = 0, l = details.length; i < l; ++i) {
+                task.user = details[i].user;
+                task.dateAndTime = details[i].created;
+                task.content = details[i].content;
+                task.odd = (i % 2 === 0 ? 'even' : 'odd'); /* todo: use css's even/odd child psuedo-class */
+                detailsHtml += Y.substitute(taskDetailsTemplate, task);
+            }
+        }
 
-		return detailsHtml;
-	}
+        return detailsHtml;
+    }
 
-	function inviteParticipants( participants ) {
-		var pplhtml = "<li>" ;
-		var c,l ;
-		for (c=0, l=participants.length; c < l; c++) {
-			if( c%3===0 ) {
-				pplhtml += '<ul class="participants-row"><li>' ;
-			}
-			pplhtml += '<span class="participant" participant="'
+    function inviteParticipants(participants) {
+        var pplhtml = "<li>";
+        var c, l;
+        for (c = 0, l = participants.length; c < l; c++) {
+            if (c % 3 === 0) {
+                pplhtml += '<ul class="participants-row"><li>';
+            }
+            pplhtml += '<span class="participant" participant="'
 					+ participants[c].id
 					+ '"><span class="person"></span>'
-					+ participants[c].display 
-					+ '</span>' ;
-			if( c%3===2 || c===l-1) {
-				pplhtml += '</li></ul>' ;
-			}
-		}
-		pplhtml += "</li>" ;
-		return pplhtml ;
-	}
+					+ participants[c].display
+					+ '</span>';
+            if (c % 3 === 2 || c === l - 1) {
+                pplhtml += '</li></ul>';
+            }
+        }
+        pplhtml += "</li>";
+        return pplhtml;
+    }
 
 
-	function manageParticipants( participants ) {
-		var pplhtml = "<li>" ;	
-		var c,i,l ;
-		if( participants && participants instanceof Array ) {
-			for ( c=0, i=0, l=participants.length; i < l; i++ ) {
-				var participant = participants[i] ;
-				if( participant.id !== Y.sled.gpostmile.profile.id ) {	// can't disinvite self
-					if( c%3===0 ) {
-						pplhtml += '<ul class="participants-row"><li>' ;
-					}
-					pplhtml += '<span class="participant" pid="'
+    function manageParticipants(participants) {
+        var pplhtml = "<li>";
+        var c, i, l;
+        if (participants && participants instanceof Array) {
+            for (c = 0, i = 0, l = participants.length; i < l; i++) {
+                var participant = participants[i];
+                if (participant.id !== Y.postmile.gpostmile.profile.id) {	// can't disinvite self
+                    if (c % 3 === 0) {
+                        pplhtml += '<ul class="participants-row"><li>';
+                    }
+                    pplhtml += '<span class="participant" pid="'
 							+ participant.id
 							+ '"><span class="person"></span>'
-							+ participant.display 
-							+ '</span>' ;
-					if( c%3===2 || c===l-1) {
-						pplhtml += '</li></ul>' ;
-					}
-					c++ ;
-				}
-			}
-		}
-		pplhtml += "</li>" ;
-		return pplhtml ;
-	}
+							+ participant.display
+							+ '</span>';
+                    if (c % 3 === 2 || c === l - 1) {
+                        pplhtml += '</li></ul>';
+                    }
+                    c++;
+                }
+            }
+        }
+        pplhtml += "</li>";
+        return pplhtml;
+    }
 
-	function taskParticipants( participants ) {
-		var html = "" ;	// ul
-		var c,l ;
-		if( participants && participants instanceof Array ) {
-			for (c=0, l=participants.length; c < l; c++) {
-				html += '<li>'
+    function taskParticipants(participants) {
+        var html = ""; // ul
+        var c, l;
+        if (participants && participants instanceof Array) {
+            for (c = 0, l = participants.length; c < l; c++) {
+                html += '<li>'
 					+ '<input type="checkbox" participant="'
 					+ participants[c].id
 					+ '" id="tp'
 					+ participants[c].id
 					+ '"'
-					+ ( participants[c].selected ? 'checked' : '' )
+					+ (participants[c].selected ? 'checked' : '')
 					+ '>'
 					+ '<label for="tp'
 					+ participants[c].id
@@ -336,103 +336,103 @@ YUI.add('postmile-templates', function (Y) {
 					+ '</label>'
 					+ '</li>'
 					;
-				}
-		}
-		html += "" ;
-		return html ;
-	}
+            }
+        }
+        html += "";
+        return html;
+    }
 
-	function participantMenuItem( participant ) {
+    function participantMenuItem(participant) {
 
-		var classes = participant.isPending ? ' diminishedtextitem ' : '';
-		classes += participant.isPID ? ' disabledtextitem ' : '';
-		var display = participant.display;
+        var classes = participant.isPending ? ' diminishedtextitem ' : '';
+        classes += participant.isPID ? ' disabledtextitem ' : '';
+        var display = participant.display;
 
-		display += participant.isPending ? ' (pending) ' : '';
-		display += participant.isPid ? ' (dummy) ' : '';
-		display = '<em>' + display + '</em>';
-		// html += '<li class="menuitem"><a class="menuitem-content participant ' + classes + '" pid="' + participant.id + '">' + display + '</a></li>';
-		var html = '<li><a class="menuitem-content participant ' + classes + '" pid="' + participant.id + '">' + display + '</a></li>';
+        display += participant.isPending ? ' (pending) ' : '';
+        display += participant.isPid ? ' (dummy) ' : '';
+        display = '<em>' + display + '</em>';
+        // html += '<li class="menuitem"><a class="menuitem-content participant ' + classes + '" pid="' + participant.id + '">' + display + '</a></li>';
+        var html = '<li><a class="menuitem-content participant ' + classes + '" pid="' + participant.id + '">' + display + '</a></li>';
 
-		return html ;
+        return html;
 
-	}
+    }
 
-	function sledMenuItem( sled, mostRecentProject ) {
+    function sledMenuItem(sled, mostRecentProject) {
 
-		var selectedClass = '' ;	// done in renderProject ( sled === mostRecentProject ) ? 'sled-loading' : '' ;
-		selectedClass += ( sled.isPending ) ? 'diminishedtextitem' : '' ;
+        var selectedClass = ''; // done in renderProject ( sled === mostRecentProject ) ? 'sled-loading' : '' ;
+        selectedClass += (sled.isPending) ? 'diminishedtextitem' : '';
 
-		var sledTitle = sled.title ;
-		sledTitle += sled.isPending ? ' (pending) ' : '' ;
-		// sledTitle += sled.isPid ? ' (dummy) ' : '' ;
+        var sledTitle = sled.title;
+        sledTitle += sled.isPending ? ' (pending) ' : '';
+        // sledTitle += sled.isPid ? ' (dummy) ' : '' ;
 
-		var html = '<li class="menuitem sled" sled="' + sled.id + '"><a class="menuitem-content ' + selectedClass + '"> ' + sledTitle + '</a></li>';		
+        var html = '<li class="menuitem sled" sled="' + sled.id + '"><a class="menuitem-content ' + selectedClass + '"> ' + sledTitle + '</a></li>';
 
-		return html ;
-	}
+        return html;
+    }
 
-	function settingsMenuItem( setting ) {
+    function settingsMenuItem(setting) {
 
-		var selectedClass = ( setting.value ) ? 'enabled' : '' ;
-		var html = '<li class="menuitem setting" setting="' + setting.id + '"><a class="menuitem-content ' + selectedClass + '">- ' + setting.title + '</a></li>';
+        var selectedClass = (setting.value) ? 'enabled' : '';
+        var html = '<li class="menuitem setting" setting="' + setting.id + '"><a class="menuitem-content ' + selectedClass + '">- ' + setting.title + '</a></li>';
 
-		return html ;
-	}
+        return html;
+    }
 
 
-	function taskInnerHtml(task) {
+    function taskInnerHtml(task) {
 
-		// return taskNode( task ).get( 'innerHTML' ) ;
-		return taskHtml(rawTaskTemplate, task) ;
+        // return taskNode( task ).get( 'innerHTML' ) ;
+        return taskHtml(rawTaskTemplate, task);
 
-	}
+    }
 
-	function taskListHtml(task, oldTaskNode, extraClasses, extraAttrs, extraContent) {	// awkaward args - perhaps s/b two diff func
-		var oldTaskDetailsNode;
-		// if( oldTaskNode ) {
-		// oldTaskDetailsNode = oldTaskNode.one( '.taskdetails' ) ;
-		// }
-		// var showDetails = oldTaskDetailsNode && oldTaskDetailsNode.hasClass( 'open' ) ;
-		var showDetails = oldTaskNode && oldTaskNode.hasClass('open');
-		task.showDetails = showDetails ? 'open' : '';
-		// task.liClasses = showDetails ? 'open' : '' ;
+    function taskListHtml(task, oldTaskNode, extraClasses, extraAttrs, extraContent) {	// awkaward args - perhaps s/b two diff func
+        var oldTaskDetailsNode;
+        // if( oldTaskNode ) {
+        // oldTaskDetailsNode = oldTaskNode.one( '.taskdetails' ) ;
+        // }
+        // var showDetails = oldTaskDetailsNode && oldTaskDetailsNode.hasClass( 'open' ) ;
+        var showDetails = oldTaskNode && oldTaskNode.hasClass('open');
+        task.showDetails = showDetails ? 'open' : '';
+        // task.liClasses = showDetails ? 'open' : '' ;
 
-		extraClasses = extraClasses || '';
-		extraAttrs = extraAttrs || '';
-		extraContent = extraContent || '';
+        extraClasses = extraClasses || '';
+        extraAttrs = extraAttrs || '';
+        extraContent = extraContent || '';
 
-		extraClasses += oldTaskNode && oldTaskNode.hasClass('active') ? 'active' : '';
-		extraAttrs += '';
-		extraContent += '';
+        extraClasses += oldTaskNode && oldTaskNode.hasClass('active') ? 'active' : '';
+        extraAttrs += '';
+        extraContent += '';
 
-		// var html = taskNode( task, extraClasses, extraAttrs, extraContent).get( 'outerHTML' ) ;
-		var html = taskHtml(listTaskTemplate, task, extraClasses, extraAttrs, extraContent);
+        // var html = taskNode( task, extraClasses, extraAttrs, extraContent).get( 'outerHTML' ) ;
+        var html = taskHtml(listTaskTemplate, task, extraClasses, extraAttrs, extraContent);
 
-		return html ;
-	}
+        return html;
+    }
 
-	function suggestionListHtml(suggestion) {
-		return Y.substitute(suggestionTemplate, suggestion);
-	}
+    function suggestionListHtml(suggestion) {
+        return Y.substitute(suggestionTemplate, suggestion);
+    }
 
-	Y.namespace("sled.templates");
-	Y.sled.templates = {	// export it
-		listAddTaskTemplate: listAddTaskTemplate,
-		taskListHtml: taskListHtml,
-		suggestionListHtml: suggestionListHtml,
-		taskInnerHtml: taskInnerHtml,
-		taskDetailsHtml: taskDetailsHtml,
-		taskEditedByHtml: taskEditedByHtml,
-		inviteParticipants: inviteParticipants,
-		manageParticipants: manageParticipants,
-		taskParticipants: taskParticipants,
-		participantMenuItem: participantMenuItem,
-		sledMenuItem: sledMenuItem,
-		settingsMenuItem: settingsMenuItem,
-		sledTitle: sledTitle,
-		last: null
+    Y.namespace("sled.templates");
+    Y.postmile.templates = {	// export it
+        listAddTaskTemplate: listAddTaskTemplate,
+        taskListHtml: taskListHtml,
+        suggestionListHtml: suggestionListHtml,
+        taskInnerHtml: taskInnerHtml,
+        taskDetailsHtml: taskDetailsHtml,
+        taskEditedByHtml: taskEditedByHtml,
+        inviteParticipants: inviteParticipants,
+        manageParticipants: manageParticipants,
+        taskParticipants: taskParticipants,
+        participantMenuItem: participantMenuItem,
+        sledMenuItem: sledMenuItem,
+        settingsMenuItem: settingsMenuItem,
+        sledTitle: sledTitle,
+        last: null
 
-	};
+    };
 
 }, "1.0.0", { requires: ['node', 'substitute'] });
