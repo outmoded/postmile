@@ -10,37 +10,37 @@
 *	will use some YUI (via global Y) when available
 *
 *
-*/ 
+*/
 
-var Y;	// global to carry across script tags / in this func
+var Y; // global to carry across script tags / in this func
 // global var debug;	// determines what is loaded and how
 
-/* let it be global var */ initialSledId = null;
+/* let it be global var */initialProjectId = null;
 var initialTasks;
 var initialTasksRendered;
-/* let it be global var */ initialSled = null;
-var initialSledRendered;
+/* let it be global var */initialProject = null;
+var initialProjectRendered;
 var sledCodeLoaded;
 
 var st;
-st = new Date; 
+st = new Date;
 st = st.getTime();
-timeLog = function ( s, pri ) {
-	if( pri && pri <= 1 && typeof console !== 'undefined' ) {
-		console.log( "TIME " + ( (new Date).getTime() - st ) + " " + s );
-	}
+timeLog = function (s, pri) {
+    if (pri && pri <= 1 && typeof console !== 'undefined') {
+        console.log("TIME " + ((new Date).getTime() - st) + " " + s);
+    }
 }
 
-getQueryVariable = function(variable) {
-	var query = window.location.search.substring(1);
-	var vars = query.split("&");
-	for (var i = 0; i < vars.length; i++) {
-		var pair = vars[i].split("=");
-		if (pair[0] == variable) {
-			return pair[1];
-		}
-	}
-	// alert('Query Variable ' + variable + ' not found');
+getQueryVariable = function (variable) {
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) {
+            return pair[1];
+        }
+    }
+    // alert('Query Variable ' + variable + ' not found');
 }
 
 
@@ -48,59 +48,59 @@ getQueryVariable = function(variable) {
 
 function resizeListBox() {
 
-	var topBar = document.getElementById('top-bar');
-	var mainBox = document.getElementById('main-box');
-	var sledDetails = document.getElementById('sled-details-bar');
-	var blueBox = document.getElementById('bluebox');
-	var tasks = document.getElementById('tasks');
-	var tourGuideBox = document.getElementById('tour-guide-alignment');
+    var topBar = document.getElementById('top-bar');
+    var mainBox = document.getElementById('main-box');
+    var sledDetails = document.getElementById('sled-details-bar');
+    var blueBox = document.getElementById('bluebox');
+    var tasks = document.getElementById('tasks');
+    var tourGuideBox = document.getElementById('tour-guide-alignment');
 
-	var minHeight = 591;	 // 546 (Invite dialog) + 45
-	var height = Math.max(window.innerHeight, minHeight);
-	var width = Math.max(window.innerWidth, 1180);
-	var outsideWhiteHeight = 185;   // 45 + 20 + 15 + 15 + 80
+    var minHeight = 591;  // 546 (Invite dialog) + 45
+    var height = Math.max(window.innerHeight, minHeight);
+    var width = Math.max(window.innerWidth, 1180);
+    var outsideWhiteHeight = 185;   // 45 + 20 + 15 + 15 + 80
 
-	var prevMainBoxHeight =  parseInt(mainBox.style.height, 10);
+    var prevMainBoxHeight = parseInt(mainBox.style.height, 10);
 
-	document.body.style.overflowY = (height === minHeight || window.innerWidth < (width - 150) ? 'auto' : 'hidden');
+    document.body.style.overflowY = (height === minHeight || window.innerWidth < (width - 150) ? 'auto' : 'hidden');
 
-	mainBox.style.height = (height - outsideWhiteHeight) + 'px';
-	blueBox.style.height = (height - 83 - outsideWhiteHeight) + 'px';
-	tasks.style.height = (height - 118 - outsideWhiteHeight) + 'px';
-	tourGuideBox.style.height = (height + 60 - outsideWhiteHeight) + 'px';
+    mainBox.style.height = (height - outsideWhiteHeight) + 'px';
+    blueBox.style.height = (height - 83 - outsideWhiteHeight) + 'px';
+    tasks.style.height = (height - 118 - outsideWhiteHeight) + 'px';
+    tourGuideBox.style.height = (height + 60 - outsideWhiteHeight) + 'px';
 
-	var prevMainBoxWidth =  parseInt(mainBox.style.width, 10);
+    var prevMainBoxWidth = parseInt(mainBox.style.width, 10);
 
-	topBar.style.width = (width - 150) + 'px';
-	mainBox.style.width = (width - 180) + 'px';
-	sledDetails.style.width = (width - 460) + 'px';
-	blueBox.style.width = (width - 445) + 'px';
-	tourGuideBox.style.width = (width - 150) + 'px';
+    topBar.style.width = (width - 150) + 'px';
+    mainBox.style.width = (width - 180) + 'px';
+    sledDetails.style.width = (width - 460) + 'px';
+    blueBox.style.width = (width - 445) + 'px';
+    tourGuideBox.style.width = (width - 150) + 'px';
 
-	if (Y && Y.one) {
-		var tourGuide = Y.one('#tour-guide');
-		if (tourGuide) {
+    if (Y && Y.one) {
+        var tourGuide = Y.one('#tour-guide');
+        if (tourGuide) {
 
-			if (tourGuide.hasClass('stickyW')) {
-				tourGuide.setStyle('width', parseInt(tourGuide.getStyle('width'), 10) - prevMainBoxWidth + (width - 180) + 'px');
-			}
-			if (tourGuide.hasClass('stickyH')) {
-				tourGuide.setStyle('height', parseInt(tourGuide.getStyle('height'), 10) - prevMainBoxHeight + (height - outsideWhiteHeight) + 'px');
-			}
-		}
-	}
+            if (tourGuide.hasClass('stickyW')) {
+                tourGuide.setStyle('width', parseInt(tourGuide.getStyle('width'), 10) - prevMainBoxWidth + (width - 180) + 'px');
+            }
+            if (tourGuide.hasClass('stickyH')) {
+                tourGuide.setStyle('height', parseInt(tourGuide.getStyle('height'), 10) - prevMainBoxHeight + (height - outsideWhiteHeight) + 'px');
+            }
+        }
+    }
 
-	var footer = document.getElementById('footer');
-	footer.style.position = 'static';
-	footer.style.bottom = null;
-	footer.style.minWidth = width - 150 + 'px';
-	
-	if( Y && Y.sled && Y.sled.tasklist ) {
-		var taskList = Y.one( "#tasks" );
-		var liNodes = taskList.all("li");
-		liNodes.each( Y.sled.tasklist.showUpdatedAgo );		
-	}
-	
+    var footer = document.getElementById('footer');
+    footer.style.position = 'static';
+    footer.style.bottom = null;
+    footer.style.minWidth = width - 150 + 'px';
+
+    if (Y && Y.sled && Y.sled.tasklist) {
+        var taskList = Y.one("#tasks");
+        var liNodes = taskList.all("li");
+        liNodes.each(Y.sled.tasklist.showUpdatedAgo);
+    }
+
 }
 
 window.onresize = resizeListBox;
@@ -110,291 +110,287 @@ window.onresize = resizeListBox;
 
 function showTaskListLoading() {
 
-	var blueBox = document.getElementById('bluebox').style;
-	var tasks = document.getElementById('tasks').style;
-	var loading = document.getElementById('bluebox-loading').style;
+    var blueBox = document.getElementById('bluebox').style;
+    var tasks = document.getElementById('tasks').style;
+    var loading = document.getElementById('bluebox-loading').style;
 
-	tasks.overflowY = 'hidden';
-	loading.display = 'inline-block';
-	loading.top = (parseInt(blueBox.height, 10) / 2 - 32) + 'px';
-	loading.left = (parseInt(blueBox.width, 10) / 2 - 32) + 'px';
+    tasks.overflowY = 'hidden';
+    loading.display = 'inline-block';
+    loading.top = (parseInt(blueBox.height, 10) / 2 - 32) + 'px';
+    loading.left = (parseInt(blueBox.width, 10) / 2 - 32) + 'px';
 }
 
 function hideTaskListLoading() {
 
-	var loading = document.getElementById('bluebox-loading').style;
-	var tasks = document.getElementById('tasks').style;
+    var loading = document.getElementById('bluebox-loading').style;
+    var tasks = document.getElementById('tasks').style;
 
-	loading.display = 'none';
-	tasks.overflowY = 'scroll';
+    loading.display = 'none';
+    tasks.overflowY = 'scroll';
 }
 
 // Show suggestions loading wheel
 
 function showSuggestionsLoading() {
 
-	var loading = document.getElementById('suggestions-loading').style;
+    var loading = document.getElementById('suggestions-loading').style;
 
-	loading.display = 'inline-block';
+    loading.display = 'inline-block';
 }
 
 hideSuggestionsLoading = function () {
 
-	var loading = document.getElementById('suggestions-loading').style;
+    var loading = document.getElementById('suggestions-loading').style;
 
-	loading.display = 'none';
+    loading.display = 'none';
 
-	// Lauch guided tour if first time
+    // Lauch guided tour if first time
 
-	getJson("/storage/showtour", function (json) {
-		Y.sled.gsled.showTour = (json.showtour ? (json.showtour === 'true') : true);
-		if (Y.sled.gsled.showTour) {
-			Y.fire( 'sled:launchTour' );
-			postJson('/storage/showtour', '{"value":"false"}', function (response, myarg) {});
-		}
-	});
+    getJson("/storage/showtour", function (json) {
+        Y.sled.gpostmile.showTour = (json.showtour ? (json.showtour === 'true') : true);
+        if (Y.sled.gpostmile.showTour) {
+            Y.fire('sled:launchTour');
+            postJson('/storage/showtour', '{"value":"false"}', function (response, myarg) { });
+        }
+    });
 }
 
 
 // <!--========== prime/prefetch active sled id and tasks (loaded before body for perf) =============================== -->
 
-preBody = function() {
+preBody = function () {
 
-	function confirmLogin( fragSled ) {
+    function confirmLogin(fragProject) {
 
-		function confirmActiveSled( json ) {
+        function confirmActiveProject(json) {
 
-			initialSledId = json.activesled;
+            initialProjectId = json.activesled;
 
-			function gotTasks( tasks ) {
+            function gotTasks(tasks) {
 
-				initialTasks = tasks;
+                initialTasks = tasks;
 
-				if( typeof initialTaskRender === 'function' && !initialTasksRendered && sledCodeLoaded ) {	// sled loaded and already tried 
-					timeLog( "rendering tasks from gotTasks callback ", 1 );
-					initialTaskRender();
-					// console.log( "Retrying initialLoad " );
-				} 
-			}
+                if (typeof initialTaskRender === 'function' && !initialTasksRendered && sledCodeLoaded) {	// sled loaded and already tried 
+                    timeLog("rendering tasks from gotTasks callback ", 1);
+                    initialTaskRender();
+                    // console.log( "Retrying initialLoad " );
+                }
+            }
 
-			function gotSled( sled ) {
+            function gotProject(sled) {
 
-				initialSled = sled;
+                initialProject = sled;
 
-				if( typeof initialSledRender === 'function' && !initialSledRendered && sledCodeLoaded ) {	// sled loaded and already tried 
-					timeLog( "rendering sled from gotSled callback ", 1 );
-					initialSledRender();
-					// console.log( "Retrying initialLoad " );
-				} 
-			}
+                if (typeof initialProjectRender === 'function' && !initialProjectRendered && sledCodeLoaded) {	// sled loaded and already tried 
+                    timeLog("rendering sled from gotProject callback ", 1);
+                    initialProjectRender();
+                    // console.log( "Retrying initialLoad " );
+                }
+            }
 
-			getJson("/project/" + initialSledId + "/tasks", gotTasks);
-			getJson("/project/" + initialSledId, gotSled);
-		}
+            getJson("/project/" + initialProjectId + "/tasks", gotTasks);
+            getJson("/project/" + initialProjectId, gotProject);
+        }
 
-		if( fragSled ) {
-			confirmActiveSled( { activesled: fragSled } );
-		} else {
-            getJson("/storage/activesled", confirmActiveSled); // sync these:?
-		}
+        if (fragProject) {
+            confirmActiveProject({ activesled: fragProject });
+        } else {
+            getJson("/storage/activesled", confirmActiveProject); // sync these:?
+        }
 
-	}
+    }
 
-	loadCredentials( function() { confirmLogin( fragment ) } );
+    loadCredentials(function () { confirmLogin(fragment) });
 
 }
 
 
 // <!--========== loaded after YUI-min but before body - just start loading the rest of YUI =============================== -->
 
-postYUI = function() {
+postYUI = function () {
 
-	var loadModules = {
-				sledtasklist: { path: 'tasklist.js' },
-				sledglobal: { path: 'global.js' },
-				sledhistory: { path: 'history.js' },
-				sledsettings: { path: 'settings.js' },
-				sledsuggestionlist: { path: 'suggestionlist.js' },
-				sledtemplates: { path: 'templates.js' },
-				slednetwork: { path: 'network.js' },
-				sledstream: { path: 'stream.js' },
-				sleddnd: { path: 'dnd.js' },
-				sleduser: { path: 'user.js' },
-				sledsled: { path: 'sled.js' },
-				sledsledlist: { path: 'sledlist.js' },
-				sledcontacts: { path: 'contacts.js' },
-				sledtooltips: { path: 'tooltips.js' },
-				sleduiutils: { path: 'uiutils.js' },
-				sledtips: { path: 'tips.js' },
-				sledtour: { path: 'tour.js' },
-				'sled-calendar': { path: 'calendar.js' },
-				'sled-menu': { path: 'sled-menu.js' },
-				'sled-overlay-extras': { path: 'sled-overlay-extras.js' }
-	};
+    var loadModules = {
 
-	Y = new YUI( {
+        'postmile-tasks-list': { path: 'tasklist.js' },
+        'postmile-global': { path: 'global.js' },
+        'postmile-history': { path: 'history.js' },
+        'postmile-settings': { path: 'settings.js' },
+        'postmile-suggestions-list': { path: 'suggestionlist.js' },
+        'postmile-templates': { path: 'templates.js' },
+        'postmile-network': { path: 'network.js' },
+        'postmile-stream': { path: 'stream.js' },
+        'postmile-dnd': { path: 'dnd.js' },
+        'postmile-user': { path: 'user.js' },
+        'postmile-project': { path: 'sled.js' },
+        'postmile-projects-list': { path: 'sledlist.js' },
+        'postmile-contacts': { path: 'contacts.js' },
+        'postmile-tooltips': { path: 'tooltips.js' },
+        'postmile-ui-utils': { path: 'uiutils.js' },
+        'postmile-tips': { path: 'tips.js' },
+        'postmile-tour': { path: 'tour.js' },
+        'postmile-calendar': { path: 'calendar.js' },
+        'postmile-menu': { path: 'sled-menu.js' },
+        'postmile-overlays-extra': { path: 'sled-overlay-extras.js' }
+    };
 
-		// debug : true,
-		// combine: false,
-		filter: debug ? 'raw' : null,	// can make sled-min unfound	// or debug
-		debug : debug,
-		combine: !debug,
+    Y = new YUI({
 
-		// base: 'https://sec.yimg.com/combo?yui-ssl/3.3.0/build/',
-		comboBase: 'https://sec.yimg.com/combo?',
-		root: 'yui-ssl/3.3.0/build/',
+        filter: debug ? 'raw' : null, // can make sled-min unfound	// or debug
+        debug: debug,
+        combine: false,
 
-		groups: {
-			sled: {
-				// combine: false,
-				base: 'js/',
-				// root: '2.8.0r4/build/',
-				modules: loadModules
-			}
-		}
-	});
+        comboBase: 'https://sec.yimg.com/combo?',
+        root: 'yui-ssl/3.3.0/build/',
 
-	Y.use( 
+        groups: {
+            sled: {
+                base: 'js/',
+                modules: loadModules
+            }
+        }
+    });
 
-			// common
+    Y.use(
+
+    // common
 			'node-base',
 			'json-parse',
-			// 'querystring',
+    // 'querystring',
 			'dd-delegate',
 			'substitute',
 			'overlay',
 
-		function(Y) {
-			// timeLog( "native done loading my base YUI modules" );
+		function (Y) {
+		    // timeLog( "native done loading my base YUI modules" );
 		});
 }
 
 // <!--========== run Y.use on all needed YUI and sled modules =============================== -->
 
-postBody = function() {
+postBody = function () {
 
-	function initialTaskRender() {
+    function initialTaskRender() {
 
-			Y.sled.initialSledId = initialSledId;
-			Y.sled.initialTasks = initialTasks;
+        Y.sled.initialProjectId = initialProjectId;
+        Y.sled.initialTasks = initialTasks;
 
-			if( initialTasks && initialSled ) {
+        if (initialTasks && initialProject) {
 
-				initialSled.tasks = initialTasks;
+            initialProject.tasks = initialTasks;
 
-				Y.fire( 'sled:renderTasks', initialTasks, initialSledId );
+            Y.fire('sled:renderTasks', initialTasks, initialProjectId);
 
-			}
+        }
 
-	}
+    }
 
-	function initialSledRender() {
+    function initialProjectRender() {
 
-			Y.sled.initialSledId = initialSledId;
-			Y.sled.initialSled = initialSled;
+        Y.sled.initialProjectId = initialProjectId;
+        Y.sled.initialProject = initialProject;
 
-			if( initialSled ) {
+        if (initialProject) {
 
-				Y.sled.gsled.sleds[initialSledId] = initialSled;	// doesn't help much as sledsList just wipes it out again
+            Y.sled.gpostmile.projects[initialProjectId] = initialProject; // doesn't help much as sledsList just wipes it out again
 
-				initialSled.tasks = initialTasks;
+            initialProject.tasks = initialTasks;
 
-				initialSled.requestedDetails = true;	// just to say we tried
+            initialProject.requestedDetails = true; // just to say we tried
 
-				Y.fire( 'sled:renderSled', initialSled );
+            Y.fire('sled:renderProject', initialProject);
 
-			}
+        }
 
-	}
+    }
 
-	function initialRender() {
+    function initialRender() {
 
-		timeLog( "rendering tasks and sled from initialRender (sled loaded) ", 1 );
+        timeLog("rendering tasks and sled from initialRender (sled loaded) ", 1);
 
-		sledCodeLoaded = true;
+        sledCodeLoaded = true;
 
-		initialTaskRender();
+        initialTaskRender();
 
-		hideTaskListLoading();
-		showSuggestionsLoading();
+        hideTaskListLoading();
+        showSuggestionsLoading();
 
-		initialSledRender();
-	}
+        initialProjectRender();
+    }
 
-	timeLog( "load initial modules YUI modules ", 3 );
-	Y.use(
-			// common
+    timeLog("load initial modules YUI modules ", 3);
+    Y.use(
+    // common
 			'node-base',
 			'json-parse',
-			// 'querystring',
+    // 'querystring',
 			'dd-delegate',
 			'substitute',
 			'overlay',
 
-		function(Y) {
+		function (Y) {
 
-			if( debug ) {
+		    if (debug) {
 
-				Y.use(
+		        Y.use(
 
 					'test',
 
-					// for multiple debug requests
-					'sledglobal',
-					'sledtemplates',
-					'sleddnd',
-					'sledtasklist',
-					'sledsled',
+		        // for multiple debug requests
+					'postmile-global',
+					'postmile-templates',
+					'postmile-dnd',
+					'postmile-tasks-list',
+					'postmile-project',
 
 					initialRender
 				);
 
-			} else {
+		    } else {
 
-				if( !Y.assert || !debug ) {
-					Y.assert = function(){};
-				}
-				Y.assert( Y.assert );
+		        if (!Y.assert || !debug) {
+		            Y.assert = function () { };
+		        }
+		        Y.assert(Y.assert);
 
-				Y.use(
+		        Y.use(
 
-					// for one batch request
+		        // for one batch request
 					'sled',
-					'sledtasklist',
-					'sledsled',
+					'postmile-tasks-list',
+					'postmile-project',
 
 					initialRender
 				);
 
-			}
+		    }
 
-	});
+		});
 
-	Y.use('node-base', 'oop', 'node-focusmanager', function(Y) {
+    Y.use('node-base', 'oop', 'node-focusmanager', function (Y) {
 
-	    Y.use('sled-menu', function(Y) {
+        Y.use('postmile-menu', function (Y) {
 
-		    var accountmenu = Y.one('#account');
-		    accountmenu.plug(Y.Plugin.NodeMenuNav);
+            var accountmenu = Y.one('#account');
+            accountmenu.plug(Y.Plugin.NodeMenuNav);
 
-		    /*for now, make this global var*/ sledsmenu = Y.one('#sleds-list');
-		    sledsmenu.plug(Y.Plugin.NodeMenuNav);
+            /*for now, make this global var*/sledsmenu = Y.one('#projects-list');
+            sledsmenu.plug(Y.Plugin.NodeMenuNav);
 
-		    var participantsmenu = Y.one('#sled-participants');
-		    participantsmenu.plug(Y.Plugin.NodeMenuNav);
-	    });
-	});
+            var participantsmenu = Y.one('#sled-participants');
+            participantsmenu.plug(Y.Plugin.NodeMenuNav);
+        });
+    });
 
 
-	// =============================== load initial modules ===============================
-	timeLog( "native applying/using all/advanced YUI modules ", 3 );
-	Y.use(
+    // =============================== load initial modules ===============================
+    timeLog("native applying/using all/advanced YUI modules ", 3);
+    Y.use(
 			'overlay',
 			'event-key',
-			'anim',	// base not good enough for easing
-			'sled-menu',
+			'anim', // base not good enough for easing
+			'postmile-menu',
 
-			// for tooltips
+    // for tooltips
 			"event-mouseenter",
 			"widget",
 			"widget-position",
@@ -402,34 +398,34 @@ postBody = function() {
 
 			"history",
 
-			'sled-overlay-extras',	// brought from YUI/gallery-land into sled fold for https issues
-			'sled-calendar',
+			'postmile-overlays-extra', // brought from YUI/gallery-land into sled fold for https issues
+			'postmile-calendar',
 
-			'sledglobal',
-			'sledhistory',
-			'sleduser',
-			'sledsuggestionlist',
-			'slednetwork',
-			'sledstream',
-			'sledsettings',
-			'sledtemplates',
-			'sledsledlist',
-			'sledsled',
-			'sledtasklist',
-			'sleddnd',
-			'sledcontacts',
-			'sledtooltips',
-			'sleduiutils',
-			'sledtips',
-			'sledtour',
+			'postmile-global',
+			'postmile-history',
+			'postmile-user',
+			'postmile-suggestions-list',
+			'postmile-network',
+			'postmile-stream',
+			'postmile-settings',
+			'postmile-templates',
+			'postmile-projects-list',
+			'postmile-project',
+			'postmile-tasks-list',
+			'postmile-dnd',
+			'postmile-contacts',
+			'postmile-tooltips',
+			'postmile-ui-utils',
+			'postmile-tips',
+			'postmile-tour',
 
-		function(Y) {
+		function (Y) {
 
-			timeLog( "done loading sled ", 2 );
+		    timeLog("done loading sled ", 2);
 
-	});
+		});
 
-	resizeListBox();
-	showTaskListLoading();
+    resizeListBox();
+    showTaskListLoading();
 }
 

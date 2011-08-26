@@ -5,7 +5,7 @@
 
 /**
 *
-* sledhistory module
+* 'postmile-history' module
 *
 *	for now, just catch when user changes the URL fragment
 *	eventually keep track of what the user may be doing (back, forward, etc)
@@ -13,9 +13,9 @@
 *
 */ 
 
-YUI.add('sledhistory', function(Y) {
+YUI.add('postmile-history', function(Y) {
 
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 var hash ;
 
 function setHash() {	
@@ -34,8 +34,8 @@ function bind() {
 	  var changed = e.changed ;	// removed = e.removed;
 
 		if( changed.sled && e.src !== 'replace' && Y.sled.sled ) {
-			var ssled = gsled.sleds[ changed.sled.newVal ] ;
-			Y.fire( 'sled:renderSled', ssled ) ;
+			var ssled = gpostmile.projects[ changed.sled.newVal ] ;
+			Y.fire( 'sled:renderProject', ssled ) ;
 		}
 
 	});

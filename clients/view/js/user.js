@@ -7,7 +7,7 @@
 *
 * user module:
 *
-*	upon login, get the active sled, user profile, the list of sleds, and user contacts
+*	upon login, get the active sled, user profile, the list of projects, and user contacts
 *	(details of the current sled, as well as tips and suggestions for that sled, were req'd in rendering that sled)
 *	also includes funcitn to render the profile (the account menu)
 *	render the tips
@@ -15,33 +15,33 @@
 *
 */ 
 
-YUI.add('sleduser', function (Y) {
+YUI.add('postmile-user', function (Y) {
 
-	var gsled = Y.sled.gsled;
+	var gpostmile = Y.sled.gpostmile;
 
 
 	// login is more of init now that we've got auth
 	// it sets the current sled based on the frag passed in 
-	// gets the profile, list of sleds, and contacts
+	// gets the profile, list of projects, and contacts
 
-	function login(fragSled) {
+	function login(fragProject) {
 
-		if (fragSled) {
-			gsled.activeSledId = fragSled;
+		if (fragProject) {
+			gpostmile.activeProjectId = fragProject;
 		} else {
-			var confirmActiveSled = function(response) {
+			var confirmActiveProject = function(response) {
 				if (response && (response._networkRequestStatusCode && response._networkRequestStatusCode === 200)) {
-					gsled.activeSledId = response.activesled;
+					gpostmile.activeProjectId = response.activesled;
 				} else {
-					Y.log('login confirmActiveSled - error: ' + JSON.stringify(response));
+					Y.log('login confirmActiveProject - error: ' + JSON.stringify(response));
 				}
 			} ;
-			getJson("/storage/activesled", confirmActiveSled); // sync these:?
+			getJson("/storage/activesled", confirmActiveProject); // sync these:?
 		}
 
 		getJson("/profile", renderProfile);
 
-		getJson( "/projects", function( sleds ){ Y.fire( 'sled:renderSleds', sleds, true ) ; } ) ; 
+		getJson( "/projects", function( projects ){ Y.fire( 'sled:renderProjects', projects, true ) ; } ) ; 
 
 		getJson( "/contacts", function( contacts ){ Y.fire( 'sled:renderContacts', contacts ) ; } ) ; 
 	}
@@ -56,16 +56,16 @@ YUI.add('sleduser', function (Y) {
 			return;
 		}
 
-		gsled.profile = profile;
+		gpostmile.profile = profile;
 
 		// set name wrt precedence: profile name, username, first email addr, and finally 'Account'
 		var target = Y.one('#account #name');		
 		var name;
-		name = name || gsled.profile.name;
-		name = name || gsled.profile.username;
-		name = name || ( gsled.profile.emails && gsled.profile.emails.length > 0 && gsled.profile.emails[0].address );
+		name = name || gpostmile.profile.name;
+		name = name || gpostmile.profile.username;
+		name = name || ( gpostmile.profile.emails && gpostmile.profile.emails.length > 0 && gpostmile.profile.emails[0].address );
 		name = name || 'Account';
-		gsled.profile.display = name;
+		gpostmile.profile.display = name;
 		target.setContent(name);
 
 		// show the acct menu now that it's loaded
@@ -106,5 +106,5 @@ YUI.add('sleduser', function (Y) {
 	} ;
 
 
-}, "1.0.0", { requires: ["sledsledlist", "sledglobal", 'slednetwork', 'sledcontacts', 'node'] });
+}, "1.0.0", { requires: ["'postmile-projects-list'", "postmile-global", 'postmile-network', 'postmile-contacts', 'node'] });
 

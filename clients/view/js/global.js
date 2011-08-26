@@ -5,14 +5,14 @@
 
 /**
 *
-* sledglobal module
+* postmile-global module
 *
-*	the root data structure for profile, contacts, all sleds, tasks, suggestions, tips, etc.
+*	the root data structure for profile, contacts, all projects, tasks, suggestions, tips, etc.
 *
 *
 */ 
 
-YUI.add('sledglobal', function(Y) {
+YUI.add('postmile-global', function(Y) {
 
 Y.namespace("sled");
 Y.namespace("sled.global");
@@ -20,14 +20,14 @@ Y.sled.global = {	// export it
 	// baseObject: {},
 	profile: {},
 	contacts: [],
-	sleds: [],
+	projects: [],
 	sled: null,	// no active/selected sled
 	users: {},
 	tips: {},
 	tip: -1,
 	last: null
 } ;
-Y.namespace("sled.gsled");
-Y.sled.gsled = Y.sled.global ;
+Y.namespace("sled.gpostmile");
+Y.sled.gpostmile = Y.sled.global ;
 
 }, "1.0.0" , {requires:['node']} );

@@ -10,7 +10,7 @@
 *
 */ 
 
-YUI.add('sleduiutils', function(Y) {
+YUI.add('postmile-ui-utils', function(Y) {
 
 var statusTimer ;
 var statusCallback ;
@@ -409,7 +409,7 @@ function bind() {
 
 		var msg = what ;
 
-		var whom = Y.sled.gsled.sled.participants[ by ] ;
+		var whom = Y.sled.gpostmile.sled.participants[ by ] ;
 		if( whom ) {
 			msg += ' by ' + whom.display.split(' ')[0] ;
 		}
@@ -444,7 +444,7 @@ function startVersionChecking() {
 		function thisIsTheInitialVersion( response, err ) {
 			if( response && response['version'] ) {
 				currentVersion = response.version ;
-				Y.log( 'Sled got initial version ' + currentVersion[0] + '.' + currentVersion[1] ) ;
+				Y.log( 'Project got initial version ' + currentVersion[0] + '.' + currentVersion[1] ) ;
 			}
 		}
 		getClientProfile( thisIsTheInitialVersion ) ;
@@ -453,18 +453,18 @@ function startVersionChecking() {
 		function thisIsTheLatestVersion( response, err ) {
 			if( response && response['version'] ) {
 				var version = response.version ;
-				function reloadSled( arg ) {
+				function reloadProject( arg ) {
 					window.location.reload(true);
 				}
 				if( currentVersion[0] !== version[0] ) {
 					// statusMessage( 'New version required - please reload', 2*timeInterval ) ;	// display twice as long
-					Y.fire( 'sled:confirm', 'Reload?', 'A new version of sled is required.', reloadSled, null);
-					Y.log( 'Sled new major version required ' + version[0] + '.' + version[1] ) ;
+					Y.fire( 'sled:confirm', 'Reload?', 'A new version of sled is required.', reloadProject, null);
+					Y.log( 'Project new major version required ' + version[0] + '.' + version[1] ) ;
 				} else if( currentVersion[1] !== version[1] ) {
 					// statusMessage( 'New version available' ) ;
-					// Y.fire( 'sled:suggest', 'New version available: ' + 'Reload Now', reloadSled, null);
-					statusMessage( 'New version available - click this message to reload', 2*100*timeInterval, reloadSled ) ;	// display twice as long
-					Y.log( 'Sled new major version required ' + version[0] + '.' + version[1] ) ;
+					// Y.fire( 'sled:suggest', 'New version available: ' + 'Reload Now', reloadProject, null);
+					statusMessage( 'New version available - click this message to reload', 2*100*timeInterval, reloadProject ) ;	// display twice as long
+					Y.log( 'Project new major version required ' + version[0] + '.' + version[1] ) ;
 				}				
 			}
 		}

@@ -10,20 +10,20 @@
 *
 */
 
-YUI.add('sledtips', function (Y) {
+YUI.add('postmile-tips', function (Y) {
 
-var gsled = Y.sled.gsled;
+var gpostmile = Y.sled.gpostmile;
 
 
 // renderTips
 
-function renderTips(tips, sledId) {
+function renderTips(tips, projectId) {
 
 	if (!tips || (tips._networkRequestStatusCode && tips._networkRequestStatusCode !== 200)) {
 		return ;
 	}
 
-	var sled = gsled.sleds[sledId];
+	var sled = gpostmile.projects[projectId];
 
 	if (!tips || tips.length <= 0 || !sled) {
 		return;
@@ -43,11 +43,11 @@ function renderTips(tips, sledId) {
 
 function nextTip() {
 
-	var sled = gsled.sled;
+	var sled = gpostmile.sled;
 
 	sled.tip = sled.tip + 1 < sled.tips.length ? sled.tip + 1 : 0;
 
-	renderTips(gsled.sled.tips, gsled.sled.id);
+	renderTips(gpostmile.sled.tips, gpostmile.sled.id);
 
 }
 
@@ -56,7 +56,7 @@ function nextTip() {
 
 function showTip() {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 	var tip = sled.tips[ sled.tip ] ;
 
 	// until the API returns context - todo: look up tip.context locally to get node and pos
@@ -114,8 +114,8 @@ function bind() {
 
 	// event handlers
 
-	Y.on( "sled:renderTips", function( tips, sledId ) {
-		renderTips( tips, sledId ) ;
+	Y.on( "sled:renderTips", function( tips, projectId ) {
+		renderTips( tips, projectId ) ;
 	});
 
 }

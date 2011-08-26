@@ -7,87 +7,87 @@
 *
 * sledlist module
 *
-*	manage (render, select, delete, create) list of sleds (currently in sleds menu)
+*	manage (render, select, delete, create) list of projects (currently in projects menu)
 *	perhaps later allow more management like reordering
 *
 *
 */ 
 
-YUI.add('sledsledlist', function(Y) {
+YUI.add('postmile-projects-list', function(Y) {
 
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 
 
 // render
 
-function renderSleds( sleds, renderMostRecentSled ) {
+function renderProjects( projects, renderMostRecentProject ) {
 
 	var i,l ;	// make jslint as happy as it can be about this
 
-	// if sleds is not null, it's an array w length
-	if (!sleds || ( sleds._networkRequestStatusCode && sleds._networkRequestStatusCode !== 200 ) ) {
-		Y.log( 'renderSleds - no data: ' + JSON.stringify( sleds ) ) ;
+	// if projects is not null, it's an array w length
+	if (!projects || ( projects._networkRequestStatusCode && projects._networkRequestStatusCode !== 200 ) ) {
+		Y.log( 'renderProjects - no data: ' + JSON.stringify( projects ) ) ;
 		return;
 	}
 
-	// set active sleds
-	gsled.sleds = sleds ;
+	// set active projects
+	gpostmile.projects = projects ;
 
 	var html = "" ;
-	var mostRecentSled = gsled.sled ;	// same as gsled.sleds[gsled.activeSledId] ;
+	var mostRecentProject = gpostmile.sled ;	// same as gpostmile.projects[gpostmile.activeProjectId] ;
 
-	for ( i=0, l=sleds.length; i < l; ++i) {
+	for ( i=0, l=projects.length; i < l; ++i) {
 
-		var sled = sleds[i] ;
+		var sled = projects[i] ;
 
 		sled.index = i ;	// for convenience if we have only key and want to find place in array
-		gsled.sleds[sled.id] = sled ;	// prime
+		gpostmile.projects[sled.id] = sled ;	// prime
 
-		if( !mostRecentSled && ( !gsled.activeSledId || sled.id === gsled.activeSledId ) ) {
-			mostRecentSled = sled ;
+		if( !mostRecentProject && ( !gpostmile.activeProjectId || sled.id === gpostmile.activeProjectId ) ) {
+			mostRecentProject = sled ;
 		} 
 
-		html += Y.sled.templates.sledMenuItem( sled, mostRecentSled ) ;
+		html += Y.sled.templates.sledMenuItem( sled, mostRecentProject ) ;
 	} 
 
 	html += "" ;
 
-	if( !mostRecentSled ) {
-		mostRecentSled = gsled.sleds[ 0 ] ;
+	if( !mostRecentProject ) {
+		mostRecentProject = gpostmile.projects[ 0 ] ;
 	}
 
-	var sledsNode = Y.one('#sleds');
+	var sledsNode = Y.one('#projects');
 	sledsNode.setContent(html);
 
 	// put back the initial sled so we don't get a double load - just this once
-	if( initialSledId && initialSled ) {
-		gsled.sleds[initialSledId] = initialSled ;
-		for ( i=0, l=gsled.sleds.length; i < l; ++i) {
-			if( gsled.sleds[i].id === initialSled.id ) {
-				gsled.sleds[i] = initialSled ;
-				gsled.sleds[i].index = i ;
+	if( initialProjectId && initialProject ) {
+		gpostmile.projects[initialProjectId] = initialProject ;
+		for ( i=0, l=gpostmile.projects.length; i < l; ++i) {
+			if( gpostmile.projects[i].id === initialProject.id ) {
+				gpostmile.projects[i] = initialProject ;
+				gpostmile.projects[i].index = i ;
 			}
 		}
 	}
 
-	if( renderMostRecentSled ) {
-		if( mostRecentSled ) {
-			Y.fire( 'sled:renderSled', mostRecentSled ) ;		// may be incomlpete, but call will prime to get details and tasks
+	if( renderMostRecentProject ) {
+		if( mostRecentProject ) {
+			Y.fire( 'sled:renderProject', mostRecentProject ) ;		// may be incomlpete, but call will prime to get details and tasks
 		} else {
-			makeAndRenderNewSled();
+			makeAndRenderNewProject();
 		}
 	} else {
 	}
 
 	// put this here as well as in sled.js just in case sled is not rendered
-	var sledsMenuLabel = Y.one( "#sleds-list" ) ;
+	var sledsMenuLabel = Y.one( "#projects-list" ) ;
 	// for some reason, immediate removal of class doesn't work - delay even of 0 does
 	setTimeout( function() { sledsMenuLabel.removeClass("sled-loading"); }, 0 ) ;
-	setTimeout( function() { sledsMenuLabel.one('#sleds-menu').removeClass("sled-loading"); }, 1000 ) ;
+	setTimeout( function() { sledsMenuLabel.one('#projects-menu').removeClass("sled-loading"); }, 1000 ) ;
 
 	// configure menu for the state of this sled 
-	if( mostRecentSled ) {
-		removeSledFromMenu( mostRecentSled.id ) ;
+	if( mostRecentProject ) {
+		removeProjectFromMenu( mostRecentProject.id ) ;
 	}
 
 	if( Y.sled.dnd ) {
@@ -100,82 +100,82 @@ function renderSleds( sleds, renderMostRecentSled ) {
 
 // remove sled from menu - hide it if it's selected, as it shows in the menu label on top
 
-function removeSledFromMenu( sledId ) {
+function removeProjectFromMenu( projectId ) {
 	if( Y.sled.settings && Y.sled.settings.sledsReorder() ) {
 		return null ;
 	}
-	var sledsMenu = Y.one( "#sleds-list #sleds" ) ;
+	var sledsMenu = Y.one( "#projects-list #projects" ) ;
 	sledMenuAnchors = sledsMenu.all( ".sled a" ) ;
 	sledMenuAnchors.removeClass( 'sled-loading' ) ;
-	selectedSledMenuLink = sledsMenu.one('li[sled="' + sledId + '"]') ;
-	selectedSledMenuAnchor = selectedSledMenuLink.one('a');
-	selectedSledMenuAnchor.addClass( 'sled-loading' ) ;
+	selectedProjectMenuLink = sledsMenu.one('li[sled="' + projectId + '"]') ;
+	selectedProjectMenuAnchor = selectedProjectMenuLink.one('a');
+	selectedProjectMenuAnchor.addClass( 'sled-loading' ) ;
 }
 
 
 // create a new sled to render
 
-function makeAndRenderNewSled() {
+function makeAndRenderNewProject() {
 
-	var myNewSled = {
+	var myNewProject = {
 		"id": "",
 		"title": "Name your new sled",
 		"participants": [ ],
 		"tasks": [ ]
 		} ;
 
-	// add to sleds array (not done by renderSled), to the beginning
-	gsled.sleds.unshift( myNewSled );	
+	// add to projects array (not done by renderProject), to the beginning
+	gpostmile.projects.unshift( myNewProject );	
 
-	// new/empty active/selected sled, needs to be done before renderSleds because renderSled adds the sled arg to the sleds
-	Y.fire( 'sled:renderSled', myNewSled, true ) ;
+	// new/empty active/selected sled, needs to be done before renderProjects because renderProject adds the sled arg to the projects
+	Y.fire( 'sled:renderProject', myNewProject, true ) ;
 
 	// dismiss menu just in case we're creating a new sled because the user selected 'create' from the menu
 	// could make a menu-specific callback to do just this
-	var mySledsMenu = Y.one( "#sleds-menu" ) ;
-	mySledsMenu.addClass( 'menu-hidden' ) ;
+	var myProjectsMenu = Y.one( "#projects-menu" ) ;
+	myProjectsMenu.addClass( 'menu-hidden' ) ;
 
-	function confirmAddedSled( response, myarg ) { // response has id, rev, status
+	function confirmAddedProject( response, myarg ) { // response has id, rev, status
 
 		if( response.status === 'ok' ) {
 
-			myNewSled.rev = response.rev ;	
+			myNewProject.rev = response.rev ;	
 
-			myNewSled.id = response.id ;
-			gsled.sleds[myNewSled.id] = myNewSled ;	// needs to be added to sleds keys again with new id 
+			myNewProject.id = response.id ;
+			gpostmile.projects[myNewProject.id] = myNewProject ;	// needs to be added to projects keys again with new id 
 
 
-			if( !myNewSled.requestedSuggestions && myNewSled.id !== "" ) {
+			if( !myNewProject.requestedSuggestions && myNewProject.id !== "" ) {
 
-				myNewSled.requestedSuggestions = true ;
-				getJson( "/project/" + myNewSled.id + "/suggestions",
-						function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, myNewSled.id ) ;
-
-			} else {	
-
-				// clear even if no suggestions
-				Y.fire( 'sled:renderSuggestions', myNewSled.suggestions, myNewSled.id ) ;
-
-			}
-
-			if( !myNewSled.requestedTips && myNewSled.id !== "" ) {
-
-				myNewSled.requestedTips = true ;	// just to say we tried
-				getJson( "/project/" + myNewSled.id + "/tips", 
-						function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, myNewSled.id ) ;	
+				myNewProject.requestedSuggestions = true ;
+				getJson( "/project/" + myNewProject.id + "/suggestions",
+						function( suggestions, projectId ){ Y.fire( 'sled:renderSuggestions', suggestions, projectId ) ; }, myNewProject.id ) ;
 
 			} else {	
 
 				// clear even if no suggestions
-				Y.fire( 'sled:renderTips', myNewSled.tips, myNewSled.id ) ;
+				Y.fire( 'sled:renderSuggestions', myNewProject.suggestions, myNewProject.id ) ;
 
 			}
 
-			// need to renderSleds menu for both adding and changing sled names
-			// just to repop the menu of sleds with prop id, do not set and render last/active sled
-			renderSleds( gsled.sleds, false ) ;
+			if( !myNewProject.requestedTips && myNewProject.id !== "" ) {
 
-			document.location.href = document.location.href.split('#')[0] + '#sled=' + myNewSled.id ;
+				myNewProject.requestedTips = true ;	// just to say we tried
+				getJson( "/project/" + myNewProject.id + "/tips", 
+						function( tips, projectId ){ Y.fire( 'sled:renderTips', tips, projectId ) ; }, myNewProject.id ) ;	
+
+			} else {	
+
+				// clear even if no suggestions
+				Y.fire( 'sled:renderTips', myNewProject.tips, myNewProject.id ) ;
+
+			}
+
+			// need to renderProjects menu for both adding and changing sled names
+			// just to repop the menu of projects with prop id, do not set and render last/active sled
+			renderProjects( gpostmile.projects, false ) ;
+
+			document.location.href = document.location.href.split('#')[0] + '#sled=' + myNewProject.id ;
 
 		} else {
 
@@ -184,8 +184,8 @@ function makeAndRenderNewSled() {
 		}
 	}
 
-	var json = '{"title":"' + myNewSled.title + '"}'  ;
-	putJson( "/project", json, confirmAddedSled ) ;
+	var json = '{"title":"' + myNewProject.title + '"}'  ;
+	putJson( "/project", json, confirmAddedProject ) ;
 
 }
 
@@ -195,24 +195,24 @@ function makeAndRenderNewSled() {
 function reorder( dragNode ) {
 
 	var dropNode = dragNode.get( 'nextSibling' ) ;
-	var dropIndex = gsled.sleds.length ;
+	var dropIndex = gpostmile.projects.length ;
 	if( dropNode ) {
 		var dropId = dropNode.getAttribute('sled') ;
 		if( dropId ) {	// might've been on other kind of item/node
-			var dropSled = gsled.sleds[dropId] ;
-			dropIndex = dropSled.index ;
+			var dropProject = gpostmile.projects[dropId] ;
+			dropIndex = dropProject.index ;
 		}
 	}
 
 	var dragId = dragNode.getAttribute('sled') ;
-	var dragSled = gsled.sleds[dragId] ;
-	var dragIndex = dragSled.index ;
+	var dragProject = gpostmile.projects[dragId] ;
+	var dragIndex = dragProject.index ;
 
 	if( dragIndex < dropIndex ) {
 		dropIndex--;
 	}
 
-	if( dragSled.index !== dropIndex ) {
+	if( dragProject.index !== dropIndex ) {
 
 		// post new order
 		var confirmOrder = function( response, myarg ) {
@@ -220,32 +220,32 @@ function reorder( dragNode ) {
 			if( response.status === 'ok' ) {
 
 				// change array order
-				var dragSplice = gsled.sleds.splice( dragIndex, 1 ) ;
-				gsled.sleds.splice( dropIndex, 0, dragSplice[0] ) ;
+				var dragSplice = gpostmile.projects.splice( dragIndex, 1 ) ;
+				gpostmile.projects.splice( dropIndex, 0, dragSplice[0] ) ;
 
 				// update index fields
-				if( gsled.sleds ) {	// just update all indecies
+				if( gpostmile.projects ) {	// just update all indecies
 					var i,l ;
-					for (/*var*/ i=0, l=gsled.sleds.length; i < l; ++i) {
-						var sled = gsled.sleds[i] ;
+					for (/*var*/ i=0, l=gpostmile.projects.length; i < l; ++i) {
+						var sled = gpostmile.projects[i] ;
 						sled.index = i ;	// for convenience if we have only key and want to find place in array
-						Y.assert( gsled.sleds[sled.id] === sled ) ;	
+						Y.assert( gpostmile.projects[sled.id] === sled ) ;	
 					}
 				}
 
-				Y.fire( 'sled:statusMessage', 'Sled reordered' ) ;
+				Y.fire( 'sled:statusMessage', 'Project reordered' ) ;
 
 			} else {
 
-				renderSleds( gsled.sleds, false ) ;
+				renderProjects( gpostmile.projects, false ) ;
 
-				Y.fire( 'sled:errorMessage',  'Sled reorder failed' ) ;
+				Y.fire( 'sled:errorMessage',  'Project reorder failed' ) ;
 
 			}
 		} ;
 
-		postJson( "/project/" + dragSled.id + "?position=" + dropIndex, "", confirmOrder ) ;
-		// Y.log( "sled/" + dragSled.id + "?position=" + dropIndex + "  (" + dragIndex + ")" ) ;
+		postJson( "/project/" + dragProject.id + "?position=" + dropIndex, "", confirmOrder ) ;
+		// Y.log( "sled/" + dragProject.id + "?position=" + dropIndex + "  (" + dragIndex + ")" ) ;
 	}
 
 }
@@ -253,37 +253,37 @@ function reorder( dragNode ) {
 
 // delete a sled
 
-function deleteSled( sledId ) {
+function deleteProject( projectId ) {
 	
 	var sc,i,l ;	
 	
-	function confirmLeftSled( response, myarg ) {
+	function confirmLeftProject( response, myarg ) {
 
 		if( response.status === "ok" ) {
 
 			// remove sled index from array
-			for( sc=0 ; sc < gsled.sleds.length ; sc++ ) {
-				if( gsled.sleds[sc].id === sledId ) {
-					gsled.sleds.splice( sc, 1 ) ;
+			for( sc=0 ; sc < gpostmile.projects.length ; sc++ ) {
+				if( gpostmile.projects[sc].id === projectId ) {
+					gpostmile.projects.splice( sc, 1 ) ;
 				}
 			}
 
 			// remove sled id from dictionary
-			delete gsled.sleds[sledId] ;
+			delete gpostmile.projects[projectId] ;
 
 			// update index fields
-			if( gsled.sleds ) {	// just update all indecies
-				for ( i=0, l=gsled.sleds.length; i < l; ++i) {
-					var sled = gsled.sleds[i] ;
+			if( gpostmile.projects ) {	// just update all indecies
+				for ( i=0, l=gpostmile.projects.length; i < l; ++i) {
+					var sled = gpostmile.projects[i] ;
 					sled.index = i ;	// for convenience if we have only key and want to find place in array
-					Y.assert( gsled.sleds[sled.id] === sled ) ;	
+					Y.assert( gpostmile.projects[sled.id] === sled ) ;	
 				}
 			}
 
 
 			// remove from menu, go to next in menu, create new sled if needed
 
-			var sledMenuNode = Y.one( '#sleds-list #sleds .sled[sled="' + sledId + '"]' ) ;
+			var sledMenuNode = Y.one( '#projects-list #projects .sled[sled="' + projectId + '"]' ) ;
 
 			if( sledMenuNode ) {
 
@@ -300,16 +300,16 @@ function deleteSled( sledId ) {
 
 				if( !nextNode ) {
 
-					// if no more sleds, make another one
-					makeAndRenderNewSled() ;
+					// if no more projects, make another one
+					makeAndRenderNewProject() ;
 
 				} else {
 
 					// slect and render next sled
-					var newSledId = nextNode.getAttribute('sled') ;	// get does not work
-					var ssled = gsled.sleds[newSledId] ;
+					var newProjectId = nextNode.getAttribute('sled') ;	// get does not work
+					var ssled = gpostmile.projects[newProjectId] ;
 
-					Y.fire( 'sled:renderSled', ssled ) ;
+					Y.fire( 'sled:renderProject', ssled ) ;
 
 				}
 
@@ -327,7 +327,7 @@ function deleteSled( sledId ) {
 
 	}
 
-	deleteJson( "/project/" + sledId, null, confirmLeftSled ) ;
+	deleteJson( "/project/" + projectId, null, confirmLeftProject ) ;
 
 }
 
@@ -337,60 +337,60 @@ function deleteSled( sledId ) {
 function bind( ) {
 
 	// bind delete sled menu item, and ask first
-	var deleteSledMenuItem = Y.one( "#sleds-list #delete-sled" ) ;
-	deleteSledMenuItem.on( 'click', function( e ) {
+	var deleteProjectMenuItem = Y.one( "#projects-list #delete-sled" ) ;
+	deleteProjectMenuItem.on( 'click', function( e ) {
 		Y.fire( 'sled:confirm',  
 			'Delete sled?', 
 			'Deleting the sled will remove all the items and details. This change will delete the sled for all participants and it is permanent.', 
-			deleteSled, 
-			gsled.sled.id ) ;
+			deleteProject, 
+			gpostmile.sled.id ) ;
 	});
 
-	var leaveSledMenuItem = Y.one( ".leave-sled" ) ;
-	leaveSledMenuItem.on( 'click', function( e ) {
+	var leaveProjectMenuItem = Y.one( ".leave-sled" ) ;
+	leaveProjectMenuItem.on( 'click', function( e ) {
 		var pm = Y.one('#sled-participants-menu') ;
 		pm.addClass( 'menu-hidden' ) ;
 		Y.fire( 'sled:confirm', 
-			'Leave this Sled?', 
+			'Leave this Project?', 
 			'You will not be able to join unless invited back by another participant.', 
-			deleteSled, 
-			gsled.sled.id ) ;
+			deleteProject, 
+			gpostmile.sled.id ) ;
 	});
 
 	// bind join sled menu item, and ask first
-	var joinSledMenuItem = Y.one( "#sleds-list #join-sled" ) ;
-	joinSledMenuItem.on( 'click', function( e ) {
-		Y.fire( 'sled:askJoinCurrentSled', true ) ;	// if false, don't ask, just do it
+	var joinProjectMenuItem = Y.one( "#projects-list #join-sled" ) ;
+	joinProjectMenuItem.on( 'click', function( e ) {
+		Y.fire( 'sled:askJoinCurrentProject', true ) ;	// if false, don't ask, just do it
 	});
 
 	// bind create new sled menu item
-	var newSled = Y.one( "#sleds-list #newsled" ) ;
-	newSled.on('click', makeAndRenderNewSled ) ;
+	var newProject = Y.one( "#projects-list #newsled" ) ;
+	newProject.on('click', makeAndRenderNewProject ) ;
 
-	// allow user to switch sleds via menu
-	var sledsMenu = Y.one( "#sleds-list #sleds" ) ;
+	// allow user to switch projects via menu
+	var sledsMenu = Y.one( "#projects-list #projects" ) ;
 	sledsMenu.delegate('click',function (e) {
 
-		var sledId = e.currentTarget.getAttribute('sled') ;	// get does not always work
-		var ssled = gsled.sleds[sledId] ;
+		var projectId = e.currentTarget.getAttribute('sled') ;	// get does not always work
+		var ssled = gpostmile.projects[projectId] ;
 
 		// if sled does not have details, this will get them
-			Y.fire( 'sled:renderSled', ssled ) ;
+			Y.fire( 'sled:renderProject', ssled ) ;
 
 
 		// remove sled from menu, as it shows in the menu label on top
-		removeSledFromMenu( ssled.id ) ;
+		removeProjectFromMenu( ssled.id ) ;
 
 		// show menus once bound
-		Y.one("#sleds-menu").addClass( 'menu-hidden' ) ;
-		Y.one("#sleds-menu").previous().removeClass( 'menu-label-menuvisible' ) ;
-		Y.one("#sleds-menu").previous().removeClass( 'menu-label-active' ) ;
+		Y.one("#projects-menu").addClass( 'menu-hidden' ) ;
+		Y.one("#projects-menu").previous().removeClass( 'menu-label-menuvisible' ) ;
+		Y.one("#projects-menu").previous().removeClass( 'menu-label-active' ) ;
 
 	}, '.sled' ) ;
 
 	// event handlers
-	Y.on( "sled:renderSleds", function( sleds, renderMostRecentSled ) {
-		renderSleds( sleds, renderMostRecentSled ) ;
+	Y.on( "sled:renderProjects", function( projects, renderMostRecentProject ) {
+		renderProjects( projects, renderMostRecentProject ) ;
 	});
 
 	Y.on( "sled:sledReorder", function( node ) {
@@ -404,4 +404,4 @@ Y.namespace("sled").sledlist = {
 
 bind() ;
 
-}, "1.0.0", {requires:["sledglobal", 'slednetwork', "sledsledlist", 'node' ]} );
+}, "1.0.0", {requires:["postmile-global", 'postmile-network', "'postmile-projects-list'", 'node' ]} );

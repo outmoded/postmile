@@ -5,7 +5,7 @@
 
 // Based on Y.Calendar by lijing00333@163.com (jayli)
 
-YUI.add('sled-calendar', function (Y) {
+YUI.add('postmile-calendar', function (Y) {
 	/**
 	* @class Y.Calendar
 	* @param { string } hook or trigger

@@ -208,7 +208,7 @@ body {
 
 
 /*
- * Sled menu
+ * Project menu
  * ----------------------------------------------------------------------------
  */
 
@@ -394,7 +394,7 @@ body {
 
 
 /*
- * Sled details bar
+ * Project details bar
  * ----------------------------------------------------------------------------
  */
  
@@ -406,7 +406,7 @@ body {
 
 
 /*
- * Sleds menu
+ * Projects menu
  * ----------------------------------------------------------------------------
  */
 
@@ -459,12 +459,12 @@ body {
 	height: 28px;
 }
 
-#sleds-list {
+#projects-list {
     position: relative;
     display: inline-block;
 }
 
-#sleds-list .menu-label {
+#projects-list .menu-label {
     top: -61px;
     left: 413px;
     display: inline-block;
@@ -478,12 +478,12 @@ body {
     border-radius: 6px;
 }
 
-#sleds-list .menu-label:hover {
+#projects-list .menu-label:hover {
     background: url('../images/colage.png') 0 -503px no-repeat;
 	background-color: #ffffff;
 }
 
-#sleds-menu {
+#projects-menu {
 	position: absolute;
 	top: -64px;
 	left: 0px;
@@ -500,7 +500,7 @@ body {
 	box-shadow: 3px 3px 2px #aaaaaa;
 }
 
-#sleds-menu .icon-tab {
+#projects-menu .icon-tab {
     float: right;
     display: inline-block;
     width: 6px;
@@ -510,7 +510,7 @@ body {
 	border-top-right-radius: 6px;
 }
 
-#sleds-menu .menu-content {
+#projects-menu .menu-content {
     clear: both;
 	padding: 5px 0 0 0;
 	color: #3373a0;
@@ -521,28 +521,28 @@ body {
 	border-top: 1px solid #cccccc;
 }
 
-#sleds-menu .menuitem a {
+#projects-menu .menuitem a {
 	padding: 0 10px;
 }
 
-#sleds-menu .menuitem a:hover {
+#projects-menu .menuitem a:hover {
 	background-color: #e3e3e3;
 	cursor: default;
 }
 
-#sleds-menu ul.break {
+#projects-menu ul.break {
 	border-top: solid 1px #b6b6b6;
 	padding-top: 6px;
 	margin-top: 6px;
 }
 
-#sleds-menu #sleds a {
+#projects-menu #projects a {
     font-weight: bold;
 }
 
 
 /*
- * Sled details
+ * Project details
  * ----------------------------------------------------------------------------
  */
 
@@ -596,7 +596,7 @@ body {
 }
 
 /*
- * Sled participants menu
+ * Project participants menu
  * ----------------------------------------------------------------------------
  */
 

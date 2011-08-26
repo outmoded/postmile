@@ -5,7 +5,7 @@
 
 /**
 *
-* sleddnd (drag and drop) module
+* 'postmile-dnd' (drag and drop) module
 *
 * handles two drag sources (tasks and suggestions) and one drop target (tasks)
 *
@@ -13,7 +13,7 @@
 */ 
 
 
-YUI.add('sleddnd', function(Y) {
+YUI.add('postmile-dnd', function(Y) {
 	//Y.DD.DDM._debugShim = true;
 
 	var legitDrop = false ;
@@ -104,7 +104,7 @@ YUI.add('sleddnd', function(Y) {
 		// so go back to data and templates to regen markup
 		// drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	
 		var taskId = drag.get('node').getAttribute('task') ;
-		var task = Y.sled.gsled.sled.tasks[taskId] ;
+		var task = Y.sled.gpostmile.sled.tasks[taskId] ;
 		var html = Y.sled.templates.taskListHtml( task ) ;
 		drag.get('dragNode').set( 'innerHTML', html );	// innerHTML's parent includes sibs
 		drag.get('dragNode').setStyles({
@@ -124,7 +124,7 @@ YUI.add('sleddnd', function(Y) {
 		// and can't count on outerHTML in places like FF
 		// so go back to data and templates to regen markup
 		// drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	// outerHTML better than text since it includes markup
-		var suggestions = Y.sled.gsled.sled.suggestions ;
+		var suggestions = Y.sled.gpostmile.sled.suggestions ;
 		var dragId = drag.get('node').getAttribute('suggestion') ;
 		var dragSuggestion = suggestions[dragId] ;
 		var html = Y.sled.templates.suggestionListHtml( dragSuggestion ) ;
@@ -171,7 +171,7 @@ YUI.add('sleddnd', function(Y) {
 	// listen for over - could be a dragged task or suggestion
 	tasksDndDelegate.on('drop:over', function(e) {
 		
-		// somehow the sledslist menu is leaking events back into the task list - ignore those by checking if we're in a sleds drag
+		// somehow the sledslist menu is leaking events back into the task list - ignore those by checking if we're in a projects drag
 		if( savedMouseOutHideDelay ) {
 			return ;
 		}
@@ -266,7 +266,7 @@ YUI.add('sleddnd', function(Y) {
 	});
 
 
-	// this is strictly for the sleds list menu - nothing to do with tasks and suggestion - perhaps factor out somewhere else
+	// this is strictly for the projects list menu - nothing to do with tasks and suggestion - perhaps factor out somewhere else
 
 	function sledsDnd() {
 		
@@ -275,18 +275,18 @@ YUI.add('sleddnd', function(Y) {
 		}
 
 		if( sledsDndDelegate ) {
-			sledsDndDelegate.syncTargets() ; // gsled.tasksSortable.delegate.syncTargets() ;
+			sledsDndDelegate.syncTargets() ; // gpostmile.tasksSortable.delegate.syncTargets() ;
 			return sledsDndDelegate ;
 		}
 
 		// sled list is both a drag and drop target
 		sledsDndDelegate = new Y.DD.Delegate({
-			cont: '#sleds',
-			nodes: '#sleds li.sled',
+			cont: '#projects',
+			nodes: '#projects li.sled',
 			// invalid: 'input',
 			// valid: 'a',
 			target: { padding: '-10 10 10 -10' },	// needed
-			// constrain2node: '#sleds',
+			// constrain2node: '#projects',
 			last: null
 			});
 
@@ -301,8 +301,8 @@ YUI.add('sleddnd', function(Y) {
 			last: null
 		});
 
-		// constrain sleds to just the sled list
-		var sledlistNode = Y.one( '#sleds' ) ;
+		// constrain projects to just the sled list
+		var sledlistNode = Y.one( '#projects' ) ;
 		if( sledlistNode ) {
 			sledsDndDelegate.dd.plug(Y.Plugin.DDConstrained, {
 				constrain2node: sledlistNode,
@@ -312,7 +312,7 @@ YUI.add('sleddnd', function(Y) {
 
 		/*
 		// don't allow draggin up or down past list
-		var sledsNode = Y.one( '#sleds' ) ;
+		var sledsNode = Y.one( '#projects' ) ;
 		if( sledsNode ) {
 			sledsDndDelegate.dd.plug(Y.Plugin.DDNodeScroll, {
 				node: sledsNode,	// get('parentNode')
@@ -321,7 +321,7 @@ YUI.add('sleddnd', function(Y) {
 		}
 		*/
 
-		//Listen for drag:start events on sleds
+		//Listen for drag:start events on projects
 		sledsDndDelegate.on('drag:start', function(e) {
 		
 			// we need to make the menu stick up during drag by ignoring the mouse out caused by the drag proxy
@@ -337,8 +337,8 @@ YUI.add('sleddnd', function(Y) {
 			// so go back to data and templates to regen markup
 			// drag.get('dragNode').set('innerHTML', drag.get('node').get('outerHTML') );	// innerHTML's parent includes sibs
 			var id = drag.get('node').getAttribute('sled') ;
-			var sled = Y.sled.gsled.sleds[id] ;
-			var html = Y.sled.templates.sledMenuItem( sled, Y.sled.gsled.sled ) ;
+			var sled = Y.sled.gpostmile.projects[id] ;
+			var html = Y.sled.templates.sledMenuItem( sled, Y.sled.gpostmile.sled ) ;
 			drag.get('dragNode').set( 'innerHTML', html );	// innerHTML's parent includes sibs
 			drag.get('dragNode').setStyles({
 				opacity: '.5',
@@ -369,13 +369,13 @@ YUI.add('sleddnd', function(Y) {
 					drop = drop.get('nextSibling');
 				}
 
-				// is this coming from suggestions, or a reordering of sleds?
+				// is this coming from suggestions, or a reordering of projects?
 				if( drag.hasClass( 'sled' ) ) {
 					e.drop.get('node').get('parentNode').insertBefore(drag, drop);	// reordered sled
 				} else {
 					// drag from suggestion
 					// pull proxy from list instead of using drag
-					var list = Y.one( '#sleds' ) ;
+					var list = Y.one( '#projects' ) ;
 					var proxy = list.one( '.proxy' ) ;
 					if( !proxy ) {
 						// create proxy from sled template
@@ -402,7 +402,7 @@ YUI.add('sleddnd', function(Y) {
 			}
 		});
 	
-		// Listen for drag:end events started on sleds (and must end on sleds since that's the only drop)
+		// Listen for drag:end events started on projects (and must end on projects since that's the only drop)
 		sledsDndDelegate.on('drag:end', function(e) {
 
 			sledsmenu.menuNav.set( 'mouseOutHideDelay', savedMouseOutHideDelay ) ;
@@ -432,4 +432,4 @@ Y.sled.dnd = {
 	last: null
 } ;
 
-}, "1.0.0", {requires:['sledglobal', 'dd-constrain', 'dd-proxy', 'dd-drop', 'dd-scroll', 'dd-delegate', 'node']} );
+}, "1.0.0", {requires:['postmile-global', 'dd-constrain', 'dd-proxy', 'dd-drop', 'dd-scroll', 'dd-delegate', 'node']} );

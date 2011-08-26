@@ -4,7 +4,7 @@
 */
 
 /**
-* sledcontacts module
+* 'postmile-contacts' module
 *
 * handles three overlays:
 *
@@ -16,10 +16,10 @@
 */ 
 
 
-YUI.add('sledcontacts', function(Y) {
+YUI.add('postmile-contacts', function(Y) {
 
 // module data
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 var inviteOverlay ;
 var taskParticipantsOverlay ;
 
@@ -34,13 +34,13 @@ function renderContacts( contacts ) {
 
 	if( contacts && ( contacts._networkRequestStatusCode && contacts._networkRequestStatusCode === 200 ) ) {
 
-		gsled.contacts = contacts ;
+		gpostmile.contacts = contacts ;
 
 		var i,l ;
-		for (/*var*/ i=0, l=gsled.contacts.length; i < l; ++i) {
-			var contact = gsled.contacts[i] ;
-			gsled.contacts[contact.id] = contact ;
-			gsled.contacts[contact.id].selected = false ;
+		for (/*var*/ i=0, l=gpostmile.contacts.length; i < l; ++i) {
+			var contact = gpostmile.contacts[i] ;
+			gpostmile.contacts[contact.id] = contact ;
+			gpostmile.contacts[contact.id].selected = false ;
 		}
 
 		renderInvite() ;
@@ -57,15 +57,15 @@ function renderContacts( contacts ) {
 //
 function renderInvite( ) {
 
-	var pplhtml = Y.sled.templates.inviteParticipants( gsled.contacts ) ;
+	var pplhtml = Y.sled.templates.inviteParticipants( gpostmile.contacts ) ;
 
 	// clear selected nodes and data
 	var inviteOverlayNode = Y.one( "#invite-overlay" ) ;
 	inviteOverlayNode.all( '.participant' ).removeClass( 'selected' ) ;
 	var i,l ;
-	for (/*var*/ i=0, l=gsled.contacts.length; i < l; ++i) {
-		var contact = gsled.contacts[i] ;
-		gsled.contacts[contact.id].selected = false ;
+	for (/*var*/ i=0, l=gpostmile.contacts.length; i < l; ++i) {
+		var contact = gpostmile.contacts[i] ;
+		gpostmile.contacts[contact.id].selected = false ;
 	}
 
 	var inviteEmails = Y.one( "#invite-emails" ) ;
@@ -77,7 +77,7 @@ function renderInvite( ) {
 	inviteMessage.set( 'value', '' ) ;
 	inviteLabel.setContent( 'Tell your friends what this sled is about' ) ;	// from html markup
 	
-	if( gsled.contacts.length > 0 ) {
+	if( gpostmile.contacts.length > 0 ) {
 		Y.all( '#invite-overlay .participants-pane' ).show() ;
 	} else {
 		Y.all( '#invite-overlay .participants-pane' ).hide() ;
@@ -92,7 +92,7 @@ function renderInvite( ) {
 function renderManage() {
 
 	// sled participants (not contacts)
-	var pplhtml = Y.sled.templates.manageParticipants( gsled.sled.participants ) ;
+	var pplhtml = Y.sled.templates.manageParticipants( gpostmile.sled.participants ) ;
 
 	var dpl = Y.all('#manage-overlay .participants-list');
 	dpl.setContent(pplhtml);
@@ -101,15 +101,15 @@ function renderManage() {
 	var manageOverlayNode = Y.one( "#manage-overlay" ) ;
 	manageOverlayNode.all( '.participant' ).removeClass( 'selected' ) ;
 
-	if( gsled.sled && gsled.sled.participants && gsled.sled.participants instanceof Array ) {
+	if( gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array ) {
 		var c,l ;
-		for (/*var*/ c=0, l=gsled.sled.participants.length; c < l; c++) {
-			var participant = gsled.sled.participants[c] ;
+		for (/*var*/ c=0, l=gpostmile.sled.participants.length; c < l; c++) {
+			var participant = gpostmile.sled.participants[c] ;
 			participant.selected = false ;
 		}
 	}
 
-	if( gsled.sled && gsled.sled.participants && gsled.sled.participants instanceof Array && gsled.sled.participants.length > 0 ) {
+	if( gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array && gpostmile.sled.participants.length > 0 ) {
 		Y.all( '#manage-overlay .participants-pane' ).show() ;
 	} else {
 		Y.all( '#manage-overlay .participants-pane' ).hide() ;
@@ -125,16 +125,16 @@ function renderManage() {
 function renderTaskParticipants( task ) {
 
 	// clear/set sled participants (not contacts) for task menu
-	if( gsled.sled && gsled.sled.participants && gsled.sled.participants instanceof Array ) {
+	if( gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array ) {
 		var c,l ;
-		for (/*var*/ c=0, l=gsled.sled.participants.length; c < l; c++) {
-			var participant = gsled.sled.participants[c] ;
+		for (/*var*/ c=0, l=gpostmile.sled.participants.length; c < l; c++) {
+			var participant = gpostmile.sled.participants[c] ;
 			participant.selected = task.participants.indexOf( participant.id ) !== -1 ;
-			gsled.sled.participants[participant.id] = participant ;
+			gpostmile.sled.participants[participant.id] = participant ;
 		}
 	}
 
-	var html = Y.sled.templates.taskParticipants( gsled.sled.participants ) ;
+	var html = Y.sled.templates.taskParticipants( gpostmile.sled.participants ) ;
 
 	var tpl = Y.one('#task-participant-list');
 	tpl.setContent(html);
@@ -194,7 +194,7 @@ function bindInviteOverlay() {
 		} else { 
 			t.addClass( 'selected' ) ;
 		}
-		gsled.contacts[id].selected = t.hasClass( 'selected' ) ;
+		gpostmile.contacts[id].selected = t.hasClass( 'selected' ) ;
 
 	}, '.participant' ) ;
 
@@ -203,7 +203,7 @@ function bindInviteOverlay() {
 		// needs to be URL encoded since it's a query param
 		var message = encodeURIComponent( inviteMessage.get( 'value' ) ) ;
 
-		var uri = "/project/" + gsled.sled.id + "/participants?message=" + message ;
+		var uri = "/project/" + gpostmile.sled.id + "/participants?message=" + message ;
 
 		var newParticipants = inviteEmails.get( 'value' ).replace(/^\s+|\s+$/g,"") ;
 		newParticipants = newParticipants.split( ',' ) ;
@@ -212,9 +212,9 @@ function bindInviteOverlay() {
 
 		var participants = newParticipants ;
 		var c,l ;
-		for (/*var*/ c=0, l=gsled.contacts.length; c < l; c++) {
-			if( gsled.contacts[c].selected ) {
-				participants.push( gsled.contacts[c].id ) ;
+		for (/*var*/ c=0, l=gpostmile.contacts.length; c < l; c++) {
+			if( gpostmile.contacts[c].selected ) {
+				participants.push( gpostmile.contacts[c].id ) ;
 			}
 		}
 
@@ -227,16 +227,16 @@ function bindInviteOverlay() {
 
 				if( response.status === "ok" ) {
 
-					// getJson( "/project/" + gsled.sled.id, Y.sled.sled.renderSledParticipants ) ;
-					gsled.sled.participants = response.participants ;
-					Y.fire( 'sled:renderSledParticipants', gsled.sled ) ;
+					// getJson( "/project/" + gpostmile.sled.id, Y.sled.sled.renderProjectParticipants ) ;
+					gpostmile.sled.participants = response.participants ;
+					Y.fire( 'sled:renderProjectParticipants', gpostmile.sled ) ;
 
 					/* instead of locally turning participant into contact
 					   rely on streaming contact update
 					for (var c=0, l=newParticipants.length; c < l; c++) {
 						var newContact = { }
-						gsled.contacts.push( newParticipants[c].id ) ;
-						gsled.contacts[ newParticipants[c].id ] = newParticipants[c] ;
+						gpostmile.contacts.push( newParticipants[c].id ) ;
+						gpostmile.contacts[ newParticipants[c].id ] = newParticipants[c] ;
 					}
 					*/
 
@@ -246,9 +246,9 @@ function bindInviteOverlay() {
 					// this clearing is now redundant as we clear upon launch
 					inviteOverlayNode.all( '.participant' ).removeClass( 'selected' ) ;
 					var i,l ;
-					for (/*var*/ i=0, l=gsled.contacts.length; i < l; ++i) {
-						var contact = gsled.contacts[i] ;
-						gsled.contacts[contact.id].selected = false ;
+					for (/*var*/ i=0, l=gpostmile.contacts.length; i < l; ++i) {
+						var contact = gpostmile.contacts[i] ;
+						gpostmile.contacts[contact.id].selected = false ;
 					}
 
 					// clear text fields
@@ -308,23 +308,23 @@ function bindParticipantsOverlay() {
 
 	taskParticipantsOverlayNode.delegate( 'click', function( e ) {
 
-		var task = gsled.task ;
+		var task = gpostmile.task ;
 		var cb = e.currentTarget ;
 		var id = cb.getAttribute( 'participant' ) ;
 		var checked = cb.get( 'checked' ) ;	// not getAttribute
 
-		gsled.sled.participants[id].selected = checked ;
+		gpostmile.sled.participants[id].selected = checked ;
 
 		var taskIsMe = false ;
 		var participants = [] ;
-		if( gsled.sled && gsled.sled.participants && gsled.sled.participants instanceof Array ) {
+		if( gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array ) {
 			var c,l ;
-			for (/*var*/ c=0, l=gsled.sled.participants.length; c < l; c++) {
-				if( gsled.sled.participants[c].selected ) {
-					participants.push( gsled.sled.participants[c].id ) ;
+			for (/*var*/ c=0, l=gpostmile.sled.participants.length; c < l; c++) {
+				if( gpostmile.sled.participants[c].selected ) {
+					participants.push( gpostmile.sled.participants[c].id ) ;
 				}
-				if( gsled.sled.participants[c].id === Y.sled.gsled.profile.id ) {
-					taskIsMe = gsled.sled.participants[c].selected ;				
+				if( gpostmile.sled.participants[c].id === Y.sled.gpostmile.profile.id ) {
+					taskIsMe = gpostmile.sled.participants[c].selected ;				
 				}
 			}
 		}
@@ -422,9 +422,9 @@ function bindManageOverlay() {
 			t.addClass( 'selected' ) ;
 		}
 		if( id ) {
-			var participant = gsled.sled.participants[id] ;
+			var participant = gpostmile.sled.participants[id] ;
 			if( participant ) {	
-				gsled.sled.participants[id].selected = t.hasClass( 'selected' ) ;
+				gpostmile.sled.participants[id].selected = t.hasClass( 'selected' ) ;
 			}
 		}
 
@@ -434,10 +434,10 @@ function bindManageOverlay() {
 	manageButton.on( 'click', function( e ) {
 
 		var participants = [] ;
-		if( gsled.sled && gsled.sled.participants && gsled.sled.participants instanceof Array ) {
+		if( gpostmile.sled && gpostmile.sled.participants && gpostmile.sled.participants instanceof Array ) {
 			var c,l ;
-			for (/*var*/ c=0, l=gsled.sled.participants.length; c < l; c++) {
-				var participant = gsled.sled.participants[c] ;
+			for (/*var*/ c=0, l=gpostmile.sled.participants.length; c < l; c++) {
+				var participant = gpostmile.sled.participants[c] ;
 				if( participant.selected ) {
 					participants.push( participant.id ) ;
 				}
@@ -453,8 +453,8 @@ function bindManageOverlay() {
 
 				if( response.status === "ok" ) {
 
-					gsled.sled.participants = response.participants ;
-					Y.fire( 'sled:renderSledParticipants', gsled.sled ) ;
+					gpostmile.sled.participants = response.participants ;
+					Y.fire( 'sled:renderProjectParticipants', gpostmile.sled ) ;
 
 				} else {
 
@@ -465,7 +465,7 @@ function bindManageOverlay() {
 			} ;
 
 			var askRemove = function( arg ) {
-			    var uri = "/project/" + gsled.sled.id + "/participants";
+			    var uri = "/project/" + gpostmile.sled.id + "/participants";
 				deleteJson( uri, json, confirmRemove ) ;				
 			} ;
 			askHeader = participants.length > 1 ? 'Remove Participants?' : 'Remove Participant?' ;
@@ -518,7 +518,7 @@ function bindManageOverlay() {
  */
 
 function showTaskParticipants( trigger, task, maxY ) {
-	gsled.task = task ;
+	gpostmile.task = task ;
 
 	if( task.participants ) {
 		showTaskParticipantsSync( trigger, task, maxY ) ;
@@ -540,7 +540,7 @@ function showTaskParticipantsCB( response, cbo ) {
 		var task = cbo.task ;
 		var maxY = cbo.maxY ;
 
-		Y.assert( gsled.task === task ) ;
+		Y.assert( gpostmile.task === task ) ;
 
 		// todo: other fields? shall we update anything/anywhere else?
 		task.participants = response.participants || [] ;
@@ -558,7 +558,7 @@ function showTaskParticipantsCB( response, cbo ) {
 function showTaskParticipantsSync( trigger, task, maxY ) {
 	var taskId = task.id ;
 
-	// needs to be done for each task selection after gsled.contacts[c].selected set
+	// needs to be done for each task selection after gpostmile.contacts[c].selected set
 	renderTaskParticipants( task ) ;	
 
 	// alignment needs to be done after render

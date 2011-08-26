@@ -18,9 +18,9 @@
 
 // tasks module - perhaps should factor-out details since that may become sophisticated on its own
 
-YUI.add('sledtasklist', function(Y) {
+YUI.add('postmile-tasks-list', function(Y) {
 
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 var taskList = Y.one( "#tasks" ) ;
 var exitKey = -1 ;	// key last typed when exiting dialog
 
@@ -34,7 +34,7 @@ var checkStates = [
 
 // render
 
-function render( tasks, sledId ) {
+function render( tasks, projectId ) {
 
 	if (!tasks || ( tasks._networkRequestStatusCode && tasks._networkRequestStatusCode !== 200 ) ) {
 		// it's okay for thre to be no tasks (still need to render none/blank)
@@ -42,8 +42,8 @@ function render( tasks, sledId ) {
 	}
 
 	// may sometimes not have sled yet
-	if( gsled && gsled.sleds ) {
-		var sled = gsled.sleds[sledId] ;
+	if( gpostmile && gpostmile.projects ) {
+		var sled = gpostmile.projects[projectId] ;
 		if( sled ) {
 			sled.tasks = tasks ;
 		}
@@ -203,7 +203,7 @@ function showUpdatedAgo( liTarget, doSync ) {
 function sync() {
 
 	if( Y.sled.dnd && Y.sled.dnd.tasksDndDelegate ) {
-		Y.sled.dnd.tasksDndDelegate.syncTargets() ; // gsled.tasksSortable.delegate.syncTargets() ;
+		Y.sled.dnd.tasksDndDelegate.syncTargets() ; // gpostmile.tasksSortable.delegate.syncTargets() ;
 	}
 
 	if( Y.sled.tooltips && Y.sled.tooltips.tasktip ) {
@@ -218,8 +218,8 @@ function sync() {
 
 function reorder( dragNode ) {
 
-	var sledId = gsled.sled.id ;
-	var sled = gsled.sleds[sledId] ;
+	var projectId = gpostmile.sled.id ;
+	var sled = gpostmile.projects[projectId] ;
 	var tasks = sled.tasks ;
 
 	var dropNode = dragNode.get( 'nextSibling' ) ;
@@ -266,7 +266,7 @@ function reorder( dragNode ) {
 
 			} else {
 
-				Y.fire( 'sled:renderSled', Y.sled.gsled.sled ) ;
+				Y.fire( 'sled:renderProject', Y.sled.gpostmile.sled ) ;
 
 				Y.fire( 'sled:errorMessage',  'Item reorder failed' ) ;
 
@@ -302,9 +302,9 @@ function addAddTask( taskList ) {
 
 function dropSuggestion( dragNode ) {
 
-	var sledId = gsled.sled.id ;
-	var tasks = gsled.sled.tasks ;
-	var suggestions = gsled.sled.suggestions ;
+	var projectId = gpostmile.sled.id ;
+	var tasks = gpostmile.sled.tasks ;
+	var suggestions = gpostmile.sled.suggestions ;
 	var dragId = dragNode.getAttribute('suggestion') ;
 	var dragSuggestion = suggestions[dragId] ;
 	// var dragIndex = dragSuggestion.index ;
@@ -327,7 +327,7 @@ function dropSuggestion( dragNode ) {
 
 	showUpdatedAgo( dragNode, true ) ;
 
-	addSuggestionToServer( dragSuggestion, gsled.sled, tasks, task, dropIndex, dragNode ) ;
+	addSuggestionToServer( dragSuggestion, gpostmile.sled, tasks, task, dropIndex, dragNode ) ;
 
 }
 
@@ -336,8 +336,8 @@ function dropSuggestion( dragNode ) {
 
 function addSuggestion( suggestion ) {
 
-	var sledId = gsled.sled.id ;
-	var tasks = gsled.sled.tasks ;
+	var projectId = gpostmile.sled.id ;
+	var tasks = gpostmile.sled.tasks ;
 
 	var title = suggestion.title ;
 	var task = {"title":title, "participantsCount":0}  ;
@@ -357,7 +357,7 @@ function addSuggestion( suggestion ) {
 	// scroll / animate to end of list
 	scrollNodeToBottom( newNode ) ;
 
-	addSuggestionToServer( suggestion, gsled.sled, tasks, task, tasks.length, newNode ) ;
+	addSuggestionToServer( suggestion, gpostmile.sled, tasks, task, tasks.length, newNode ) ;
 }
 
 
@@ -386,7 +386,7 @@ function addSuggestionToServer( suggestion, sled, tasks, task, index, node ) {
 
 			// todo: undelete/regen suggesitons list, renderSuggestions
 
-			Y.fire( 'sled:renderSled', sled ) ;
+			Y.fire( 'sled:renderProject', sled ) ;
 
 			Y.fire( 'sled:errorMessage',  'Suggestion add failed' ) ;
 
@@ -529,7 +529,7 @@ function openDetails(e) {
 
 	var liTarget = e.currentTarget.ancestor("li", true ) ;
 	var taskId = liTarget.getAttribute('task') ;
-	var task = gsled.sled.tasks[taskId] ;
+	var task = gpostmile.sled.tasks[taskId] ;
 	var liTitleTarget = liTarget.one( ".tasktitle" ) ;
 	var newInput = liTitleTarget ;	// liTitleTarget.one("input.tasktitle") ;
 	var liDetailsDivTarget = liTarget.one("div.messages") ;
@@ -696,15 +696,15 @@ function blurDetails(e) {
 	// var json = '{ "type":"text", "content":"' + encodeURIComponent(detailsText) + '"}' ;	// todo: just stringify
 	// var json = '{ "type":"text", "content":' + JSON.stringify(detailsText) + '}' ;
 	// var json = '{ "type":"text", "content":"' + detailsText + '"}' ;
-	// var detailsObject = { "type":"text", "content": detailsText, "user": { id: gsled.profile.id, display: gsled.profile.name }, "created": ((new Date()).getTime()) } ;
+	// var detailsObject = { "type":"text", "content": detailsText, "user": { id: gpostmile.profile.id, display: gpostmile.profile.name }, "created": ((new Date()).getTime()) } ;
 	var detailsObject = { "type":"text", "content": detailsText } ;
 	var json = JSON.stringify( detailsObject ) ;	// escapes newlines too
-	detailsObject.user = { id: gsled.profile.id, display: gsled.profile.name } ;
+	detailsObject.user = { id: gpostmile.profile.id, display: gpostmile.profile.name } ;
 	detailsObject.created = new Date().getTime() ;
 	
 	var liTarget = liDetailsInputTarget.ancestor("li") ;
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gsled.sled.tasks[taskId] ;
+	var task = gpostmile.sled.tasks[taskId] ;
 
 	liDetailsInputTarget.set('value','') ;
 
@@ -778,7 +778,7 @@ function nextState( liTarget, newState ) {
 
 	var liCheckTarget = liTarget.one(".check") ;
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gsled.sled.tasks[taskId] ;
+	var task = gpostmile.sled.tasks[taskId] ;
 
 	var oldState ;
 
@@ -820,7 +820,7 @@ function checkTask(e) {
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 	var liCheckTarget = liTarget.one(".check") ;
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gsled.sled.tasks[taskId] ;
+	var task = gpostmile.sled.tasks[taskId] ;
 	var state = nextState( liTarget ) ;
 	var jsonObject = { status : task.status }  ;
 	var json = JSON.stringify( jsonObject )  ;
@@ -867,8 +867,8 @@ function fadeDeleteTask(e) {
 	var liCloseTarget = e.currentTarget ;
 	var liTarget = liCloseTarget.ancestor("li", true) ;
 	var taskId = liTarget.getAttribute('task') ;
-	var tasks = gsled.sled.tasks ;
-	var task = gsled.sled.tasks[taskId] ;
+	var tasks = gpostmile.sled.tasks ;
+	var task = gpostmile.sled.tasks[taskId] ;
 	var fadeAnim = new Y.Anim({
 		node: liTarget,
 		to: {
@@ -909,7 +909,7 @@ function fadeDeleteTask(e) {
 
 		} else {
 
-			Y.fire( 'sled:renderSled', Y.sled.gsled.sled ) ;
+			Y.fire( 'sled:renderProject', Y.sled.gpostmile.sled ) ;
 
 			Y.fire( 'sled:errorMessage',  'Item deletion failed' ) ;
 
@@ -926,13 +926,13 @@ function fadeDeleteTask(e) {
 
 function showParticipants(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 	var tasks = sled.tasks ;
 
 	var liTarget = e.currentTarget.ancestor("li", true) ;
 
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
-	var task = gsled.sled.tasks[taskId] ;
+	var task = gpostmile.sled.tasks[taskId] ;
 
 	var scrollWindowNode = Y.one("#tasks");
 	var maxY = scrollWindowNode.getY() + parseInt(scrollWindowNode.getComputedStyle('height'), 10) ;
@@ -958,8 +958,8 @@ function onHover(e) {
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
 	var task = null ;
 
-	if( gsled.sled && gsled.sled.tasks && taskId ) {
-		task = gsled.sled.tasks[taskId] ;
+	if( gpostmile.sled && gpostmile.sled.tasks && taskId ) {
+		task = gpostmile.sled.tasks[taskId] ;
 	}
 
 	liTarget.addClass("active") ;
@@ -1027,7 +1027,7 @@ function titleTyped(e) {
 
 function titleEntered(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 
 	if( !liTarget ) {
@@ -1053,7 +1053,7 @@ function titleEntered(e) {
 	liNodes.removeClass("editing") ;
 
 	if( taskId ) {
-		task = gsled.sled.tasks[taskId] ;
+		task = gpostmile.sled.tasks[taskId] ;
 	}
 
 	if( task ) {
@@ -1249,7 +1249,7 @@ function bindDragVsSelect() {
 
 function taskSingleClick(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 	var liTitleTarget = liTarget.one( ".tasktitle" ) ;	// choses first one, with ttile (not span of right icons)
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
@@ -1278,7 +1278,7 @@ function taskTitleClick(e) {
 	// don't immediately add active and editing classes 
 	// because the forthcoming focus causes a blur which will remove editing
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 	var liTitleTarget = liTarget.one( ".tasktitle" ) ;	// choses first one, with ttile (not span of right icons)
 	var taskId = liTarget.getAttribute('task') ;	// get does not always work
@@ -1291,7 +1291,7 @@ function taskTitleClick(e) {
 	}
 
 	if( taskId ) {
-		task = gsled.sled.tasks[taskId] ;
+		task = gpostmile.sled.tasks[taskId] ;
 	}
 
 	// do this now after focus as caused blur and removed 'editing' class from all LI nodes
@@ -1331,7 +1331,7 @@ function bind( ) {
 		if( e.keyCode===27 ) {	// escape
 			var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 			var taskId = liTarget.getAttribute('task') ;	// get does not always work
-			var task = gsled.sled.tasks[taskId] ;
+			var task = gpostmile.sled.tasks[taskId] ;
 			if( task ) {
 				e.currentTarget.set('value',task.title) ;
 			}
@@ -1441,8 +1441,8 @@ function bind( ) {
 		reorder( node ) ;
 	});
 
-	Y.on( "sled:renderTasks", function( tasks, sledId ) {
-		render( tasks, sledId ) ;
+	Y.on( "sled:renderTasks", function( tasks, projectId ) {
+		render( tasks, projectId ) ;
 	});
 
 }
@@ -1454,4 +1454,4 @@ Y.sled.tasklist = {
 
 bind() ;
 
-}, "1.0.0", {requires:['sledglobal', 'sledtemplates', 'sledsuggestionlist', 'sledsettings', 'sleddnd', 'event-key', 'node', 'anim' ]} );
+}, "1.0.0", {requires:['postmile-global', 'postmile-templates', 'postmile-suggestions-list', 'postmile-settings', 'postmile-dnd', 'event-key', 'node', 'anim' ]} );

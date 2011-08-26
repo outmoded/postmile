@@ -13,22 +13,22 @@
 *
 */ 
 
-YUI.add('sledsettings', function(Y) {
+YUI.add('postmile-settings', function(Y) {
 
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 
 // renderSettings
 function renderSettings( settings ) {
-	// gsled.settings = settings ;
-	gsled.settings = [] ;
+	// gpostmile.settings = settings ;
+	gpostmile.settings = [] ;
 	var html = "" ;
 	var i,l ;
 	for (/*var*/ i=0, l=settings.length; i < l; ++i) {
 		var setting = settings[i] ;
 		if( setting.id !== "oneDetailAtaTime" ) {
-			gsled.settings.push( setting ) ;
+			gpostmile.settings.push( setting ) ;
 			// setting.index = i ;	// for convenience if we have only key and want to find place in array, but then have to watch for deletes to compact
-			gsled.settings[setting.id] = setting ;	// prime
+			gpostmile.settings[setting.id] = setting ;	// prime
 			html += Y.sled.templates.settingsMenuItem( setting ) ;
 		}
 	}
@@ -55,17 +55,17 @@ function bind( ) {
 	loginMenu.delegate('click',function (e) {
 		var settingId = e.currentTarget.getAttribute('setting') ;	// get does not always work
 		Y.assert( settingId ) ;
-		var ssetting = gsled.settings[settingId] ;
+		var ssetting = gpostmile.settings[settingId] ;
 		Y.assert( ssetting ) ;
 		ssetting.value = !ssetting.value ;
-		selectedSledMenuLink = loginMenu.one('li[setting="' + ssetting.id + '"]') ;
-		selectedSledMenuAnchor = selectedSledMenuLink.one('a');
+		selectedProjectMenuLink = loginMenu.one('li[setting="' + ssetting.id + '"]') ;
+		selectedProjectMenuAnchor = selectedProjectMenuLink.one('a');
 		if( ssetting.value ) {
-			selectedSledMenuAnchor.addClass( 'enabled' ) ;
+			selectedProjectMenuAnchor.addClass( 'enabled' ) ;
 		} else {
-			selectedSledMenuAnchor.removeClass( 'enabled' ) ;
+			selectedProjectMenuAnchor.removeClass( 'enabled' ) ;
 		}
-		var postableSettings = { 'value' : JSON.stringify(gsled.settings) } ;
+		var postableSettings = { 'value' : JSON.stringify(gpostmile.settings) } ;
 		postJson( "/storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
 	}, '.setting' ) ;
 }
@@ -80,48 +80,48 @@ function confirmSetSettings( response ) {
 // confirmGetSettings
 function confirmGetSettings( response ) {
 	if (!response || ( response._networkRequestStatusCode && response._networkRequestStatusCode !== 200 ) || !response.settings ) {	// && settings.length > 0 ) {
-		var postableSettings = { 'value' : JSON.stringify(gsled.settings) } ;
+		var postableSettings = { 'value' : JSON.stringify(gpostmile.settings) } ;
 		postJson( "/storage/settings", JSON.stringify( postableSettings ), confirmSetSettings ) ;
 	} else {
-		gsled.settings = JSON.parse( response.settings ) ;	// todo: secure
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+		gpostmile.settings = JSON.parse( response.settings ) ;	// todo: secure
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 	}
 }
 
 // settings
 function settings() {
-	if( !gsled.settings ) {
-		gsled.settings = [ { id:"multipleDetails", title:"Multi-Details", value:false } ] ;	// defaults until response, and stops it from rerequesting
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+	if( !gpostmile.settings ) {
+		gpostmile.settings = [ { id:"multipleDetails", title:"Multi-Details", value:false } ] ;	// defaults until response, and stops it from rerequesting
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 		getJson( "/storage/settings", confirmGetSettings ) ;
 	}
-	return gsled.settings ;
+	return gpostmile.settings ;
 }
 function multipleDetails() {
 	if( !settings().multipleDetails ) {
-		gsled.settings.push( { id:"multipleDetails", title:"Multi-open Details", value:false } ) ;
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+		gpostmile.settings.push( { id:"multipleDetails", title:"Multi-open Details", value:false } ) ;
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 	}
 	return ( settings() && settings().multipleDetails ) ? settings().multipleDetails.value : false ;
 }
 function multilineDetails() {
 	if( !settings().multilineDetails ) {
-		gsled.settings.push( { id:"multilineDetails", title:"Multi-line Details", value:false } ) ;
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+		gpostmile.settings.push( { id:"multilineDetails", title:"Multi-line Details", value:false } ) ;
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 	}
 	return ( settings() && settings().multilineDetails ) ? settings().multilineDetails.value : false ;
 }
 function confirmDelete() {
 	if( !settings().confirmDelete ) {
-		gsled.settings.push( { id:"confirmDelete", title:"Confirm Delete", value:true } ) ;
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+		gpostmile.settings.push( { id:"confirmDelete", title:"Confirm Delete", value:true } ) ;
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 	}
 	return ( settings() && settings().confirmDelete ) ? settings().confirmDelete.value : true ;
 }
 function sledsReorder() {
 	if( !settings().sledsReorder ) {
-		gsled.settings.push( { id:"sledsReorder", title:"Sled Reorder", value:true } ) ;
-		renderSettings( gsled.settings ) ;	// adds settings[id]
+		gpostmile.settings.push( { id:"sledsReorder", title:"Project Reorder", value:true } ) ;
+		renderSettings( gpostmile.settings ) ;	// adds settings[id]
 	}
 	return ( settings() && settings().sledsReorder ) ? settings().sledsReorder.value : true ;
 }
@@ -143,4 +143,4 @@ if( Y.sled.settings ) {
 }
 
 
-}, "1.0.0", {requires:['sledglobal', 'slednetwork']} );
+}, "1.0.0", {requires:['postmile-global', 'postmile-network']} );

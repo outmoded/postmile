@@ -8,7 +8,7 @@
 *
 */
 
-YUI.add('sledtemplates', function (Y) {
+YUI.add('postmile-templates', function (Y) {
 
 
 /**
@@ -296,7 +296,7 @@ YUI.add('sledtemplates', function (Y) {
 		if( participants && participants instanceof Array ) {
 			for ( c=0, i=0, l=participants.length; i < l; i++ ) {
 				var participant = participants[i] ;
-				if( participant.id !== Y.sled.gsled.profile.id ) {	// can't disinvite self
+				if( participant.id !== Y.sled.gpostmile.profile.id ) {	// can't disinvite self
 					if( c%3===0 ) {
 						pplhtml += '<ul class="participants-row"><li>' ;
 					}
@@ -358,9 +358,9 @@ YUI.add('sledtemplates', function (Y) {
 
 	}
 
-	function sledMenuItem( sled, mostRecentSled ) {
+	function sledMenuItem( sled, mostRecentProject ) {
 
-		var selectedClass = '' ;	// done in renderSled ( sled === mostRecentSled ) ? 'sled-loading' : '' ;
+		var selectedClass = '' ;	// done in renderProject ( sled === mostRecentProject ) ? 'sled-loading' : '' ;
 		selectedClass += ( sled.isPending ) ? 'diminishedtextitem' : '' ;
 
 		var sledTitle = sled.title ;

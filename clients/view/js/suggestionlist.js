@@ -11,22 +11,22 @@
 */ 
 
 
-YUI.add('sledsuggestionlist', function(Y) {
+YUI.add('postmile-suggestions-list', function(Y) {
 
-var gsled = Y.sled.gsled ;
+var gpostmile = Y.sled.gpostmile ;
 var suggestions = Y.one( "#suggestions" ) ;
 
 
 // render
 
-function renderSuggestions( suggestions, sledId ) {
+function renderSuggestions( suggestions, projectId ) {
 
 	if (!suggestions || ( suggestions._networkRequestStatusCode && suggestions._networkRequestStatusCode !== 200 ) ) {
 		// it's okay for thre to be no suggestions
 		// tho if it's a net err, perhaps could retry (but that'd be at a lower level)
 	}
 
-	var sled = gsled.sleds[sledId] ;
+	var sled = gpostmile.projects[projectId] ;
 	sled.suggestions = suggestions ;
 
 	var html = "" ;
@@ -76,7 +76,7 @@ function suggestionSingleClick(e) {
 
 function suggestionDelete(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 	var suggestionId = liTarget.getAttribute('suggestion') ;
@@ -94,7 +94,7 @@ function suggestionDelete(e) {
 
 function suggestionRemove(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 
 	// delete in UI
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
@@ -117,7 +117,7 @@ function suggestionRemove(e) {
 
 function suggestionAdd(e) {
 
-	var sled = gsled.sled ;
+	var sled = gpostmile.sled ;
 
 	var liTarget = e.currentTarget.ancestor("li", true ) ;	// true == scans/tests self
 	var suggestionId = liTarget.getAttribute('suggestion') ;
@@ -142,8 +142,8 @@ function bind( ) {
 
 	// event handlers
 
-	Y.on( "sled:renderSuggestions", function( suggestions, sledId ) {
-		renderSuggestions( suggestions, sledId ) ;
+	Y.on( "sled:renderSuggestions", function( suggestions, projectId ) {
+		renderSuggestions( suggestions, projectId ) ;
 	});
 
 }
@@ -155,5 +155,5 @@ Y.namespace("sled").suggestionlist = {
 } ;
 
 
-}, "1.0.0", {requires:['sledglobal', 'tasklist', 'node']} );
+}, "1.0.0", {requires:['postmile-global', 'tasklist', 'node']} );
 

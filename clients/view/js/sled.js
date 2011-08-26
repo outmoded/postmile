@@ -10,94 +10,94 @@
 *
 */
 
-YUI.add('sledsled', function (Y) {
+YUI.add('postmile-project', function (Y) {
 
-	var gsled = Y.sled.gsled;
+	var gpostmile = Y.sled.gpostmile;
 	// now in Y.sled.sled var calendar ;
 	var sledInputTitleOverlay;
 
 
-	// renderSled will also fetch more data (including details and tasks) as needed
-	// if details get more complicated, then factor them out instead of reusing renderSled
+	// renderProject will also fetch more data (including details and tasks) as needed
+	// if details get more complicated, then factor them out instead of reusing renderProject
 
-	function renderSled(sled, force) {
+	function renderProject(sled, force) {
 
 		if (!sled || ( sled._networkRequestStatusCode && sled._networkRequestStatusCode !== 200 ) || !sled.id && !force) {
-			Y.log( 'renderSled - no data: ' + JSON.stringify( sled ) ) ;
+			Y.log( 'renderProject - no data: ' + JSON.stringify( sled ) ) ;
 			return; // todo: revisit why this is necessary
 		}
 
 		Y.assert(sled);
 
-		gsled.sled = sled; // set active sled
+		gpostmile.sled = sled; // set active sled
 
-		var prevSled = gsled.sleds[sled.id];
+		var prevProject = gpostmile.projects[sled.id];
 
-		if (!prevSled) {
-			prevSled = sled; // blank/new sled
+		if (!prevProject) {
+			prevProject = sled; // blank/new sled
 		}
 
-		if (prevSled) {
+		if (prevProject) {
 
 			// replace wholeasle in dict (by key), and in array by index
 			// to flush/fill-out what was already prime
-			gsled.sleds[prevSled.id] = sled; 
-			gsled.sleds[prevSled.index] = sled; 
+			gpostmile.projects[prevProject.id] = sled; 
+			gpostmile.projects[prevProject.index] = sled; 
 
 			// prepoluate with previous sled data (same id), 
 			// paying attention to pending requests, 
 			// to avoid rerequests
-			sled.index = sled.index || prevSled.index ;
-			sled.requestedDetails = prevSled.requestedDetails;
-			sled.requestedTasks = prevSled.requestedTasks;
-			sled.requestedTips = prevSled.requestedTips;
-			sled.requestedSuggestions = prevSled.requestedSuggestions;
-			sled.tasks = sled.tasks || prevSled.tasks;
-			sled.tips = sled.tips || prevSled.tips;
-			sled.suggestions = sled.suggestions || prevSled.suggestions;
-			sled.place = sled.place || prevSled.place;
-			sled.date = sled.date || prevSled.date;
-			sled.time = sled.time || prevSled.time;
-			sled.participants = sled.participants || prevSled.participants;
-			sled.subscribed = prevSled.subscribed;
+			sled.index = sled.index || prevProject.index ;
+			sled.requestedDetails = prevProject.requestedDetails;
+			sled.requestedTasks = prevProject.requestedTasks;
+			sled.requestedTips = prevProject.requestedTips;
+			sled.requestedSuggestions = prevProject.requestedSuggestions;
+			sled.tasks = sled.tasks || prevProject.tasks;
+			sled.tips = sled.tips || prevProject.tips;
+			sled.suggestions = sled.suggestions || prevProject.suggestions;
+			sled.place = sled.place || prevProject.place;
+			sled.date = sled.date || prevProject.date;
+			sled.time = sled.time || prevProject.time;
+			sled.participants = sled.participants || prevProject.participants;
+			sled.subscribed = prevProject.subscribed;
 		}
 
 
-		renderSledDetails( sled ) ;
+		renderProjectDetails( sled ) ;
 
-		renderSledParticipants( sled ) ;
+		renderProjectParticipants( sled ) ;
 
 
 		// if needed, get sled tasks, then render tasks (even if empty)
 		// note that we pass sled.id as the sled object may be/become defunct by the time the request returns 
 		// (from getting more sled data/detaisl)
 
-		// done in prevSled sled.tasks = Y.sled.initialTasks ;
-		if (sled.id === Y.sled.initialSledId) {
+		// done in prevProject sled.tasks = Y.sled.initialTasks ;
+		if (sled.id === Y.sled.initialProjectId) {
 
 			// once we've rendered sled, dump the initial cache, get tips, sugs, etc
-			Y.sled.initialTasks = Y.sled.initialSledId = null; 
+			Y.sled.initialTasks = Y.sled.initialProjectId = null; 
 
 		} else {
 
 			// do not refretch/rerender details we aleady have  
 
-			renderSledTasks( sled ) ;
+			renderProjectTasks( sled ) ;
 
-			renderSledTips( sled ) ;
+			renderProjectTips( sled ) ;
 
-			renderSledSuggestions( sled ) ;
+			renderProjectSuggestions( sled ) ;
 
 			// set active sled
 			if (sled.id) {
-				// jslint is concerned function confirmSavedActiveSled(response, myarg) {
-				var confirmSavedActiveSled = function(response, myarg) {
+				// jslint is concerned function confirmSavedActiveProject(response, myarg) {
+				var confirmSavedActiveProject = function(response, myarg) {
 					if (!response || ( response.status !== 'ok' ) ) {
-						Y.log( 'error storing active sled from renderSled ' + JSON.stringify( response ) ) ;
+						Y.log( 'error storing active sled from renderProject ' + JSON.stringify( response ) ) ;
 					}
 				} ;
 				var json = '{"value":"' + sled.id + '"}';
-				postJson( '/storage/activesled', json, confirmSavedActiveSled);
+				postJson( '/storage/activesled', json, confirmSavedActiveProject);
 			}
 
 		}
@@ -114,34 +114,34 @@ YUI.add('sledsled', function (Y) {
 		participantsmenu.removeClass("sled-loading");
 		setTimeout(function () { participantsmenu.one('#sled-participants-menu').removeClass("sled-loading"); }, 1000);
 
-		// show sleds menu area - even though the underlying sled list may not yet be populated,
+		// show projects menu area - even though the underlying sled list may not yet be populated,
 		// it's worth showing just for the current sled title
 		// todo: do not let the underlying menu be clickable until the sled list is populated / valid
-		var sledsmenu = Y.one("#sleds-list");
-		// todo: figure out why immediate removal of class doesn't work var sledoptions = Y.one( "#sleds-menu" ) ;
+		var sledsmenu = Y.one("#projects-list");
+		// todo: figure out why immediate removal of class doesn't work var sledoptions = Y.one( "#projects-menu" ) ;
 		setTimeout(function () { sledsmenu.removeClass("sled-loading"); }, 0);
-		setTimeout(function () { sledsmenu.one('#sleds-menu').removeClass("sled-loading"); }, 1000);
-		// setTimeout( function() { sledsmenu.one('#sleds').removeClass("sled-loading"); }, 1000 ) ;
+		setTimeout(function () { sledsmenu.one('#projects-menu').removeClass("sled-loading"); }, 1000);
+		// setTimeout( function() { sledsmenu.one('#projects').removeClass("sled-loading"); }, 1000 ) ;
 
 		// conditional display of menu item
-		var joinSled = Y.one("#join-sled");
+		var joinProject = Y.one("#join-sled");
 		if (sled.isPending) {
-			joinSled.removeClass('sled-loading');
+			joinProject.removeClass('sled-loading');
 		} else {
-			joinSled.addClass('sled-loading');
+			joinProject.addClass('sled-loading');
 		}
 
 		// if pending, be proactive upon rendering and ask user to join sled
 		if (sled.isPending) {
-			Y.fire( 'sled:askJoinCurrentSled', true ) ;
+			Y.fire( 'sled:askJoinCurrentProject', true ) ;
 		}
 
 		// uncover any loading blockers
 		Y.fire( 'sled:checkUncover' );
 
-		// start getting updates on sled (this automatically unsubscribes from other sleds)
+		// start getting updates on sled (this automatically unsubscribes from other projects)
 		if (Y.sled.stream) {
-			Y.fire( 'sled:subscribeSled', sled ) ;
+			Y.fire( 'sled:subscribeProject', sled ) ;
 		}
 
 		// document.location.href = document.location.href.split('#')[0] + '#sled=' + sled.id;
@@ -154,7 +154,7 @@ YUI.add('sledsled', function (Y) {
 
 	// render sled details such as title, date, time, place
 
-	function renderSledDetails( sled ) {
+	function renderProjectDetails( sled ) {
 
 		// sled name/title
 		var html = Y.sled.templates.sledTitle( sled.title ) ;
@@ -175,7 +175,7 @@ YUI.add('sledsled', function (Y) {
 		// otherwise render already present details
 		if (!sled.requestedDetails && sled.id !== "") {
 			sled.requestedDetails = true; // just to say we've tried
-			getJson( "/project/" + sled.id, renderSled); 
+			getJson( "/project/" + sled.id, renderProject); 
 		} else {
 			// they may be blank on purpose rather than an initial conditoon
 			placeT = sled.place || "";
@@ -198,20 +198,20 @@ YUI.add('sledsled', function (Y) {
 
 	// render sled participants menu
 
-	function renderSledParticipants( sled ) {
+	function renderProjectParticipants( sled ) {
 
-		if (!gsled.sled.participants || !(gsled.sled.participants instanceof Array)) {
-			gsled.sled.participants = [];
+		if (!gpostmile.sled.participants || !(gpostmile.sled.participants instanceof Array)) {
+			gpostmile.sled.participants = [];
 		}
 
 		var html = "";
 		if (sled.participants && sled.participants.length > 0) {
 
 			var pm = Y.one('#sled-participants');
-			var sm = Y.one('#sleds-menu');
-			var deleteSledMenuItem = Y.one("#sleds-list #delete-sled");
-			if (sled.participants[0].id === Y.sled.gsled.profile.id) {
-				deleteSledMenuItem.removeClass('sled-loading');
+			var sm = Y.one('#projects-menu');
+			var deleteProjectMenuItem = Y.one("#projects-list #delete-sled");
+			if (sled.participants[0].id === Y.sled.gpostmile.profile.id) {
+				deleteProjectMenuItem.removeClass('sled-loading');
 				if (sled.participants.length > 1) {
 					pm.one('.launch-manage-menu-item').removeClass('sled-loading');
 				} else {
@@ -219,7 +219,7 @@ YUI.add('sledsled', function (Y) {
 				}
 				sm.one('.leave-sled-menu-item').addClass('sled-loading');
 			} else {
-				deleteSledMenuItem.addClass('sled-loading');
+				deleteProjectMenuItem.addClass('sled-loading');
 				sm.one('.leave-sled-menu-item').removeClass('sled-loading');
 				pm.one('.launch-manage-menu-item').addClass('sled-loading');
 			}
@@ -254,11 +254,11 @@ YUI.add('sledsled', function (Y) {
 
 	// render sled tasks
 
-	function renderSledTasks( sled ) {			
+	function renderProjectTasks( sled ) {			
 		// tasks
 		if (!sled.requestedTasks && sled.id && sled.id !== "") {
 			sled.requestedTasks = true; // just to say we tried
-			getJson( "/project/" + sled.id + "/tasks", function( tasks, sledId ){ Y.fire( 'sled:renderTasks', tasks, sledId ) ; }, sled.id ) ;
+			getJson( "/project/" + sled.id + "/tasks", function( tasks, projectId ){ Y.fire( 'sled:renderTasks', tasks, projectId ) ; }, sled.id ) ;
 		} else {	
 			// clear even if not tasks
 			Y.fire( 'sled:renderTasks', sled.tasks, sled.id ) ;	
@@ -268,11 +268,11 @@ YUI.add('sledsled', function (Y) {
 
 	// render sled tips
 
-	function renderSledTips( sled ) {			
+	function renderProjectTips( sled ) {			
 		// tips (start here w tips, using events instead of calls)
 		if (!sled.requestedTips && sled.id && sled.id !== "") {
 			sled.requestedTips = true; // just to say we tried
-			getJson( "/project/" + sled.id + "/tips", function( tips, sledId ){ Y.fire( 'sled:renderTips', tips, sledId ) ; }, sled.id ) ;
+			getJson( "/project/" + sled.id + "/tips", function( tips, projectId ){ Y.fire( 'sled:renderTips', tips, projectId ) ; }, sled.id ) ;
 		} else {	
 			// clear even if no tips
 			Y.fire( 'sled:renderTips', sled.tips, sled.id ) ;
@@ -282,11 +282,11 @@ YUI.add('sledsled', function (Y) {
 
 	// render sled suggestions
 
-	function renderSledSuggestions( sled ) {			
+	function renderProjectSuggestions( sled ) {			
 		// and suggestions
 		if (!sled.requestedSuggestions && sled.id && sled.id !== "") {
 			sled.requestedSuggestions = true; // just to say we tried
-			getJson( "/project/" + sled.id + "/suggestions", function( suggestions, sledId ){ Y.fire( 'sled:renderSuggestions', suggestions, sledId ) ; }, sled.id);
+			getJson( "/project/" + sled.id + "/suggestions", function( suggestions, projectId ){ Y.fire( 'sled:renderSuggestions', suggestions, projectId ) ; }, sled.id);
 		} else {	
 			// clear even if no suggestions
 			Y.fire( 'sled:renderSuggestions', sled.suggestions, sled.id ) ;
@@ -360,7 +360,7 @@ YUI.add('sledsled', function (Y) {
 
 	function setDate( d ) {
 
-		var sled = gsled.sled;
+		var sled = gpostmile.sled;
 		var dateN = Y.one('#sled-details .date');
 
 		var j ;
@@ -414,20 +414,20 @@ YUI.add('sledsled', function (Y) {
 	// prompt the user about joining the sled, 
 	// and retry any request that failed perms and caused the prompt
 
-	function askJoinCurrentSled( ask, retryCallback ) {
+	function askJoinCurrentProject( ask, retryCallback ) {
 
-		function joinCurrentSled() {
+		function joinCurrentProject() {
 
-			function confirmJoinSled(response, myarg) { // response has id, rev, status
+			function confirmJoinProject(response, myarg) { // response has id, rev, status
 
 				if (response.status === "ok") {
 
-					delete Y.sled.gsled.sled.isPending; // = false ;
-					delete Y.sled.gsled.sled.participants[Y.sled.gsled.profile.id].isPending;
+					delete Y.sled.gpostmile.sled.isPending; // = false ;
+					delete Y.sled.gpostmile.sled.participants[Y.sled.gpostmile.profile.id].isPending;
 
-					// rerender all sleds to ensure the sleds menu looks correct wrt pending etc
+					// rerender all projects to ensure the projects menu looks correct wrt pending etc
 					// and rerender active sled to correct join menu option
-					Y.fire( 'sled:renderSleds', Y.sled.gsled.sleds, true ) ;
+					Y.fire( 'sled:renderProjects', Y.sled.gpostmile.projects, true ) ;
 
 					Y.fire( 'sled:statusMessage', 'Joined sled' ) ;
 
@@ -445,18 +445,18 @@ YUI.add('sledsled', function (Y) {
 
 			}
 
-			postJson("/project/" + Y.sled.gsled.sled.id + '/join', null, confirmJoinSled);
+			postJson("/project/" + Y.sled.gpostmile.sled.id + '/join', null, confirmJoinProject);
 
 		}
 
-		function revertSled() {
+		function revertProject() {
 					// orig call err hndlr should fix this window.location.reload(); 
 		}
 
 		if( !ask ) {
-			joinCurrentSled() ;
+			joinCurrentProject() ;
 		} else {
-			Y.fire( 'sled:confirm', 'Join this sled?', 'Joining allows you to make changes. You can always leave later.', joinCurrentSled, null, revertSled, null);
+			Y.fire( 'sled:confirm', 'Join this sled?', 'Joining allows you to make changes. You can always leave later.', joinCurrentProject, null, revertProject, null);
 		}
 
 	}
@@ -501,7 +501,7 @@ YUI.add('sledsled', function (Y) {
 				points: [Y.WidgetPositionAlign.LC, Y.WidgetPositionAlign.LC]
 			});
 
-			sledInputTitle.set('value', Y.sled.gsled.sled.title);
+			sledInputTitle.set('value', Y.sled.gpostmile.sled.title);
 
 			sledInputTitleOverlay.show();
 			sledInputTitle.focus();
@@ -518,7 +518,7 @@ YUI.add('sledsled', function (Y) {
 
 			sledInputTitleOverlay.hide();
 
-			var sled = gsled.sled;
+			var sled = gpostmile.sled;
 			var title = sledInputTitle.get('value');
 			if (!title) {
 				sledInputTitle.set('value', sled.title);
@@ -529,7 +529,7 @@ YUI.add('sledsled', function (Y) {
 
 			var json = '{"title":"' + title + '"}';
 
-			function confirmChangedSled(response, myarg) { // response has id, rev, status
+			function confirmChangedProject(response, myarg) { // response has id, rev, status
 
 				if(response.status === "ok") {
 
@@ -537,9 +537,9 @@ YUI.add('sledsled', function (Y) {
 
 					sled.rev = response.rev;
 
-					// need to renderSleds menu for both adding and changing sled names
-					// just to repop the menu of sleds with prop id, do not set and render last/active sled
-					Y.fire( 'sled:renderSleds', gsled.sleds, false ) ;
+					// need to renderProjects menu for both adding and changing sled names
+					// just to repop the menu of projects with prop id, do not set and render last/active sled
+					Y.fire( 'sled:renderProjects', gpostmile.projects, false ) ;
 
 				} else {
 
@@ -550,7 +550,7 @@ YUI.add('sledsled', function (Y) {
 				}
 			}
 
-			postJson( "/project/" + sled.id, json, confirmChangedSled);
+			postJson( "/project/" + sled.id, json, confirmChangedProject);
 		});
 
 		// handle return and escape
@@ -559,7 +559,7 @@ YUI.add('sledsled', function (Y) {
 				sledInputTitle.blur();
 			}
 			if (e.keyCode === 27) {	// escape
-				var sled = gsled.sled;
+				var sled = gpostmile.sled;
 				sledInputTitle.set('value', sled.title);
 				sledInputTitle.blur();
 			}
@@ -578,21 +578,21 @@ YUI.add('sledsled', function (Y) {
 				bindCalendar();
 			}
 
-			var sledDate = gsled.sled.date ? new Date(gsled.sled.date) : new Date();
+			var sledDate = gpostmile.sled.date ? new Date(gpostmile.sled.date) : new Date();
 			Y.sled.sled.calendar.render({ selected: sledDate, date: sledDate });
 			setTimeout(Y.bind(dateN.select, dateN), 0) ;
 		});
 
 		// process new date when field looses user's focus
 		dateN.on('blur', function (e) {
-			var sled = gsled.sled;
+			var sled = gpostmile.sled;
 			var dateInput = dateN.get('value');
 			setDate( dateInput ) ;
 		});
 
 		// pay attention to escape and return
 		dateN.on('keydown', function (e) {
-			var sled = gsled.sled;
+			var sled = gpostmile.sled;
 			if (e.keyCode === 13) {	// return
 				dateN.blur();
 				Y.sled.sled.calendar.hide();
@@ -622,7 +622,7 @@ YUI.add('sledsled', function (Y) {
 		// process when loosing user focus
 		function onTimeBlur(e) {
 
-			var sled = gsled.sled;
+			var sled = gpostmile.sled;
 			var timeInput = timeField.get('value');
 			var newTime = jsonStringFromTime(timeInput);
 			var newContents = displayStringFromTime(newTime);
@@ -658,7 +658,7 @@ YUI.add('sledsled', function (Y) {
 
 		// handle return and escape keys
 		timeField.on('keydown', function (e) {
-			var sled = gsled.sled;
+			var sled = gpostmile.sled;
 			if (e.keyCode === 13) {	// return
 				timeField.blur();
 			}
@@ -682,23 +682,23 @@ YUI.add('sledsled', function (Y) {
 		// process place when loosing focus
 		function onPlace(e) {
 
-			var sled = gsled.sled;
-			// gsled.onPlaceHandler = place.on( 'click', onPlace );	
+			var sled = gpostmile.sled;
+			// gpostmile.onPlaceHandler = place.on( 'click', onPlace );	
 			var placeInput = place.get('value');
-			var newContents = placeInput || ""; // renderSled does this as well
+			var newContents = placeInput || ""; // renderProject does this as well
 			var json = '{"place":"' + placeInput + '"}';
 			function confirmChangedPlace(response, myarg) { // response has id, rev, status
 				if( response.status === 'ok' ) {
 					sled.place = placeInput;	// following line handles blank input
 				} else {
-					newContents = sled.place || ""; // renderSled does this as well
+					newContents = sled.place || ""; // renderProject does this as well
 					place.set('value', newContents);
 					Y.log( 'error setting place ' + JSON.stringify( response ) ) ;
 				}
 			}
 			postJson( "/project/" + sled.id, json, confirmChangedPlace);
 		}
-		gsled.onPlaceHandler = place.on('blur', onPlace);
+		gpostmile.onPlaceHandler = place.on('blur', onPlace);
 
 		// handle return and escape keys
 		var placeN = Y.one('#sled-details .place');
@@ -707,7 +707,7 @@ YUI.add('sledsled', function (Y) {
 				placeN.blur();
 			}
 			if (e.keyCode === 27) {	// escape
-				var sled = gsled.sled;
+				var sled = gpostmile.sled;
 				placeN.set('value', sled.place || "");
 				placeN.blur();
 			}
@@ -751,16 +751,16 @@ YUI.add('sledsled', function (Y) {
 
 		// event handling 
 
-		Y.on( "sled:askJoinCurrentSled", function( retryRequest ) {
-			askJoinCurrentSled( retryRequest ) ;
+		Y.on( "sled:askJoinCurrentProject", function( retryRequest ) {
+			askJoinCurrentProject( retryRequest ) ;
 		});
 
-		Y.on( "sled:renderSled", function( sled, force ) {
-			renderSled( sled, force ) ;
+		Y.on( "sled:renderProject", function( sled, force ) {
+			renderProject( sled, force ) ;
 		});
 
-		Y.on( "sled:renderSledParticipants", function( sled ) {
-			renderSledParticipants( sled ) ;
+		Y.on( "sled:renderProjectParticipants", function( sled ) {
+			renderProjectParticipants( sled ) ;
 		});
 
 	}
@@ -780,4 +780,4 @@ YUI.add('sledsled', function (Y) {
 
 	bind();
 
-}, "1.0.0", { requires: ["sledglobal", 'slednetwork', 'node'] });
+}, "1.0.0", { requires: ["postmile-global", 'postmile-network', 'node'] });

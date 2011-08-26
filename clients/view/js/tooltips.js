@@ -13,7 +13,7 @@
 *
 */ 
 
-YUI.add('sledtooltips', function(Y) {
+YUI.add('postmile-tooltips', function(Y) {
 
 	var Lang = Y.Lang,
 		Node = Y.Node,

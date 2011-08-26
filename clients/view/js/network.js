@@ -120,7 +120,7 @@ function xFire( e, a1, a2, a3 ) {
 							// getCredentials(function () {}/*, true*/);	// not refreshCredentials();
 						    window.location = postmile.api.uri + '/login';
 						} else {
-							xFire( 'sled:askJoinCurrentSled', true, retryRequest ) ;
+							xFire( 'sled:askJoinCurrentProject', true, retryRequest ) ;
 						}
 					}
 
