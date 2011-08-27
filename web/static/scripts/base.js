@@ -490,7 +490,7 @@ function register() {
                     document.forms['register-form'].submit();
                 }
                 else if (request.status === 400 ||
-                            request.status === 404) {
+                         request.status === 404) {
 
                     var response = request.responseText;
                     var msg;
@@ -521,8 +521,8 @@ function register() {
 
 function hideRegisterIntro() {
 
-    document.getElementById("error").style.display = "none";
-    document.getElementById("two-columns").style.display = "block";
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('two-columns').style.display = 'block';
     resizeListBox();
 }
 

@@ -21,23 +21,37 @@ exports.register = function (req, res, next) {
 
             res.api.jar.signup = req.api.jar.signup;
 
-            var locals = {
+            // Check if invitation required
 
-                logo: false,
-                network: req.api.jar.signup.network,
+            Api.call('GET', '/invite/public', '', function (data, err, code) {
 
-                env: {
+                if (code === 200) {
 
-                    invite: (req.api.jar.signup.invite || ''),
-                    name: (req.api.jar.signup.name || ''),
-                    email: (req.api.jar.signup.email || ''),
-                    username: (req.api.jar.signup.username || ''),
-                    message: (req.api.jar.message || '')
+                    res.api.jar.signup.invite = 'public';
                 }
-            };
+                else {
 
-            res.api.view = { template: 'register', locals: locals };
-            next();
+                    res.api.jar.signup.invite = (res.api.jar.signup.invite == 'public' ? '' : res.api.jar.signup.invite);
+                }
+
+                var locals = {
+
+                    logo: false,
+                    network: req.api.jar.signup.network,
+
+                    env: {
+
+                        invite: (res.api.jar.signup.invite || ''),
+                        name: (res.api.jar.signup.name || ''),
+                        email: (res.api.jar.signup.email || ''),
+                        username: (res.api.jar.signup.username || ''),
+                        message: (res.api.jar.message || '')
+                    }
+                };
+
+                res.api.view = { template: 'register', locals: locals };
+                next();
+            });
         }
         else {
 

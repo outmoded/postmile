@@ -36,7 +36,10 @@ internals.ObjectID = internals.client.bson_serializer.ObjectID;
 
 // Connect to database and initialize internals.collections
 
-exports.initialize = function (callback) {
+exports.initialize = function (arg1, arg2) {        // [isNew,] callback
+
+    var isNew = (arg2 ? arg1 : false);
+    var callback = (arg2 || arg1);
 
     internals.client.open(function (err, client) {
 
@@ -50,7 +53,7 @@ exports.initialize = function (callback) {
 
                         if (result === true) {
 
-                            internals.initCollection(0, callback);
+                            internals.initCollection(0, isNew, callback);
                         }
                         else {
 
@@ -65,7 +68,7 @@ exports.initialize = function (callback) {
             }
             else {
 
-                internals.initCollection(0, callback);
+                internals.initCollection(0, isNew, callback);
             }
         }
         else {
@@ -78,26 +81,35 @@ exports.initialize = function (callback) {
 };
 
 
-internals.initCollection = function (i, callback) {
+internals.initCollection = function (i, isNew, callback) {
 
     if (i < internals.collectionNames.length) {
 
-        internals.client.collection(internals.collectionNames[i], function (err, collection) {
+        if (isNew) {
 
-            if (err === null) {
+            internals.client.createCollection(internals.collectionNames[i], next);
+        }
+        else {
 
-                internals.collections[internals.collectionNames[i]] = collection;
-                internals.initCollection(i + 1, callback);
-            }
-            else {
-
-                callback('Failed opening collection: ' + internals.collectionNames[i] + ' due to: ' + err);
-            }
-        });
+            internals.client.collection(internals.collectionNames[i], next);
+        }
     }
     else {
 
         callback(null);
+    }
+
+    function next(err, collection) {
+
+        if (err === null) {
+
+            internals.collections[internals.collectionNames[i]] = collection;
+            internals.initCollection(i + 1, isNew, callback);
+        }
+        else {
+
+            callback('Failed opening collection: ' + internals.collectionNames[i] + ' due to: ' + err);
+        }
     }
 };
 

@@ -129,6 +129,7 @@ exports.create = function (paths, onInitialized) {
             // Database connection failed
 
             Log.err(err);
+            process.exit(1);
         }
     });
 };
