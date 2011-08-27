@@ -23,7 +23,7 @@ exports.session = {
 
 exports.postmileAPI = {
 
-    clientId: '',
+    clientId: 'postmile.web',
     clientSecret: ''
 };
 

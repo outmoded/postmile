@@ -12,14 +12,14 @@ exports.host = {
 
     web: {
 
-        domain: 'postmile.net',
+        domain: 'localhost',
         port: 8000,
         scheme: 'http'
     },
 
     api: {
 
-        domain: 'postmile.net',
+        domain: 'localhost',
         port: 8001,
         scheme: 'http'
     },
@@ -74,10 +74,10 @@ exports.database = {
 
 exports.email = {
 
-    fromName: 'Postmile.net',
-    replyTo: 'no-reply@postmile.net',
-    admin: 'admin@postmile.net',
-    feedback: 'admin@postmile.net',
+    fromName: 'Postmile',
+    replyTo: 'no-reply@your.domain',
+    admin: 'admin@your.domain',
+    feedback: 'admin@your.domain',
 
     server: {
 
