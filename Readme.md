@@ -36,7 +36,7 @@ Copy the postmile.web client secret and save it for later.
 ```bash
 $ cd ../web
 $ npm update
-$ cp cp vault.js.example vault.js
+$ cp vault.js.example vault.js
 ```
 
 Edit postmile/web/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
