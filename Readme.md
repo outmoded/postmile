@@ -1,9 +1,5 @@
 ﻿Postmile is a collaborative list making tool built using JS, Node.js, and MongoDB.
 
-# About
-
-Postmile is based on the discontinued experimental Yahoo! Sled project initially published at: https://github.com/yahoo/postmile.
-
 # Installation
 
 Postmile consists of an api server and a web server, both running using Node.js. The two servers can run on the same machine or different machines.
@@ -56,6 +52,10 @@ callback URI is http://localhost:8000/auth/twitter.
 $ cd ..
 ```
 
+Make sure to protect your vault.js files. If an attacker gets hold of them, you're screwed.
+If you are going to run this in a production environment, you should use TLS (HTTPS) for the web server (otherwise it's cookies and OAuth 2.0 bits are
+pretty open for attacks). To configure TLS, set the 'process.web.tls' variable in the postmile/config.js file to point to your TLS key and certificate.
+
 # Startup
 
 ```bash
@@ -65,11 +65,13 @@ $ node web/index &
 
 Point your browser at the web server.
 
-
 # To Do
 
  * Unify the two servers (api, web) to allow them to run inside the same process for single server setup
  
- 
+# History
+
+Postmile is based on the discontinued experimental Yahoo! Sled project initially published at: https://github.com/yahoo/postmile.
+
 
 
