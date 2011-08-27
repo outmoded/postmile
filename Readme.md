@@ -72,7 +72,14 @@ $ node web/index &
 ```
 
 Now point your browser at the web server address and start using Postmile.
- 
+
+# Credits
+
+[Lance Welsh](https://github.com/lpw) - 'view' web client
+Axel Albin-Lax, Josh Kamler, and Bryan Chen - UX/UI design, Snowy web client theme
+[Chris Carrasco](http://chriscarrasco.com/) - Original artwork
+[Eran Hammer-Lahav](http://hueniverse.com) - Concept and server-side components
+
 # History
 
 Postmile is based on the discontinued experimental Yahoo! Sled project initially published at: https://github.com/yahoo/postmile.
