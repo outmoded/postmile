@@ -15,7 +15,7 @@ Edit postmile/config.js with your preferences and configuration.
 
 ```bash
 $ cd api
-$ cp cp vault.js.example vault.js
+$ cp vault.js.example vault.js
 ```
 
 Edit postmile/api/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
