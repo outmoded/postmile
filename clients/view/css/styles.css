@@ -70,12 +70,12 @@ input {
     background-color: transparent;
     border: none;
 }
+
 textarea {
     background-color: transparent;
     border: none;
-	display: block ;
-	/* vertical-align: center ; */
-	resize: none ;
+	display: block;
+	resize: none;
 }
 
 
@@ -224,7 +224,7 @@ body {
 
 .menu-hidden {
 	visibility: hidden;
-	display: none ;	/* can't be in flow otherwise will get drag over events */
+	display: none;
 }
 
 .menu li {
@@ -751,18 +751,18 @@ body {
 div.yui3-dd-proxy {
 	border: none !important;
 	background-color: transparent !important;
-	cursor: move ;
+	cursor: move;
 }
 
 div.yui3-dd-proxy li,
 div.yui3-dd-proxy li.task,
 div.yui3-dd-proxy li.suggestion {
 	margin: 0 !important;
-	cursor: move ;
+	cursor: move;
 }
 
 div.yui3-dd-proxy span {
-	cursor: move ;
+	cursor: move;
 }
 
 
@@ -803,18 +803,13 @@ div.yui3-dd-proxy li.task.active {
 #tasks li .titlearea,
 div.yui3-dd-proxy li.task .titlearea {
 	display: inline-block;
-	width: 100%;	/* 100% of 80% */
-	/* max-width: 85%;	/* if showing updatedAgo w ellipses: 80%; */
+	width: 100%;
 }
 
 #tasks li .titletext,
 div.yui3-dd-proxy li.task .titletext {
 	display: inline-block;
 	max-width: 100%;
-	/*
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	*/
 	overflow: hidden;
 }
 
@@ -845,9 +840,7 @@ div.yui3-dd-proxy li.task h3 {
 	color: #999999;
 }
 
-/* #tasks li.editing a, */
 #tasks li.editing .titletext,
-/* div.yui3-dd-proxy li.task.editing a, */
 div.yui3-dd-proxy li.task.editing .titletext {
 	width: 100%;
 }
@@ -875,7 +868,7 @@ div.yui3-dd-proxy li.task .updatedAgo {
 }
 #tasks li.long-title .updatedAgo,
 div.yui3-dd-proxy .updatedAgo {
-	display: none ;
+	display: none;
 }
 
 #tasks li.updatedago-would-wrap .updatedAgo,
@@ -890,8 +883,8 @@ div.yui3-dd-proxy li.task .updatedAgo:hover {
 }
 
 #tasks li.long-title .ellipses {
-	position: relative ;
-	bottom: 8px ;
+	position: relative;
+	bottom: 8px;
 }
 
 #tasks li.short-title .ellipses,
@@ -1219,8 +1212,8 @@ div.yui3-dd-proxy li.task .taskdetails em {
 div.yui3-dd-proxy li.task .taskdetails {
     font-size: 14px;
 	font-style: normal;
-	overflow: hidden ;
-	height: auto ;
+	overflow: hidden;
+	height: auto;
 	resize: none;
 }
 
@@ -1294,9 +1287,9 @@ div.yui3-dd-proxy textarea.tasktitle {
 
 #tasks input.measureText,
 #tasks textarea.measureText {
-	width: 0 ;
-	visibility: hidden ;
-	position: absolute ; /* just get it out of the flow - who cares where it ends up since it's not visible */
+	width: 0;
+	visibility: hidden;
+	position: absolute;
 	font-size: 18px;
 }
 
@@ -1305,7 +1298,7 @@ div.yui3-dd-proxy textarea.tasktitle {
 }
 
 div.yui3-dd-proxy .measureText {
-	display: none ;
+	display: none;
 }
 
 #tasks li.addnewtask input {
@@ -1623,7 +1616,7 @@ div.yui3-dd-proxy li.suggestion a.removeSuggestion:visited {
  */
 
 .pointTo {
-	background: transparent ;
+	background: transparent;
     border: 5px solid #ff6600;
 	border-radius: 10px;
 }
@@ -1730,7 +1723,7 @@ div.yui3-dd-proxy li.suggestion a.removeSuggestion:visited {
 }
 
 #status .middleStatus {
-	display: inline-block;	/* just to get backgruond color */
+	display: inline-block;
 	background-color: #ec5320;
 	border-bottom-left-radius: 5px;
 	border-bottom-right-radius: 5px;
