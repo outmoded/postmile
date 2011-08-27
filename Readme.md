@@ -72,10 +72,6 @@ $ node web/index &
 ```
 
 Now point your browser at the web server address and start using Postmile.
-
-# To Do
-
- * Unify the two servers (api, web) to allow them to run inside the same process for single server setup
  
 # History
 
