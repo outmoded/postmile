@@ -23,6 +23,7 @@ $ cp cp vault.js.example vault.js
 ```
 
 Edit postmile/api/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
+
 If your MongoDB requires authentication, set the values of the database 'username' and 'password' (otherwise leave empty).
 
 ```bash
@@ -43,11 +44,13 @@ $ cp cp vault.js.example vault.js
 ```
 
 Edit postmile/web/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
+
 Set the value of the postmileAPI 'clientSecret' variable to the client secret saved earlier.
+
 Enter at least one third-party API credentials (Twitter, Facebook, or Yahoo!) as received from each provider when you registered the application.
 If asked, the callback URI is your web server configuration entered above with the path '/auth/twitter', '/auth/facebook', or '/auth/yahoo'.
-for example, if you configured your web server to run on 'postmile.net', port '8000', using the 'http' scheme, and you are using Twitter, your
-callback URI is http://postmile.net:8000/auth/twitter.
+For example, if you configured your web server to run on 'localhost', port '8000', using the 'http' scheme, and you are using Twitter, your
+callback URI is http://localhost:8000/auth/twitter.
 
 ```bash
 $ cd ..
