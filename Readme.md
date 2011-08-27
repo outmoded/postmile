@@ -58,12 +58,20 @@ pretty open for attacks). To configure TLS, set the 'process.web.tls' variable i
 
 # Startup
 
+To start both servers at the same time in the same process (combined log output):
+
+```bash
+$ node postmile
+```
+
+To start each server individually:
+
 ```bash
 $ node api/index &
 $ node web/index &
 ```
 
-Point your browser at the web server.
+Now point your browser at the web server address and start using Postmile.
 
 # To Do
 
