@@ -45,8 +45,8 @@ Set the value of the postmileAPI 'clientSecret' variable to the client secret sa
 
 Enter at least one third-party API credentials (Twitter, Facebook, or Yahoo!) as received from each provider when you registered the application.
 If asked, the callback URI is your web server configuration entered above with the path '/auth/twitter', '/auth/facebook', or '/auth/yahoo'.
-For example, if you configured your web server to run on 'localhost', port '8000', using the 'http' scheme, and you are using Twitter, your
-callback URI is http://localhost:8000/auth/twitter.
+For example, if you configured your web server to run on '127.0.0.1', port '8000', using the 'http' scheme, and you are using Twitter, your
+callback URI is http://127.0.0.1:8000/auth/twitter.
 
 ```bash
 $ cd ..
