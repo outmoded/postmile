@@ -452,7 +452,7 @@ exports.insert = function (collectionName, items, callback) {
 };
 
 
-// Repalce a single existing document
+// Replace a single existing document
 
 exports.replace = function (collectionName, item, callback) {
 
