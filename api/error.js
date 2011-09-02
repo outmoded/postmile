@@ -60,7 +60,7 @@ internals.callStack = function () {
 
     try {
 
-        throw new Err('Trace');
+        throw new Error('Trace');
     }
     catch (e) {
 
