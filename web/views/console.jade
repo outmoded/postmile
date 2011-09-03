@@ -28,7 +28,7 @@ script
 
                     // Socket.io
 
-                    var socket = new io.Socket(#{host.api.domain}, { port: #{host.api.port}, rememberTransport: false });
+                    var socket = new io.Socket('#{host.api.domain}', { port: #{host.api.port}, rememberTransport: false });
 
                     socket.on('connect', function () {
 
