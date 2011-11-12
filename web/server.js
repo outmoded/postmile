@@ -69,6 +69,7 @@ exports.create = function (paths) {
 
         server.set('views', __dirname + '/views');
         server.set('view engine', 'jade');
+        server.set('view options', { colons: true });
 
         server.use(Express.bodyParser());
         server.use(Express.cookieParser());

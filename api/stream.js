@@ -21,12 +21,12 @@ var internals = {
 
     updatesQueue: [],
 
-    // Clients list
+    // Sockets list
 
-    clientsBySessionId: {},     // { _sessionId_: { client: _client_, userId: _userId_ }, ... }
-    sessionIdsByProject: {},    // { _projectId_: { _sessionId_: true, ... }, ... }
-    sessionIdsByUserId: {},     // { _userId_: { _sessionId_: true, ... }, ... }
-    projectsBySessionId: {}     // { _sessionId_: { _projectId_: true, ... }, ... }
+    socketsById: {},     // { _id_: { socket: _socket_, userId: _userId_ }, ... }
+    idsByProject: {},    // { _projectId_: { _id_: true, ... }, ... }
+    idsByUserId: {},     // { _userId_: { _id_: true, ... }, ... }
+    projectsById: {}     // { _id_: { _projectId_: true, ... }, ... }
 };
 
 
@@ -35,9 +35,8 @@ var internals = {
 
 exports.initialize = function (server) {
 
-    var socket = SocketIO.listen(server, { log: Log.info });
-
-    socket.on('connection', internals.connection);
+    internals.io = SocketIO.listen(server, { log: Log.info });
+    internals.io.sockets.on('connection', internals.connection);
 
     setInterval(internals.processUpdates, 1000);
 };
@@ -72,16 +71,16 @@ exports.update = function (update, req) {
 
 exports.subscribe = function (req, res, next) {
 
-    // Lookup client
+    // Lookup socket
 
-    if (internals.clientsBySessionId[req.params.id] &&
-        internals.clientsBySessionId[req.params.id].client) {
+    if (internals.socketsById[req.params.id] &&
+        internals.socketsById[req.params.id].socket) {
 
-        if (internals.clientsBySessionId[req.params.id].userId) {
+        if (internals.socketsById[req.params.id].userId) {
 
-            if (internals.clientsBySessionId[req.params.id].userId === req.api.userId) {
+            if (internals.socketsById[req.params.id].userId === req.api.userId) {
 
-                var client = internals.clientsBySessionId[req.params.id].client;
+                var socket = internals.socketsById[req.params.id].socket;
 
                 // Lookup project
 
@@ -91,17 +90,17 @@ exports.subscribe = function (req, res, next) {
 
                         // Add to subscriber list
 
-                        internals.sessionIdsByProject[project._id] = internals.sessionIdsByProject[project._id] || {};
-                        internals.sessionIdsByProject[project._id][req.params.id] = true;
+                        internals.idsByProject[project._id] = internals.idsByProject[project._id] || {};
+                        internals.idsByProject[project._id][req.params.id] = true;
 
                         // Add to cleanup list
 
-                        internals.projectsBySessionId[req.params.id] = internals.projectsBySessionId[req.params.id] || {};
-                        internals.projectsBySessionId[req.params.id][project._id] = true;
+                        internals.projectsById[req.params.id] = internals.projectsById[req.params.id] || {};
+                        internals.projectsById[req.params.id][project._id] = true;
 
                         // Send ack via the stream
 
-                        client.send({ type: 'subscribe', project: project._id });
+                        socket.json.send({ type: 'subscribe', project: project._id });
 
                         // Send ack via the request
 
@@ -139,34 +138,34 @@ exports.subscribe = function (req, res, next) {
 
 exports.unsubscribe = function (req, res, next) {
 
-    // Lookup client
+    // Lookup socket
 
-    if (internals.clientsBySessionId[req.params.id] &&
-        internals.clientsBySessionId[req.params.id].client) {
+    if (internals.socketsById[req.params.id] &&
+        internals.socketsById[req.params.id].socket) {
 
-        if (internals.clientsBySessionId[req.params.id].userId) {
+        if (internals.socketsById[req.params.id].userId) {
 
-            if (internals.clientsBySessionId[req.params.id].userId === req.api.userId) {
+            if (internals.socketsById[req.params.id].userId === req.api.userId) {
 
-                var client = internals.clientsBySessionId[req.params.id].client;
+                var socket = internals.socketsById[req.params.id].socket;
 
                 // Remove from subscriber list
 
-                if (internals.sessionIdsByProject[req.params.project] &&
-                    internals.sessionIdsByProject[req.params.project][req.params.id]) {
+                if (internals.idsByProject[req.params.project] &&
+                    internals.idsByProject[req.params.project][req.params.id]) {
 
-                    delete internals.sessionIdsByProject[req.params.project][req.params.id];
+                    delete internals.idsByProject[req.params.project][req.params.id];
 
                     // Remove from cleanup list
 
-                    if (internals.projectsBySessionId[req.params.id]) {
+                    if (internals.projectsById[req.params.id]) {
 
-                        delete internals.projectsBySessionId[req.params.id][req.params.project];
+                        delete internals.projectsById[req.params.id][req.params.project];
                     }
 
                     // Send ack via the stream
 
-                    client.send({ type: 'unsubscribe', project: req.params.project });
+                    socket.json.send({ type: 'unsubscribe', project: req.params.project });
 
                     // Send ack via the request
 
@@ -203,26 +202,26 @@ exports.unsubscribe = function (req, res, next) {
 
 exports.drop = function (userId, projectId) {
 
-    var userSessionIds = internals.sessionIdsByUserId[userId];
-    if (userSessionIds) {
+    var userIds = internals.idsByUserId[userId];
+    if (userIds) {
 
-        var projectSessionIds = internals.sessionIdsByProject[projectId];
-        if (projectSessionIds) {
+        var projectIds = internals.idsByProject[projectId];
+        if (projectIds) {
 
-            for (var i in userSessionIds) {
+            for (var i in userIds) {
 
-                if (userSessionIds.hasOwnProperty(i)) {
+                if (userIds.hasOwnProperty(i)) {
 
-                    if (projectSessionIds[i]) {
+                    if (projectIds[i]) {
 
-                        delete internals.sessionIdsByProject[projectId][i];
+                        delete internals.idsByProject[projectId][i];
 
                         // Send ack via the stream
 
-                        if (internals.clientsBySessionId[i] &&
-                            internals.clientsBySessionId[i].client) {
+                        if (internals.socketsById[i] &&
+                            internals.socketsById[i].socket) {
 
-                            internals.clientsBySessionId[i].client.send({ type: 'unsubscribe', project: projectId });
+                            internals.socketsById[i].socket.json.send({ type: 'unsubscribe', project: projectId });
                         }
                     }
                 }
@@ -232,32 +231,32 @@ exports.drop = function (userId, projectId) {
 };
 
 
-// New Client
+// New Socket
 
-internals.connection = function (client) {
+internals.connection = function (socket) {
 
-    // Add to sessions map
+    // Add to sockets map
 
-    internals.clientsBySessionId[client.sessionId] = { client: client };
+    internals.socketsById[socket.id] = { socket: socket };
 
     // Setup handlers
 
-    client.on('message', internals.messageHandler(client));
-    client.on('disconnect', internals.disconnectHandler(client));
+    socket.on('message', internals.messageHandler(socket));
+    socket.on('disconnect', internals.disconnectHandler(socket));
 
     // Send session id
 
-    client.send({ type: 'connect', session: client.sessionId });
+    socket.json.send({ type: 'connect', session: socket.id });
 };
 
 
 // Stream message handler
 
-internals.messageHandler = function (client) {
+internals.messageHandler = function (socket) {
 
     return function (message) {
 
-        if (internals.clientsBySessionId[client.sessionId]) {
+        if (internals.socketsById[socket.id]) {
 
             if (message) {
 
@@ -265,21 +264,21 @@ internals.messageHandler = function (client) {
 
                     case 'initialize':
 
-                        Session.validate(client.sessionId, message.id, message.mac, function (userId, err) {
+                        Session.validate(socket.id, message.id, message.mac, function (userId, err) {
 
                             if (userId) {
 
-                                internals.clientsBySessionId[client.sessionId].userId = userId;
+                                internals.socketsById[socket.id].userId = userId;
 
-                                internals.sessionIdsByUserId[userId] = internals.sessionIdsByUserId[userId] || {};
-                                internals.sessionIdsByUserId[userId][client.sessionId] = true;
+                                internals.idsByUserId[userId] = internals.idsByUserId[userId] || {};
+                                internals.idsByUserId[userId][socket.id] = true;
 
-                                client.send({ type: 'initialize', status: 'ok', user: userId });
-                                Log.info('Stream ' + client.sessionId + ' initialized with userId ' + userId);
+                                socket.json.send({ type: 'initialize', status: 'ok', user: userId });
+                                Log.info('Stream ' + socket.id + ' initialized with userId ' + userId);
                             }
                             else {
 
-                                client.send({ type: 'initialize', status: 'error', error: err });
+                                socket.json.send({ type: 'initialize', status: 'error', error: err });
                                 Log.err(err);
                             }
                         });
@@ -288,14 +287,14 @@ internals.messageHandler = function (client) {
 
                     default:
 
-                        client.send({ type: 'error', error: 'Unknown message type' });
+                        socket.json.send({ type: 'error', error: 'Unknown message type: ' + message.type });
                         break;
                 }
             }
         }
         else {
 
-            Log.err('Message received after disconnect from client: ' + client.sessionId + ', message: ' + JSON.stringify(message));
+            Log.err('Message received after disconnect from socket: ' + socket.id + ', message: ' + JSON.stringify(message));
         }
     };
 }
@@ -303,38 +302,38 @@ internals.messageHandler = function (client) {
 
 // Stream disconnection handler
 
-internals.disconnectHandler = function (client) {
+internals.disconnectHandler = function (socket) {
 
     return function () {
 
-        if (internals.clientsBySessionId[client.sessionId]) {
+        if (internals.socketsById[socket.id]) {
 
-            var userId = internals.clientsBySessionId[client.sessionId].userId;
+            var userId = internals.socketsById[socket.id].userId;
 
             // Remove from users list
 
             if (userId) {
 
-                delete internals.sessionIdsByUserId[userId];
+                delete internals.idsByUserId[userId];
             }
 
-            // Remove from clients list
+            // Remove from sockets list
 
-            delete internals.clientsBySessionId[client.sessionId];
+            delete internals.socketsById[socket.id];
         }
 
         // Remove from subscribers list
 
-        var projects = internals.projectsBySessionId[client.sessionId];
+        var projects = internals.projectsById[socket.id];
         if (projects) {
 
             for (var i in projects) {
 
                 if (projects.hasOwnProperty(i)) {
 
-                    if (internals.sessionIdsByProject[i]) {
+                    if (internals.idsByProject[i]) {
 
-                        delete internals.sessionIdsByProject[i][client.sessionId];
+                        delete internals.idsByProject[i][socket.id];
                     }
                 }
             }
@@ -342,7 +341,7 @@ internals.disconnectHandler = function (client) {
 
         // Remove from cleanup list
 
-        delete internals.projectsBySessionId[client.sessionId];
+        delete internals.projectsById[socket.id];
     };
 }
 
@@ -354,7 +353,7 @@ internals.processUpdates = function () {
     for (var i = 0, il = internals.updatesQueue.length; i < il; ++i) {
 
         var update = internals.updatesQueue[i];
-        var updatedSessionIds = '';
+        var updatedIds = '';
 
         switch (update.object) {
 
@@ -365,18 +364,18 @@ internals.processUpdates = function () {
 
                 // Lookup project list
 
-                var sessionIds = internals.sessionIdsByProject[update.project];
-                if (sessionIds) {
+                var ids = internals.idsByProject[update.project];
+                if (ids) {
 
-                    for (var s in sessionIds) {
+                    for (var s in ids) {
 
-                        if (sessionIds.hasOwnProperty(s)) {
+                        if (ids.hasOwnProperty(s)) {
 
-                            if (internals.clientsBySessionId[s] &&
-                                internals.clientsBySessionId[s].client) {
+                            if (internals.socketsById[s] &&
+                                internals.socketsById[s].socket) {
 
-                                internals.clientsBySessionId[s].client.send(update);
-                                updatedSessionIds += ' ' + s;
+                                internals.socketsById[s].socket.json.send(update);
+                                updatedIds += ' ' + s;
                             }
                         }
                     }
@@ -388,18 +387,18 @@ internals.processUpdates = function () {
             case 'contacts':
             case 'projects':
 
-                var sessionIds = internals.sessionIdsByUserId[update.user];
-                if (sessionIds) {
+                var ids = internals.idsByUserId[update.user];
+                if (ids) {
 
-                    for (var s in sessionIds) {
+                    for (var s in ids) {
 
-                        if (sessionIds.hasOwnProperty(s)) {
+                        if (ids.hasOwnProperty(s)) {
 
-                            if (internals.clientsBySessionId[s] &&
-                                internals.clientsBySessionId[s].client) {
+                            if (internals.socketsById[s] &&
+                                internals.socketsById[s].socket) {
 
-                                internals.clientsBySessionId[s].client.send(update);
-                                updatedSessionIds += ' ' + s;
+                                internals.socketsById[s].socket.json.send(update);
+                                updatedIds += ' ' + s;
                             }
                         }
                     }
@@ -408,9 +407,9 @@ internals.processUpdates = function () {
                 break;
         }
 
-        if (updatedSessionIds) {
+        if (updatedIds) {
 
-            Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedSessionIds);
+            Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedIds);
         }
     }
 

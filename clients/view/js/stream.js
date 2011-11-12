@@ -78,7 +78,7 @@ YUI.add('postmile-stream', function (Y) {
 
         if (message.type === 'connect') {
 
-            socket.send({ type: 'initialize', id: session.id, mac: MAC.macMessage(message.session, session) });
+            socket.json.send({ type: 'initialize', id: session.id, mac: MAC.macMessage(message.session, session) });
             socketMessage.session = message.session;
 
         }
@@ -464,7 +464,7 @@ YUI.add('postmile-stream', function (Y) {
 
     function bind() {
 
-        socket = new io.Socket(postmile.api.domain, { port: postmile.api.port, rememberTransport: false });
+        socket = io.connect(postmile.api.uri);
 
         socket.on('connect', function () {
             Y.log('Connected!');
@@ -473,8 +473,6 @@ YUI.add('postmile-stream', function (Y) {
         socket.on('message', function (message) {
             handleStreamMessage(message);
         });
-
-        socket.connect();
 
         Y.on("postmile:subscribeProject", function (project) {
             subscribe(project);

@@ -28,7 +28,7 @@ script
 
                     // Socket.io
 
-                    var socket = new io.Socket('#{host.api.domain}', { port: #{host.api.port}, rememberTransport: false });
+                    var socket = io.connect('#{host.uri("api")}');
 
                     socket.on('connect', function () {
 
@@ -40,7 +40,7 @@ script
                         if (message.type == 'connect') {
 
                             document.getElementById('session').innerHTML = htmlEscape(message.session);
-                            socket.send({ type: 'initialize', id: credentials.id, mac: MAC.macMessage(message.session, credentials) });
+                            socket.json.send({ type: 'initialize', id: credentials.id, mac: MAC.macMessage(message.session, credentials) });
                         }
                         else if (message.type == 'initialize') {
 
