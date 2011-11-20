@@ -1,16 +1,16 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 
 // Load modules
 
 var SocketIO = require('socket.io');
-var Utils = require('./utils');
+var Utils = require('hapi').Utils;
 var Project = require('./project');
 var Session = require('./session');
-var Log = require('./log');
-var Err = require('./error');
+var Log = require('hapi').Log;
+var Err = require('hapi').Error;
 
 
 // Declare internals

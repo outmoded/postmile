@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 

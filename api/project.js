@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 
@@ -7,8 +7,8 @@
 
 var Db = require('./db');
 var User = require('./user');
-var Utils = require('./utils');
-var Err = require('./error');
+var Utils = require('hapi').Utils;
+var Err = require('hapi').Error;
 var Tips = require('./tips');
 var Suggestions = require('./suggestions');
 var Sort = require('./sort');

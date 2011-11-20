@@ -1,15 +1,14 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 
 // Load modules
 
-var Email = require('emailjs');
 var Db = require('./db');
-var Utils = require('./utils');
-var Err = require('./error');
-var Log = require('./log');
+var Utils = require('hapi').Utils;
+var Err = require('hapi').Error;
+var Log = require('hapi').Log;
 var Vault = require('./vault');
 var User = require('./user');
 var Config = require('./config');
@@ -277,7 +276,7 @@ exports.sendReminder = function (user, callback) {
                        'Use this link to sign into ' + Config.product.name + ': \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                exports.send(user.emails[0].address, subject, text);
+                Utils.email(user.emails[0].address, subject, text);
                 callback(null);
             }
             else {
@@ -309,7 +308,7 @@ exports.sendValidation = function (user, address, callback) {
                        'Use this link to verify your email address: \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                exports.send(address, subject, text);
+                Utils.email(address, subject, text);
                 callback(null);
             }
             else {
@@ -352,7 +351,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Use this link to verify your email address: \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    exports.send(address, subject, text);
+                    Utils.email(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -370,7 +369,7 @@ exports.sendWelcome = function (user, callback) {
             text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
             text += '    ' + Config.host.uri('web') + '/\n\n';
 
-            exports.send(address, subject, text);
+            Utils.email(address, subject, text);
             callback(null);
         }
         else {
@@ -385,7 +384,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    exports.send(address, subject, text);
+                    Utils.email(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -431,9 +430,9 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
 
-                exports.send(users[i].emails[0].address,
-                             subject,
-                             'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
+                Utils.email(users[i].emails[0].address,
+                            subject,
+                            'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
             }
         }
 
@@ -450,7 +449,7 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
-                exports.send(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
+                Utils.email(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
 
                     if (err === null) {
 
@@ -471,48 +470,5 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
 };
 
 
-// Send message
-
-exports.send = function (to, subject, text, html, callback) {
-
-    var headers = {
-
-        from: Config.email.fromName + ' <' + Config.email.replyTo + '>',
-        to: to,
-        subject: subject,
-        text: text
-    };
-
-    var message = Email.message.create(headers);
-
-    if (html) {
-
-        message.attach_alternative(html);
-    }
-
-    var mailer = Email.server.connect(Config.email.server);
-    mailer.send(message, function (err, message) {
-
-        if (err === null ||
-            err === undefined) {
-
-            if (callback) {
-
-                callback(null);
-            }
-        }
-        else {
-
-            if (callback) {
-
-                callback(Err.internal('Failed sending email: ' + JSON.stringify(err)));
-            }
-            else {
-
-                Log.err('Email error: ' + JSON.stringify(err));
-            }
-        }
-    });
-};
 
 

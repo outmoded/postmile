@@ -1,11 +1,11 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 
 // Load modules
 
-var Log = require('./log');
+var Log = require('hapi').Log;
 
 
 // Validate and process rule

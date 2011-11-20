@@ -1,16 +1,16 @@
 /*
-* Copyright (c) 2011 Yahoo! Inc. All rights reserved. Copyrights licensed under the New BSD License.
+* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
 * See LICENSE file included with this code project for license terms.
 */
 
 // Load modules
 
 var Db = require('./db');
-var Utils = require('./utils');
+var Utils = require('hapi').Utils;
 var Task = require('./task');
 var Last = require('./last');
 var User = require('./user');
-var Err = require('./error');
+var Err = require('hapi').Error;
 var Stream = require('./stream');
 
 

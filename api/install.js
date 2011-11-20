@@ -1,8 +1,8 @@
 // Load modules
 
-var Utils = require('./utils');
+var Utils = require('hapi').Utils;
 var Db = require('./db');
-var Log = require('./log');
+var Log = require('hapi').Log;
 
 
 // Initialize database connection
