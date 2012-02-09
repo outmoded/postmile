@@ -1,15 +1,15 @@
 {
   "name": "postmile.api",
   "description": "Postmile API Server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Eran Hammer-Lahav <eran@hammer-lahav.net>",
   "private": true,
   "dependencies": {
-    "hapi": "0.0.x",
+    "hapi": "0.1.x",
     "mongodb": "0.9.x",
     "oauth": "0.9.x",
     "socket.io": "0.8.x",
-    "mac": "0.x.x",
+    "mac": "0.1.x",
     "opts": "1.x.x"
   },
   "engines": { "node": "0.6.x" }

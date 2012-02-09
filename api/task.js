@@ -5,11 +5,10 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
 var Project = require('./project');
 var Sort = require('./sort');
-var Err = require('hapi').Error;
 var Suggestions = require('./suggestions');
 var Details = require('./details');
 var Stream = require('./stream');
@@ -28,19 +27,19 @@ exports.type.post = {
     origin:         { type: 'object',   set: false,    hide: true }
 };
 
-exports.type.put = Utils.clone(exports.type.post);
+exports.type.put = Hapi.Utils.clone(exports.type.post);
 exports.type.put.participants.set = false;
 
 
 // Task information
 
-exports.get = function (req, res, next) {
+exports.get = function (req, reply) {
 
-    exports.load(req.params.id, req.api.userId, false, function (task, err) {
+    exports.load(req.params.id, req.hapi.userId, false, function (task, err) {
 
         if (task) {
 
-            Details.expandIds([req.params.id], task.project, req.api.userId, function (details) {
+            Details.expandIds([req.params.id], task.project, req.hapi.userId, function (details) {
 
                 if (details &&
                     details[req.params.id]) {
@@ -50,15 +49,13 @@ exports.get = function (req, res, next) {
                     task.last = details[req.params.id].last;
                 }
 
-                Utils.hide(task, exports.type.post);
-                res.api.result = task;
-                next();
+                Hapi.Utils.hide(task, exports.type.post);
+                reply(task);
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -66,9 +63,9 @@ exports.get = function (req, res, next) {
 
 // Get list of tasks for given project
 
-exports.list = function (req, res, next) {
+exports.list = function (req, reply) {
 
-    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
+    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
 
         if (project) {
 
@@ -92,7 +89,7 @@ exports.list = function (req, res, next) {
 
                             for (var p = 0, pl = tasks[i].participants.length; p < pl; ++p) {
 
-                                if (tasks[i].participants[p] === req.api.userId) {
+                                if (tasks[i].participants[p] === req.hapi.userId) {
 
                                     task.isMe = true;
                                     break;
@@ -110,7 +107,7 @@ exports.list = function (req, res, next) {
                         ids.push(tasks[i]._id);
                     }
 
-                    Details.expandIds(ids, req.params.id, req.api.userId, function (details) {
+                    Details.expandIds(ids, req.params.id, req.hapi.userId, function (details) {
 
                         if (details) {
 
@@ -125,21 +122,18 @@ exports.list = function (req, res, next) {
                             }
                         }
 
-                        res.api.result = list;
-                        next();
+                        reply(list);
                     });
                 }
                 else {
 
-                    res.api.error = Err.notFound();
-                    next();
+                    reply(Hapi.Error.notFound());
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -147,13 +141,13 @@ exports.list = function (req, res, next) {
 
 // Update task properties
 
-exports.post = function (req, res, next) {
+exports.post = function (req, reply) {
 
-    exports.load(req.params.id, req.api.userId, true, function (task, err, project) {
+    exports.load(req.params.id, req.hapi.userId, true, function (task, err, project) {
 
         if (task) {
 
-            if (Object.keys(req.body).length > 0) {
+            if (Object.keys(req.hapi.payload).length > 0) {
 
                 if (req.query.position === undefined) {
 
@@ -161,23 +155,23 @@ exports.post = function (req, res, next) {
 
                     var isInvalid = false;
 
-                    if (req.body.participants &&
-                        req.body.participants.length > 0) {
+                    if (req.hapi.payload.participants &&
+                        req.hapi.payload.participants.length > 0) {
 
                         // Verify participants are members of the project
 
                         var error = null;
                         var index = {};
 
-                        for (var p = 0, pl = req.body.participants.length; p < pl; ++p) {
+                        for (var p = 0, pl = req.hapi.payload.participants.length; p < pl; ++p) {
 
-                            if (index[req.body.participants[p]] !== true) {
+                            if (index[req.hapi.payload.participants[p]] !== true) {
 
-                                index[req.body.participants[p]] = true;
+                                index[req.hapi.payload.participants[p]] = true;
 
-                                if (Project.isMember(project, req.body.participants[p]) === false) {
+                                if (Project.isMember(project, req.hapi.payload.participants[p]) === false) {
 
-                                    error = 'user ' + req.body.participants[p] + ' is not a member of the Project';
+                                    error = 'user ' + req.hapi.payload.participants[p] + ' is not a member of the Project';
                                     break;
                                 }
                             }
@@ -191,33 +185,29 @@ exports.post = function (req, res, next) {
                         if (error) {
 
                             isInvalid = true;
-                            res.api.error = Err.badRequest(error);
-                            next();
+                            reply(Hapi.Error.badRequest(error));
                         }
                     }
 
                     if (isInvalid === false) {
 
-                        Db.update('task', task._id, Db.toChanges(req.body), function (err) {
+                        Db.update('task', task._id, Db.toChanges(req.hapi.payload), function (err) {
 
                             if (err === null) {
 
                                 Stream.update({ object: 'task', project: task.project, task: task._id }, req);
-                                res.api.result = { status: 'ok' };
-                                next();
+                                reply({ status: 'ok' });
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Cannot include both position parameter and task object in body');
-                    next();
+                    reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
                 }
             }
             else if (req.query.position !== null &&
@@ -230,26 +220,22 @@ exports.post = function (req, res, next) {
                     if (err === null) {
 
                         Stream.update({ object: 'tasks', project: task.project }, req);
-                        res.api.result = { status: 'ok' };
-                        next();
+                        reply({ status: 'ok' });
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
             else {
 
-                res.api.error = Err.badRequest('Missing position parameter or task object in body');
-                next();
+                reply(Hapi.Error.badRequest('Missing position parameter or task object in body'));
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -257,9 +243,9 @@ exports.post = function (req, res, next) {
 
 // Create new task
 
-exports.put = function (req, res, next) {
+exports.put = function (req, reply) {
 
-    Project.load(req.params.id, req.api.userId, true, function (project, member, err) {
+    Project.load(req.params.id, req.hapi.userId, true, function (project, member, err) {
 
         if (project) {
 
@@ -267,7 +253,7 @@ exports.put = function (req, res, next) {
 
                 // From suggestion
 
-                if (!req.rawBody) {
+                if (!req.hapi.rawBody) {
 
                     Suggestions.get(req.query.suggestion, function (suggestion) {
 
@@ -278,36 +264,32 @@ exports.put = function (req, res, next) {
                         }
                         else {
 
-                            res.api.error = Err.badRequest('Suggestion not found');
-                            next();
+                            reply(Hapi.Error.badRequest('Suggestion not found'));
                         }
                     });
                 }
                 else {
 
-                    res.api.error = Err.badRequest('New task cannot have both body and suggestion id');
-                    next();
+                    reply(Hapi.Error.badRequest('New task cannot have both body and suggestion id'));
                 }
             }
             else {
 
                 // From body
 
-                if (req.body.title) {
+                if (req.hapi.payload.title) {
 
-                    addTask(req.body);
+                    addTask(req.hapi.payload);
                 }
                 else {
 
-                    res.api.error = Err.badRequest('New task must include a title or a suggestion id');
-                    next();
+                    reply(Hapi.Error.badRequest('New task must include a title or a suggestion id'));
                 }
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 
@@ -321,33 +303,32 @@ exports.put = function (req, res, next) {
             if (err === null) {
 
                 Stream.update({ object: 'tasks', project: task.project }, req);
-                res.api.result = { status: 'ok', id: items[0]._id };
-                res.api.created = '/task/' + items[0]._id;
+                var result = { status: 'ok', id: items[0]._id };
+                var replyOptions = { created: '/task/' + items[0]._id };
 
                 if (req.query.position !== null &&
                     req.query.position !== undefined) {        // Must test explicitly as value can be 0
 
                     // Set task position in list
 
-                    Sort.set('task', task.project, 'project', res.api.result.id, req.query.position, function (err) {
+                    Sort.set('task', task.project, 'project', result.id, req.query.position, function (err) {
 
                         if (err === null) {
 
-                            res.api.result.position = req.query.position;
+                            result.position = req.query.position;
                         }
 
-                        next();
+                        reply(result, replyOptions);
                     });
                 }
                 else {
 
-                    next();
+                    reply(result, replyOptions);
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -356,9 +337,9 @@ exports.put = function (req, res, next) {
 
 // Delete a task
 
-exports.del = function (req, res, next) {
+exports.del = function (req, reply) {
 
-    exports.load(req.params.id, req.api.userId, true, function (task, err) {
+    exports.load(req.params.id, req.hapi.userId, true, function (task, err) {
 
         if (task) {
 
@@ -369,20 +350,17 @@ exports.del = function (req, res, next) {
                     Db.remove('task.details', task._id, function (err) { });
 
                     Stream.update({ object: 'tasks', project: task.project }, req);
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -412,7 +390,7 @@ exports.load = function (taskId, userId, isWritable, callback) {
 
             if (err === null) {
 
-                callback(null, Err.notFound(), null);
+                callback(null, Hapi.Error.notFound(), null);
             }
             else {
 

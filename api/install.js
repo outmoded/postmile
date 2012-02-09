@@ -1,8 +1,7 @@
 // Load modules
 
-var Utils = require('hapi').Utils;
+var Hapi = require('hapi');
 var Db = require('./db');
-var Log = require('hapi').Log;
 
 
 // Initialize database connection
@@ -11,7 +10,7 @@ Db.initialize(true, function (err) {
 
     if (err === null) {
 
-        Log.info('Database initialized');
+        Hapi.Log.info('Database initialized');
 
         // Create required clients
 
@@ -20,7 +19,7 @@ Db.initialize(true, function (err) {
             {
                 name: 'postmile.web',
                 scope: { authorized: true, login: true, reminder: true, signup: true, tos: true },
-                secret: Utils.getRandomString(64)
+                secret: Hapi.Utils.getRandomString(64)
             },
 
             {
@@ -39,20 +38,20 @@ Db.initialize(true, function (err) {
 
                     if (err === null) {
 
-                        Log.info('Initial dataset created successfully');
-                        Log.info('>>>>> postmile.web client secret: ' + clients[0].secret);
+                        Hapi.Log.info('Initial dataset created successfully');
+                        Hapi.Log.info('>>>>> postmile.web client secret: ' + clients[0].secret);
                         process.exit(0);
                     }
                     else {
 
-                        Log.err(err);
+                        Hapi.Log.err(err);
                         process.exit(1);
                     }
                 });
             }
             else {
 
-                Log.err(err);
+                Hapi.Log.err(err);
                 process.exit(1);
             }
         });
@@ -61,7 +60,7 @@ Db.initialize(true, function (err) {
 
         // Database connection failed
 
-        Log.err(err);
+        Hapi.Log.err(err);
         process.exit(1);
     }
 });

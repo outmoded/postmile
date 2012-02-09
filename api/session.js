@@ -5,11 +5,9 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Crypto = require('crypto');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
-var Log = require('hapi').Log;
 var User = require('./user');
 var Email = require('./email');
 var Vault = require('./vault');
@@ -51,19 +49,19 @@ exports.type.client = {
 
 // Get session token
 
-exports.token = function (req, res, next) {
+exports.token = function (req, reply) {
 
-    exports.loadClient(req.body.client_id, function (client, err) {
+    exports.loadClient(req.hapi.payload.client_id, function (client, err) {
 
         if (client) {
 
             // Check client secret
 
-            if ((client.secret || '') === (req.body.client_secret || '')) {
+            if ((client.secret || '') === (req.hapi.payload.client_secret || '')) {
 
                 // Switch on grant type
 
-                switch (req.body.grant_type) {
+                switch (req.hapi.payload.grant_type) {
 
                     case 'client_credentials':
 
@@ -76,9 +74,9 @@ exports.token = function (req, res, next) {
 
                         // Refresh token
 
-                        if (req.body.refresh_token) {
+                        if (req.hapi.payload.refresh_token) {
 
-                            var refresh = Utils.decrypt(Vault.oauthRefresh.aes256Key, req.body.refresh_token);
+                            var refresh = Hapi.Utils.decrypt(Vault.oauthRefresh.aes256Key, req.hapi.payload.refresh_token);
                             if (refresh &&
                                 refresh.user &&
                                 refresh.client) {
@@ -93,27 +91,23 @@ exports.token = function (req, res, next) {
                                         }
                                         else {
 
-                                            res.api.error = err;
-                                            next();
+                                            reply(err);
                                         }
                                     });
                                 }
                                 else {
 
-                                    res.api.error = Err.oauth('invalid_grant', 'Mismatching refresh token client id');
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Mismatching refresh token client id'));
                                 }
                             }
                             else {
 
-                                res.api.error = Err.oauth('invalid_grant', 'Invalid refresh token');
-                                next();
+                                reply(Hapi.Error.oauth('invalid_grant', 'Invalid refresh token'));
                             }
                         }
                         else {
 
-                            res.api.error = Err.oauth('invalid_request', 'Missing refresh_token');
-                            next();
+                            reply(Hapi.Error.oauth('invalid_request', 'Missing refresh_token'));
                         }
 
                         break;
@@ -123,11 +117,11 @@ exports.token = function (req, res, next) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.api.scope && req.api.scope.login === true)) {
+                            (req.hapi.scope && req.hapi.scope.login === true)) {
 
                             // Get user
 
-                            User.load(req.body.x_user_id, function (user, err) {
+                            User.load(req.hapi.payload.x_user_id, function (user, err) {
 
                                 if (user) {
 
@@ -136,16 +130,14 @@ exports.token = function (req, res, next) {
                                 else {
 
                                     // Unknown local account
-                                    res.api.error = Err.oauth('invalid_grant', 'Unknown local account');
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
                                 }
                             });
                         }
                         else {
 
                             // No client scope for local account access
-                            res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
-                            next();
+                            reply(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
                         }
 
                         break;
@@ -155,11 +147,11 @@ exports.token = function (req, res, next) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.api.scope && req.api.scope.login === true)) {
+                            (req.hapi.scope && req.hapi.scope.login === true)) {
 
                             // Check Twitter identifier
 
-                            User.validate(req.body.x_user_id, 'twitter', function (user, err) {
+                            User.validate(req.hapi.payload.x_user_id, 'twitter', function (user, err) {
 
                                 if (user) {
 
@@ -168,16 +160,14 @@ exports.token = function (req, res, next) {
                                 else {
 
                                     // Unregistered Twitter account
-                                    res.api.error = Err.oauth('invalid_grant', 'Unknown Twitter account: ' + req.body.x_user_id);
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Twitter account: ' + req.hapi.payload.x_user_id));
                                 }
                             });
                         }
                         else {
 
                             // No client scope for Twitter access
-                            res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
-                            next();
+                            reply(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
                         }
 
                         break;
@@ -187,11 +177,11 @@ exports.token = function (req, res, next) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.api.scope && req.api.scope.login === true)) {
+                            (req.hapi.scope && req.hapi.scope.login === true)) {
 
                             // Check Facebook identifier
 
-                            User.validate(req.body.x_user_id, 'facebook', function (user, err) {
+                            User.validate(req.hapi.payload.x_user_id, 'facebook', function (user, err) {
 
                                 if (user) {
 
@@ -200,16 +190,14 @@ exports.token = function (req, res, next) {
                                 else {
 
                                     // Unregistered Facebook account
-                                    res.api.error = Err.oauth('invalid_grant', 'Unknown Facebook account: ' + req.body.x_user_id);
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Facebook account: ' + req.hapi.payload.x_user_id));
                                 }
                             });
                         }
                         else {
 
                             // No client scope for Facebook access
-                            res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
-                            next();
+                            reply(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
                         }
 
                         break;
@@ -219,11 +207,11 @@ exports.token = function (req, res, next) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.api.scope && req.api.scope.login === true)) {
+                            (req.hapi.scope && req.hapi.scope.login === true)) {
 
                             // Check Yahoo identifier
 
-                            User.validate(req.body.x_user_id, 'yahoo', function (user, err) {
+                            User.validate(req.hapi.payload.x_user_id, 'yahoo', function (user, err) {
 
                                 if (user) {
 
@@ -232,16 +220,14 @@ exports.token = function (req, res, next) {
                                 else {
 
                                     // Unregistered Yahoo account
-                                    res.api.error = Err.oauth('invalid_grant', 'Unknown Yahoo! account: ' + req.body.x_user_id);
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Yahoo! account: ' + req.hapi.payload.x_user_id));
                                 }
                             });
                         }
                         else {
 
                             // No client scope for Yahoo access
-                            res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
-                            next();
+                            reply(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
                         }
 
                         break;
@@ -251,11 +237,11 @@ exports.token = function (req, res, next) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.api.scope && req.api.scope.login === true)) {
+                            (req.hapi.scope && req.hapi.scope.login === true)) {
 
                             // Check email identifier
 
-                            Email.loadTicket(req.body.x_email_token, function (ticket, user, err) {
+                            Email.loadTicket(req.hapi.payload.x_email_token, function (ticket, user, err) {
 
                                 if (ticket) {
 
@@ -264,16 +250,14 @@ exports.token = function (req, res, next) {
                                 else {
 
                                     // Invalid email token
-                                    res.api.error = Err.oauth('invalid_grant', err.message);
-                                    next();
+                                    reply(Hapi.Error.oauth('invalid_grant', err.message));
                                 }
                             });
                         }
                         else {
 
                             // No client scope for email access
-                            res.api.error = Err.oauth('unauthorized_client', 'Client missing \'login\' scope');
-                            next();
+                            reply(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
                         }
 
                         break;
@@ -281,23 +265,20 @@ exports.token = function (req, res, next) {
                     default:
 
                         // Unsupported grant type
-                        res.api.error = Err.oauth('unsupported_grant_type', 'Unknown or unsupported grant type');
-                        next();
+                        reply(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type'));
                         break;
                 }
             }
             else {
 
                 // Bad client authentication
-                res.api.error = Err.oauth('invalid_client', 'Invalid client identifier or secret');
-                next();
+                reply(Hapi.Error.oauth('invalid_client', 'Invalid client identifier or secret'));
             }
         }
         else {
 
             // Unknown client
-            res.api.error = Err.oauth('invalid_client', 'Invalid client identifier or secret');
-            next();
+            reply(Hapi.Error.oauth('invalid_client', 'Invalid client identifier or secret'));
         }
     });
 
@@ -305,7 +286,7 @@ exports.token = function (req, res, next) {
 
         if (user === null ||
             (client.scope && client.scope.authorized === true) ||
-            (req.api.scope && req.api.scope.authorized === true)) {
+            (req.hapi.scope && req.hapi.scope.authorized === true)) {
 
             // Client has static authorization
 
@@ -338,7 +319,7 @@ exports.token = function (req, res, next) {
                         });
 
                         var isAuthorized = false;
-                        var now = Utils.getTimestamp();
+                        var now = Hapi.Utils.getTimestamp();
 
                         var expired = [];
                         for (var i = 0, il = items.length; i < il; ++i) {
@@ -361,7 +342,7 @@ exports.token = function (req, res, next) {
 
                                 if (err) {
 
-                                    Log.err(err);
+                                    Hapi.Log.err(err);
                                 }
                             });
                         }
@@ -372,20 +353,17 @@ exports.token = function (req, res, next) {
                         }
                         else {
 
-                            res.api.error = Err.oauth('invalid_grant', 'Client authorization expired');
-                            next();
+                            reply(Hapi.Error.oauth('invalid_grant', 'Client authorization expired'));
                         }
                     }
                     else {
 
-                        res.api.error = Err.oauth('invalid_grant', 'Client is not authorized');
-                        next();
+                        reply(Hapi.Error.oauth('invalid_grant', 'Client is not authorized'));
                     }
                 }
                 else {
 
-                    res.api.error = Err.oauth('server_error', 'Failed retrieving authorization');
-                    next();
+                    reply(Hapi.Error.oauth('server_error', 'Failed retrieving authorization'));
                 }
             });
         }
@@ -399,11 +377,11 @@ exports.token = function (req, res, next) {
 
             var token = {
 
-                key: Utils.getRandomString(32),
+                key: Hapi.Utils.getRandomString(32),
                 algorithm: internals.defaultAlgorithm,
                 client: client._id,
                 scope: client.scope,
-                expiration: Utils.getTimestamp() + (internals.tokenLifetimeSec * 1000)
+                expiration: Hapi.Utils.getTimestamp() + (internals.tokenLifetimeSec * 1000)
             };
 
             if (user) {
@@ -414,7 +392,7 @@ exports.token = function (req, res, next) {
 
             var response = {
 
-                access_token: Utils.encrypt(Vault.oauthToken.aes256Key, token),
+                access_token: Hapi.Utils.encrypt(Vault.oauthToken.aes256Key, token),
                 token_type: 'mac',
                 mac_key: token.key,
                 mac_algorithm: token.algorithm,
@@ -425,11 +403,10 @@ exports.token = function (req, res, next) {
 
             if (user) {
 
-                response.refresh_token = Utils.encrypt(Vault.oauthRefresh.aes256Key, { user: user._id, client: client._id });
+                response.refresh_token = Hapi.Utils.encrypt(Vault.oauthRefresh.aes256Key, { user: user._id, client: client._id });
             }
 
-            res.api.result = response;
-            next();
+            reply(response);
         }
     }
 };
@@ -437,7 +414,7 @@ exports.token = function (req, res, next) {
 
 // Get client information
 
-exports.client = function (req, res, next) {
+exports.client = function (req, reply) {
 
     exports.loadClient(req.params.id, function (client, err) {
 
@@ -445,20 +422,17 @@ exports.client = function (req, res, next) {
 
             if (client) {
 
-                Utils.hide(client, exports.type.client);
-                res.api.result = client;
-                next();
+                Hapi.Utils.hide(client, exports.type.client);
+                reply(client);
             }
             else {
 
-                res.api.error = Err.notFound();
-                next();
+                reply(Hapi.Error.notFound());
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -470,11 +444,11 @@ exports.load = function (token, callback) {
 
     if (token) {
 
-        var session = Utils.decrypt(Vault.oauthToken.aes256Key, token);
+        var session = Hapi.Utils.decrypt(Vault.oauthToken.aes256Key, token);
         if (session) {
 
             if (session.expiration &&
-                session.expiration > Utils.getTimestamp()) {
+                session.expiration > Hapi.Utils.getTimestamp()) {
 
                 // TODO: check against grant database to make sure underlying grant still valid
 
@@ -560,19 +534,19 @@ exports.validate = function (message, token, mac, callback) {
                 else {
 
                     // Invalid signature
-                    callback(null, Err.unauthorized('Invalid mac'));
+                    callback(null, Hapi.Error.unauthorized('Invalid mac'));
                 }
             }
             else {
 
                 // Invalid algorithm
-                callback(null, Err.internal('Unknown algorithm'));
+                callback(null, Hapi.Error.internal('Unknown algorithm'));
             }
         }
         else {
 
             // Invalid token
-            callback(null, Err.notFound('Invalid token'));
+            callback(null, Hapi.Error.notFound('Invalid token'));
         }
     });
 };

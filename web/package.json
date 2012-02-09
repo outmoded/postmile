@@ -8,7 +8,7 @@
     "express": "2.x.x",
     "emailjs": "0.x.x",
     "jade": "0.17.x",
-    "mac": "0.x.x",
+    "mac": "0.1.x",
     "oauth": "0.9.x",
     "semver": "1.x.x",
     "user-agent": "1.x.x",

@@ -5,19 +5,74 @@
 
 // Load modules
 
-var Server = require('./server');
+var Hapi = require('hapi');
+var Db = require('./db');
+var Stream = require('./stream');
+var Config = require('./config');
+var Session = require('./session');
 var Routes = require('./routes');
 var Suggestions = require('./suggestions');
 var Tips = require('./tips');
 
 
-// Create Server
+// Declare internals
 
-Server.create(Routes.endpoints, function (server) {
+var internals = {};
 
-    // Load in-memory cache
 
-    Suggestions.initialize();
-    Tips.initialize();
+// Create and configure server instance
+
+Hapi.Process.initialize({
+
+    name: Config.product.name + ' API Server',
+    process: Config.process.api,
+    email: Config.email
+});
+
+var configuration = {
+
+    uri: Config.host.uri('api'),
+
+    // Terms of Service
+
+    tos: {
+
+        min: '20110623'
+    },
+
+    // Authentication
+
+    authentication: {
+
+        loadSession: Session.load
+    }
+};
+
+var server = Hapi.Server.create(configuration, Routes.endpoints);
+
+// Initialize database connection
+
+Db.initialize(function (err) {
+
+    if (err === null) {
+
+        // Load in-memory cache
+
+        Suggestions.initialize();
+        Tips.initialize();
+
+        // Start Server
+
+        server.start();
+        Stream.initialize(server.getExpress());
+        Hapi.Process.finalize();
+    }
+    else {
+
+        // Database connection failed
+
+        Hapi.Log.err(err);
+        process.exit(1);
+    }
 });
 

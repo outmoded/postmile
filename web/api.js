@@ -51,7 +51,7 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
     if (session) {
 
-        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session, body);
+        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session);
 
         if (authorization === '') {
 
@@ -120,7 +120,6 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
         if (body !== null) {
 
-            hreq.setHeader('Content-Length', body.length);
             hreq.setHeader('Content-Type', 'application/json');
             hreq.write(body);
         }

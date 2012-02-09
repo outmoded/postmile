@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Log = require('hapi').Log;
 var Rules = require('./rules');
 
 // Declare internals
@@ -41,12 +40,12 @@ exports.initialize = function () {
                 }
                 else {
 
-                    Log.err('Failed to load tips: ' + tip._id);
+                    Hapi.Log.err('Failed to load tips: ' + tip._id);
                 }
             }
             else {
 
-                Log.err('Bad tip: missing rule or text');
+                Hapi.Log.err('Bad tip: missing rule or text');
             }
         }
     });
@@ -76,7 +75,7 @@ exports.list = function (project, callback) {
 
                 // Bad context rule
 
-                Log.err('Bad tip rule:' + tip._id);
+                Hapi.Log.err('Bad tip rule:' + tip._id);
             }
         }
     }

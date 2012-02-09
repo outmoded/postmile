@@ -5,10 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
-var Log = require('hapi').Log;
 var Vault = require('./vault');
 var User = require('./user');
 var Config = require('./config');
@@ -23,9 +21,9 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     // Create new ticket
 
-    var now = Utils.getTimestamp();
+    var now = Hapi.Utils.getTimestamp();
     var ticketId = now.toString(36);                                                // assuming users cannot generate more than one ticket per msec
-    var token = Utils.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
+    var token = Hapi.Utils.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
 
     var ticket = { timestamp: now, email: email };
 
@@ -98,7 +96,7 @@ exports.loadTicket = function (token, callback) {
 
     // Decode ticket
 
-    var record = Utils.decrypt(Vault.emailToken.aes256Key, token);
+    var record = Hapi.Utils.decrypt(Vault.emailToken.aes256Key, token);
 
     if (record &&
         record instanceof Array &&
@@ -119,7 +117,7 @@ exports.loadTicket = function (token, callback) {
                     user.tickets[ticketId]) {
 
                     var ticket = user.tickets[ticketId];
-                    var now = Utils.getTimestamp();
+                    var now = Hapi.Utils.getTimestamp();
 
                     // Check expiration
 
@@ -230,29 +228,29 @@ exports.loadTicket = function (token, callback) {
                         else {
 
                             // Don't cleanup now, do it later
-                            callback(null, user, Err.notFound('Email token sent to address no longer associated with this account'));
+                            callback(null, user, Hapi.Error.notFound('Email token sent to address no longer associated with this account'));
                         }
                     }
                     else {
 
                         // Don't cleanup now, do it later
-                        callback(null, user, Err.notFound('Expired email token'));
+                        callback(null, user, Hapi.Error.notFound('Expired email token'));
                     }
                 }
                 else {
 
-                    callback(null, user, Err.notFound('Invalid or expired email token'));
+                    callback(null, user, Hapi.Error.notFound('Invalid or expired email token'));
                 }
             }
             else {
 
-                callback(null, null, Err.notFound('Unknown email token account'));
+                callback(null, null, Hapi.Error.notFound('Unknown email token account'));
             }
         });
     }
     else {
 
-        callback(null, null, Err.internal('Invalid email token syntax'));
+        callback(null, null, Hapi.Error.internal('Invalid email token syntax'));
     }
 };
 
@@ -276,7 +274,7 @@ exports.sendReminder = function (user, callback) {
                        'Use this link to sign into ' + Config.product.name + ': \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                Utils.email(user.emails[0].address, subject, text);
+                Hapi.Utils.email(user.emails[0].address, subject, text);
                 callback(null);
             }
             else {
@@ -287,7 +285,7 @@ exports.sendReminder = function (user, callback) {
     }
     else {
 
-        callback(Err.internal('User has no email address'));
+        callback(Hapi.Error.internal('User has no email address'));
     }
 };
 
@@ -308,7 +306,7 @@ exports.sendValidation = function (user, address, callback) {
                        'Use this link to verify your email address: \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                Utils.email(address, subject, text);
+                Hapi.Utils.email(address, subject, text);
                 callback(null);
             }
             else {
@@ -319,7 +317,7 @@ exports.sendValidation = function (user, address, callback) {
     }
     else {
 
-        callback(Err.internal('User has no email address'));
+        callback(Hapi.Error.internal('User has no email address'));
     }
 };
 
@@ -351,7 +349,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Use this link to verify your email address: \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    Utils.email(address, subject, text);
+                    Hapi.Utils.email(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -369,7 +367,7 @@ exports.sendWelcome = function (user, callback) {
             text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
             text += '    ' + Config.host.uri('web') + '/\n\n';
 
-            Utils.email(address, subject, text);
+            Hapi.Utils.email(address, subject, text);
             callback(null);
         }
         else {
@@ -384,7 +382,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    Utils.email(address, subject, text);
+                    Hapi.Utils.email(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -396,7 +394,7 @@ exports.sendWelcome = function (user, callback) {
     }
     else {
 
-        callback(Err.internal('User has no email address'));
+        callback(Hapi.Error.internal('User has no email address'));
     }
 };
 
@@ -430,7 +428,7 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
 
-                Utils.email(users[i].emails[0].address,
+                Hapi.Utils.email(users[i].emails[0].address,
                             subject,
                             'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
             }
@@ -449,21 +447,21 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
-                Utils.email(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
+                Hapi.Utils.email(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
 
                     if (err === null) {
 
-                        Log.info('Email sent to: ' + pid.email + ' for project: ' + project._id);
+                        Hapi.Log.info('Email sent to: ' + pid.email + ' for project: ' + project._id);
                     }
                     else {
 
-                        Log.err('Email error: ' + pid.email + ' for project: ' + project._id);
+                        Hapi.Log.err('Email error: ' + pid.email + ' for project: ' + project._id);
                     }
                 });
             }
             else {
 
-                Log.err('Email error: project (' + project._id + ') pid (' + pid.pid + ') missing email address');
+                Hapi.Log.err('Email error: project (' + project._id + ') pid (' + pid.pid + ') missing email address');
             }
         }
     }

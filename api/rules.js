@@ -5,7 +5,7 @@
 
 // Load modules
 
-var Log = require('hapi').Log;
+var Hapi = require('hapi');
 
 
 // Validate and process rule
@@ -56,7 +56,7 @@ exports.normalize = function (rule) {
     }
     else {
 
-        Log.err('Bad suggestion rule: ' + rule);
+        Hapi.Log.err('Bad suggestion rule: ' + rule);
         return '';
     }
 };

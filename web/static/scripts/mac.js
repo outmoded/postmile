@@ -1,7 +1,7 @@
 /*
     HTTP MAC Authentication Scheme
-    Based on RFC-Draft: http://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-05
-    Copyright (c) 2011, Eran Hammer-Lahav <eran@hueniverse.com>
+    Based on RFC-Draft: http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01
+    Copyright (c) 2011-2012, Eran Hammer-Lahav <eran@hueniverse.com>
     MIT Licensed
 */
 
@@ -13,16 +13,16 @@ var MAC = {};
 
 // Calculate the request MAC
 
-MAC.calculateMAC = function (nonce, method, resource, host, port, bodyhash, ext, credentials) {
+MAC.calculateMAC = function (timestamp, nonce, method, resource, host, port, ext, credentials) {
 
     // Construct normalized req string
 
-    var normalized = nonce + '\n' +
+    var normalized = timestamp + '\n' +
+                     nonce + '\n' +
                      method.toUpperCase() + '\n' +
                      resource + '\n' +
                      host.toLowerCase() + '\n' +
                      port + '\n' +
-                     (bodyhash || '') + '\n' +
                      (ext || '') + '\n';
 
     // Set hash algorithm
@@ -45,8 +45,7 @@ MAC.calculateMAC = function (nonce, method, resource, host, port, bodyhash, ext,
 // Generate an Authorization header for a given request
 
 /*
-* credentials is an object with the following keys: 'id, 'key', 'algorithm', 'issued'.
-* 'issued' is expressed as the number of milliseconds since January 1, 1970 00:00:00 GMT.
+* credentials is an object with the following keys: 'id, 'key', 'algorithm'.
 */
 
 MAC.getAuthorizationHeader = function (method, URI, credentials, body, ext) {
@@ -71,35 +70,18 @@ MAC.getAuthorizationHeader = function (method, URI, credentials, body, ext) {
 
         // Generate nonce
 
-        var nonce = Math.floor(((new Date()).getTime() - (credentials.issued || 0)) / 1000) + ':' + MAC.getNonce(8);
-
-        // Calculate body hash
-
-        var bodyhash = '';
-        if (body !== null &&
-            body !== undefined) {
-
-            var hashFunc;
-
-            switch (credentials.algorithm) {
-
-                case 'hmac-sha-1': hashFunc = Crypto.SHA1; break;
-                case 'hmac-sha-256': hashFunc = Crypto.SHA256; break;
-                default: return '';                                         // Error: Unknown algorithm
-            }
-
-            bodyhash = Crypto.util.bytesToBase64(hashFunc(MAC.utf8Encode(body), { asBytes: true }));
-        }
+        var timestamp = Math.floor(((new Date()).getTime() - (credentials.issued || 0)) / 1000);
+        var nonce = MAC.getNonce(8);
 
         // Calculate signature
 
-        var mac = MAC.calculateMAC(nonce, method, uri.resource, uri.host, uri.port, bodyhash, ext, credentials);
+        var mac = MAC.calculateMAC(timestamp, nonce, method, uri.resource, uri.host, uri.port, ext, credentials);
 
         // Construct header
 
         var header = 'MAC id="' + credentials.id +
+                     '", ts="' + timestamp +
                      '", nonce="' + nonce +
-                     (bodyhash ? '", bodyhash="' + bodyhash : '') +
                      (ext ? '", ext="' + ext : '') +
                      '", mac="' + mac + '"';
 
@@ -206,7 +188,7 @@ MAC.parseUri = function (URI) {
 
 // Adapted from http://www.webtoolkit.info/javascript-url-decode-encode.html
 
-MAC.utf8Encode = function (string) {
+MAC.utf8Ezncode = function (string) {
 
     string = string.replace(/\r\n/g, '\n');
     var utfString = '';

@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
 
 
 // Get ordered items list
@@ -95,7 +94,7 @@ exports.set = function (collectionName, listId, key, itemId, pos, callback) {
                 newPos < items.length) {
 
                 var isNew = false;
-                var newSort = Utils.clone(sort);
+                var newSort = Hapi.Utils.clone(sort);
                 if (newSort === null) {
 
                     newSort = { _id: listId };
@@ -162,17 +161,17 @@ exports.set = function (collectionName, listId, key, itemId, pos, callback) {
                 }
                 else {
 
-                    callback(Err.badRequest('Unchanged position'));
+                    callback(Hapi.Error.badRequest('Unchanged position'));
                 }
             }
             else {
 
-                callback(Err.badRequest('Bad position'));
+                callback(Hapi.Error.badRequest('Bad position'));
             }
         }
         else {
 
-            callback(err || Err.badRequest('No items'));
+            callback(err || Hapi.Error.badRequest('No items'));
         }
     });
 };

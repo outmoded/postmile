@@ -378,7 +378,6 @@ exports.auth = function (req, res, next) {
 
         if (body !== null) {
 
-            hreq.setHeader('Content-Length', body.length);
             hreq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
             hreq.write(body);
         }

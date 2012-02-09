@@ -6,8 +6,7 @@
 // Load Modules
 
 var MongoDB = require('mongodb');
-var Err = require('hapi').Error;
-var Utils = require('hapi').Utils;
+var Hapi = require('hapi');
 var Vault = require('./vault');
 var Config = require('./config');
 
@@ -134,19 +133,19 @@ exports.all = function (collectionName, callback) {
                     }
                     else {
 
-                        callback(null, Err.database(err, collectionName, 'all'));
+                        callback(null, Hapi.Error.database(err, collectionName, 'all'));
                     }
                 });
             }
             else {
 
-                callback(null, Err.database(err, collectionName, 'all'));
+                callback(null, Hapi.Error.database(err, collectionName, 'all'));
             }
         });
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'all'));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'all'));
     }
 };
 
@@ -170,7 +169,7 @@ exports.get = function (collectionName, id, callback) {
                 }
                 else {
 
-                    callback(null, Err.database(err, collectionName, 'get', id));
+                    callback(null, Hapi.Error.database(err, collectionName, 'get', id));
                 }
             });
         }
@@ -181,7 +180,7 @@ exports.get = function (collectionName, id, callback) {
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'get', id));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'get', id));
     }
 };
 
@@ -253,13 +252,13 @@ exports.getMany = function (collectionName, ids, callback) {
                         }
                         else {
 
-                            callback(null, Err.database(err, collectionName, 'getMany', ids), ids);
+                            callback(null, Hapi.Error.database(err, collectionName, 'getMany', ids), ids);
                         }
                     });
                 }
                 else {
 
-                    callback(null, Err.database(err, collectionName, 'getMany', ids), ids);
+                    callback(null, Hapi.Error.database(err, collectionName, 'getMany', ids), ids);
                 }
             });
         }
@@ -270,7 +269,7 @@ exports.getMany = function (collectionName, ids, callback) {
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'getMany', ids), ids);
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'getMany', ids), ids);
     }
 };
 
@@ -296,19 +295,19 @@ exports.query = function (collectionName, criteria, callback) {
                     }
                     else {
 
-                        callback(null, Err.database(err, collectionName, 'query', criteria));
+                        callback(null, Hapi.Error.database(err, collectionName, 'query', criteria));
                     }
                 });
             }
             else {
 
-                callback(null, Err.database(err, collectionName, 'query', criteria));
+                callback(null, Hapi.Error.database(err, collectionName, 'query', criteria));
             }
         });
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'query', criteria));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'query', criteria));
     }
 };
 
@@ -341,7 +340,7 @@ exports.queryUnique = function (collectionName, criteria, callback) {
                                 }
                                 else {
 
-                                    callback(null, Err.database('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
+                                    callback(null, Hapi.Error.database('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
                                 }
                             }
                             else {
@@ -352,24 +351,24 @@ exports.queryUnique = function (collectionName, criteria, callback) {
                         }
                         else {
 
-                            callback(null, Err.database('Null result array', collectionName, 'queryUnique', criteria));
+                            callback(null, Hapi.Error.database('Null result array', collectionName, 'queryUnique', criteria));
                         }
                     }
                     else {
 
-                        callback(null, Err.database(err, collectionName, 'queryUnique', criteria));
+                        callback(null, Hapi.Error.database(err, collectionName, 'queryUnique', criteria));
                     }
                 });
             }
             else {
 
-                callback(null, Err.database(err, collectionName, 'queryUnique', criteria));
+                callback(null, Hapi.Error.database(err, collectionName, 'queryUnique', criteria));
             }
         });
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'queryUnique', criteria));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'queryUnique', criteria));
     }
 };
 
@@ -390,13 +389,13 @@ exports.count = function (collectionName, criteria, callback) {
             }
             else {
 
-                callback(null, Err.database(err, collectionName, 'count', criteria));
+                callback(null, Hapi.Error.database(err, collectionName, 'count', criteria));
             }
         });
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'count', criteria));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'count', criteria));
     }
 };
 
@@ -408,7 +407,7 @@ exports.insert = function (collectionName, items, callback) {
     var collection = internals.collections[collectionName];
     if (collection) {
 
-        var now = Utils.getTimestamp();
+        var now = Hapi.Utils.getTimestamp();
 
         if (items instanceof Array) {
 
@@ -436,18 +435,18 @@ exports.insert = function (collectionName, items, callback) {
                 }
                 else {
 
-                    callback(null, Err.database('No database insert output', collectionName, 'insert', items));
+                    callback(null, Hapi.Error.database('No database insert output', collectionName, 'insert', items));
                 }
             }
             else {
 
-                callback(null, Err.database(err, collectionName, 'insert', items));
+                callback(null, Hapi.Error.database(err, collectionName, 'insert', items));
             }
         });
     }
     else {
 
-        callback(null, Err.database('Collection not found', collectionName, 'insert', items));
+        callback(null, Hapi.Error.database('Collection not found', collectionName, 'insert', items));
     }
 };
 
@@ -459,7 +458,7 @@ exports.replace = function (collectionName, item, callback) {
     var collection = internals.collections[collectionName];
     if (collection) {
 
-        var now = Utils.getTimestamp();
+        var now = Hapi.Utils.getTimestamp();
         if (item.created === undefined) {
 
             item.created = now;
@@ -478,18 +477,18 @@ exports.replace = function (collectionName, item, callback) {
                 }
                 else {
 
-                    callback(Err.database('No document found to replace', collectionName, 'replace', item));
+                    callback(Hapi.Error.database('No document found to replace', collectionName, 'replace', item));
                 }
             }
             else {
 
-                callback(Err.database(err, collectionName, 'replace', item));
+                callback(Hapi.Error.database(err, collectionName, 'replace', item));
             }
         });
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'replace', item));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'replace', item));
     }
 };
 
@@ -504,7 +503,7 @@ exports.update = function (collectionName, id, changes, callback) {
         changes = changes || {};
         changes.$set = changes.$set || {};
 
-        var now = Utils.getTimestamp();
+        var now = Hapi.Utils.getTimestamp();
         changes.$set.modified = now;
 
         var dbId = internals.getDbId(id);
@@ -520,23 +519,23 @@ exports.update = function (collectionName, id, changes, callback) {
                     }
                     else {
 
-                        callback(Err.database('No document found to update', collectionName, 'update', [id, changes]));
+                        callback(Hapi.Error.database('No document found to update', collectionName, 'update', [id, changes]));
                     }
                 }
                 else {
 
-                    callback(Err.database(err, collectionName, 'update', [id, changes]));
+                    callback(Hapi.Error.database(err, collectionName, 'update', [id, changes]));
                 }
             });
         }
         else {
 
-            callback(Err.database('Invalid id', collectionName, 'update', [id, changes]));
+            callback(Hapi.Error.database('Invalid id', collectionName, 'update', [id, changes]));
         }
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'update', [id, changes]));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'update', [id, changes]));
     }
 };
 
@@ -551,7 +550,7 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
         changes = changes || {};
         changes.$set = changes.$set || {};
 
-        var now = Utils.getTimestamp();
+        var now = Hapi.Utils.getTimestamp();
         changes.$set.modified = now;
 
         var isValid = true;
@@ -591,7 +590,7 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
                         }
                         else {
 
-                            callback(Err.database('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+                            callback(Hapi.Error.database('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
                         }
                     }
                     else {
@@ -601,18 +600,18 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
                 }
                 else {
 
-                    callback(Err.database(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+                    callback(Hapi.Error.database(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
                 }
             });
         }
         else {
 
-            callback(Err.database('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+            callback(Hapi.Error.database('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
         }
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
     }
 };
 
@@ -633,13 +632,13 @@ exports.remove = function (collectionName, id, callback) {
             }
             else {
 
-                callback(Err.database(err, collectionName, 'remove', id));
+                callback(Hapi.Error.database(err, collectionName, 'remove', id));
             }
         });
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'remove', id));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', id));
     }
 };
 
@@ -660,13 +659,13 @@ exports.removeCriteria = function (collectionName, criteria, callback) {
             }
             else {
 
-                callback(Err.database(err, collectionName, 'remove', id));
+                callback(Hapi.Error.database(err, collectionName, 'remove', id));
             }
         });
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'remove', id));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', id));
     }
 };
 
@@ -699,18 +698,18 @@ exports.removeMany = function (collectionName, ids, callback) {
                 }
                 else {
 
-                    callback(Err.database(err, collectionName, 'remove', ids));
+                    callback(Hapi.Error.database(err, collectionName, 'remove', ids));
                 }
             });
         }
         else {
 
-            callback(Err.database('Invalid ids', collectionName, 'remove', ids));
+            callback(Hapi.Error.database('Invalid ids', collectionName, 'remove', ids));
         }
     }
     else {
 
-        callback(Err.database('Collection not found', collectionName, 'remove', ids));
+        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', ids));
     }
 };
 

@@ -5,10 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
-var Log = require('hapi').Log;
 var Rules = require('./rules');
 var Project = require('./project');
 
@@ -44,12 +42,12 @@ exports.initialize = function () {
                 }
                 else {
 
-                    Log.err('Failed to load suggestions: ' + suggestion._id);
+                    Hapi.Log.err('Failed to load suggestions: ' + suggestion._id);
                 }
             }
             else {
 
-                Log.err('Bad suggestion: missing rule or title');
+                Hapi.Log.err('Bad suggestion: missing rule or title');
             }
         }
     });
@@ -58,16 +56,16 @@ exports.initialize = function () {
 
 // Remove suggestion from project
 
-exports.exclude = function (req, res, next) {
+exports.exclude = function (req, reply) {
 
-    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
+    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
 
         if (project) {
 
             var suggestion = internals.suggestions[req.params.drop];
             if (suggestion) {
 
-                Db.get('user.exclude', req.api.userId, function (excludes, err) {
+                Db.get('user.exclude', req.hapi.userId, function (excludes, err) {
 
                     if (err === null) {
 
@@ -76,7 +74,7 @@ exports.exclude = function (req, res, next) {
                             // Existing excludes
 
                             var changes = { $set: {} };
-                            var now = Utils.getTimestamp();
+                            var now = Hapi.Utils.getTimestamp();
 
                             if (excludes.projects) {
 
@@ -109,13 +107,11 @@ exports.exclude = function (req, res, next) {
 
                                 if (err === null) {
 
-                                    res.api.result = { status: 'ok' };
-                                    next();
+                                    reply({ status: 'ok' });
                                 }
                                 else {
 
-                                    res.api.error = err;
-                                    next();
+                                    reply(err);
                                 }
                             });
                         }
@@ -123,42 +119,37 @@ exports.exclude = function (req, res, next) {
 
                             // First exclude
 
-                            excludes = { _id: req.api.userId, projects: {} };
+                            excludes = { _id: req.hapi.userId, projects: {} };
                             excludes.projects[project._id] = { suggestions: {} };
-                            excludes.projects[project._id].suggestions[req.params.drop] = Utils.getTimestamp();
+                            excludes.projects[project._id].suggestions[req.params.drop] = Hapi.Utils.getTimestamp();
 
                             Db.insert('user.exclude', excludes, function (items, err) {
 
                                 if (err === null) {
 
-                                    res.api.result = { status: 'ok' };
-                                    next();
+                                    reply({ status: 'ok' });
                                 }
                                 else {
 
-                                    res.api.error = err;
-                                    next();
+                                    reply(err);
                                 }
                             });
                         }
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
             else {
 
-                res.api.error = Err.notFound();
-                next();
+                reply(Hapi.Error.notFound());
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -204,7 +195,7 @@ exports.list = function (project, userId, callback) {
 
                             // Bad rule
 
-                            Log.err('Bad suggestion rule:' + suggestion._id);
+                            Hapi.Log.err('Bad suggestion rule:' + suggestion._id);
                         }
                     }
                 }
@@ -212,7 +203,7 @@ exports.list = function (project, userId, callback) {
         }
         else {
 
-            Log.err(err);
+            Hapi.Log.err(err);
         }
 
         callback(results);

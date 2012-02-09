@@ -5,12 +5,10 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var SocketIO = require('socket.io');
-var Utils = require('hapi').Utils;
 var Project = require('./project');
 var Session = require('./session');
-var Log = require('hapi').Log;
-var Err = require('hapi').Error;
 
 
 // Declare internals
@@ -35,7 +33,7 @@ var internals = {
 
 exports.initialize = function (server) {
 
-    internals.io = SocketIO.listen(server, { log: Log.info });
+    internals.io = SocketIO.listen(server, { log: Hapi.Log.info });
     internals.io.sockets.on('connection', internals.connection);
 
     setInterval(internals.processUpdates, 1000);
@@ -49,17 +47,17 @@ exports.update = function (update, req) {
     update.type = 'update';
 
     if (req &&
-        req.api) {
+        req.hapi) {
 
-        if (req.api.userId) {
+        if (req.hapi.userId) {
 
-            update.by = req.api.userId;
+            update.by = req.hapi.userId;
         }
 
-        if (req.api.session &&
-            req.api.session.id) {
+        if (req.hapi.session &&
+            req.hapi.session.id) {
 
-            update.macId = req.api.session.id.slice(0, 8);
+            update.macId = req.hapi.session.id.slice(0, 8);
         }
     }
 
@@ -69,7 +67,7 @@ exports.update = function (update, req) {
 
 // Subscribe
 
-exports.subscribe = function (req, res, next) {
+exports.subscribe = function (req, reply) {
 
     // Lookup socket
 
@@ -78,13 +76,13 @@ exports.subscribe = function (req, res, next) {
 
         if (internals.socketsById[req.params.id].userId) {
 
-            if (internals.socketsById[req.params.id].userId === req.api.userId) {
+            if (internals.socketsById[req.params.id].userId === req.hapi.userId) {
 
                 var socket = internals.socketsById[req.params.id].socket;
 
                 // Lookup project
 
-                Project.load(req.params.project, req.api.userId, false, function (project, member, err) {
+                Project.load(req.params.project, req.hapi.userId, false, function (project, member, err) {
 
                     if (err === null) {
 
@@ -104,39 +102,34 @@ exports.subscribe = function (req, res, next) {
 
                         // Send ack via the request
 
-                        res.api.result = { status: 'ok' };
-                        next();
+                        reply({ status: 'ok' });
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
             else {
 
-                res.api.error = Err.forbidden();
-                next();
+                reply(Hapi.Error.forbidden());
             }
         }
         else {
 
-            res.api.error = Err.badRequest('Stream not initialized');
-            next();
+            reply(Hapi.Error.badRequest('Stream not initialized'));
         }
     }
     else {
 
-        res.api.error = Err.notFound('Stream not found');
-        next();
+        reply(Hapi.Error.notFound('Stream not found'));
     }
 };
 
 
 // Unsubscribe
 
-exports.unsubscribe = function (req, res, next) {
+exports.unsubscribe = function (req, reply) {
 
     // Lookup socket
 
@@ -145,7 +138,7 @@ exports.unsubscribe = function (req, res, next) {
 
         if (internals.socketsById[req.params.id].userId) {
 
-            if (internals.socketsById[req.params.id].userId === req.api.userId) {
+            if (internals.socketsById[req.params.id].userId === req.hapi.userId) {
 
                 var socket = internals.socketsById[req.params.id].socket;
 
@@ -169,31 +162,26 @@ exports.unsubscribe = function (req, res, next) {
 
                     // Send ack via the request
 
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = Err.notFound('Project subscription not found');
-                    next();
+                    reply(Hapi.Error.notFound('Project subscription not found'));
                 }
             }
             else {
 
-                res.api.error = Err.forbidden();
-                next();
+                reply(Hapi.Error.forbidden());
             }
         }
         else {
 
-            res.api.error = Err.badRequest('Stream not initialized');
-            next();
+            reply(Hapi.Error.badRequest('Stream not initialized'));
         }
     }
     else {
 
-        res.api.error = Err.notFound('Stream not found');
-        next();
+        reply(Hapi.Error.notFound('Stream not found'));
     }
 };
 
@@ -274,12 +262,12 @@ internals.messageHandler = function (socket) {
                                 internals.idsByUserId[userId][socket.id] = true;
 
                                 socket.json.send({ type: 'initialize', status: 'ok', user: userId });
-                                Log.info('Stream ' + socket.id + ' initialized with userId ' + userId);
+                                Hapi.Log.info('Stream ' + socket.id + ' initialized with userId ' + userId);
                             }
                             else {
 
                                 socket.json.send({ type: 'initialize', status: 'error', error: err });
-                                Log.err(err);
+                                Hapi.Log.err(err);
                             }
                         });
 
@@ -294,7 +282,7 @@ internals.messageHandler = function (socket) {
         }
         else {
 
-            Log.err('Message received after disconnect from socket: ' + socket.id + ', message: ' + JSON.stringify(message));
+            Hapi.Log.err('Message received after disconnect from socket: ' + socket.id + ', message: ' + JSON.stringify(message));
         }
     };
 }
@@ -409,7 +397,7 @@ internals.processUpdates = function () {
 
         if (updatedIds) {
 
-            Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedIds);
+            Hapi.Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedIds);
         }
     }
 

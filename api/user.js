@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
 var Email = require('./email');
 var Invite = require('./invite');
 var Last = require('./last');
@@ -105,20 +104,18 @@ internals.forbiddenUsernames = {
 
 // Current user information
 
-exports.get = function (req, res, next) {
+exports.get = function (req, reply) {
 
-    exports.load(req.api.userId, function (user, err) {
+    exports.load(req.hapi.userId, function (user, err) {
 
         if (user) {
 
-            Utils.hide(user, exports.type.user);
-            res.api.result = user;
-            next();
+            Hapi.Utils.hide(user, exports.type.user);
+            reply(user);
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -126,73 +123,67 @@ exports.get = function (req, res, next) {
 
 // Change profile properties
 
-exports.post = function (req, res, next) {
+exports.post = function (req, reply) {
 
-    exports.load(req.api.userId, function (user, err) {
+    exports.load(req.hapi.userId, function (user, err) {
 
         if (user) {
 
             // Remove identical username
 
-            if (req.body.username &&
-                req.body.username === user.username) {
+            if (req.hapi.payload.username &&
+                req.hapi.payload.username === user.username) {
 
-                delete req.body.username;
+                delete req.hapi.payload.username;
             }
 
             // Lookup username
 
-            if (req.body.username) {
+            if (req.hapi.payload.username) {
 
-                internals.checkUsername(req.body.username, function (lookupUser, err) {
+                internals.checkUsername(req.hapi.payload.username, function (lookupUser, err) {
 
                     if (err &&
-                        err.code === Err.notFound().code) {
+                        err.code === Hapi.Error.notFound().code) {
 
-                        Db.update('user', user._id, Db.toChanges(req.body), function (err) {
+                        Db.update('user', user._id, Db.toChanges(req.hapi.payload), function (err) {
 
                             if (err === null) {
 
                                 Stream.update({ object: 'profile', user: user._id }, req);
-                                res.api.result = { status: 'ok' };
-                                next();
+                                reply({ status: 'ok' });
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
                     else {
 
-                        res.api.error = (typeof err === 'string' ? Err.badRequest('Invalid username: ' + err) : err);
-                        next();
+                        reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
                     }
                 });
             }
             else {
 
-                Db.update('user', user._id, Db.toChanges(req.body), function (err) {
+                Db.update('user', user._id, Db.toChanges(req.hapi.payload), function (err) {
 
                     if (err === null) {
 
                         Stream.update({ object: 'profile', user: user._id }, req);
-                        res.api.result = { status: 'ok' };
-                        next();
+                        reply({ status: 'ok' });
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -200,11 +191,11 @@ exports.post = function (req, res, next) {
 
 // Change profile email settings
 
-exports.email = function (req, res, next) {
+exports.email = function (req, reply) {
 
-    var address = req.body.address.toLowerCase();
+    var address = req.hapi.payload.address.toLowerCase();
 
-    exports.load(req.api.userId, function (user, err) {
+    exports.load(req.hapi.userId, function (user, err) {
 
         if (user) {
 
@@ -222,7 +213,7 @@ exports.email = function (req, res, next) {
                 }
             }
 
-            switch (req.body.action) {
+            switch (req.hapi.payload.action) {
 
                 case 'add':
 
@@ -250,38 +241,33 @@ exports.email = function (req, res, next) {
 
                                                 if (err) {
 
-                                                    Log.err(err, req);
+                                                    Hapi.Log.err(err, req);
                                                 }
 
                                                 Stream.update({ object: 'profile', user: user._id }, req);
-                                                res.api.result = { status: 'ok' };
-                                                next();
+                                                reply({ status: 'ok' });
                                             });
                                         }
                                         else {
 
-                                            res.api.error = err;
-                                            next();
+                                            reply(err);
                                         }
                                     });
                                 }
                                 else {
 
-                                    res.api.error = Err.badRequest('Email already assigned to another account');
-                                    next();
+                                    reply(Hapi.Error.badRequest('Email already assigned to another account'));
                                 }
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
                     else {
 
-                        res.api.error = Err.badRequest('Address already present');
-                        next();
+                        reply(Hapi.Error.badRequest('Address already present'));
                     }
 
                     break;
@@ -315,32 +301,27 @@ exports.email = function (req, res, next) {
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, req);
-                                        res.api.result = { status: 'ok' };
-                                        next();
+                                        reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        res.api.error = err;
-                                        next();
+                                        reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                res.api.error = Err.badRequest('Email must be verified before made primary');
-                                next();
+                                reply(Hapi.Error.badRequest('Email must be verified before made primary'));
                             }
                         }
                         else {
 
-                            res.api.error = Err.badRequest('Address already primary');
-                            next();
+                            reply(Hapi.Error.badRequest('Address already primary'));
                         }
                     }
                     else {
 
-                        res.api.error = Err.notFound('No such email address');
-                        next();
+                        reply(Hapi.Error.notFound('No such email address'));
                     }
 
                     break;
@@ -364,32 +345,27 @@ exports.email = function (req, res, next) {
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, req);
-                                        res.api.result = { status: 'ok' };
-                                        next();
+                                        reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        res.api.error = err;
-                                        next();
+                                        reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                res.api.error = Err.badRequest('Cannot remove the only address present');
-                                next();
+                                reply(Hapi.Error.badRequest('Cannot remove the only address present'));
                             }
                         }
                         else {
 
-                            res.api.error = Err.badRequest('Cannot remove primary address');
-                            next();
+                            reply(Hapi.Error.badRequest('Cannot remove primary address'));
                         }
                     }
                     else {
 
-                        res.api.error = Err.notFound('No such email address');
-                        next();
+                        reply(Hapi.Error.notFound('No such email address'));
                     }
 
                     break;
@@ -406,34 +382,29 @@ exports.email = function (req, res, next) {
 
                                 if (err === null) {
 
-                                    res.api.result = { result: 'ok' };
-                                    next();
+                                    reply({ result: 'ok' });
                                 }
                                 else {
 
-                                    res.api.error = err;
-                                    next();
+                                    reply(err);
                                 }
                             });
                         }
                         else {
 
-                            res.api.error = Err.badRequest('Account already verified');
-                            next();
+                            reply(Hapi.Error.badRequest('Account already verified'));
                         }
                     }
                     else {
 
-                        res.api.error = Err.notFound('No such email address');
-                        next();
+                        reply(Hapi.Error.notFound('No such email address'));
                     }
                     break;
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -441,11 +412,11 @@ exports.email = function (req, res, next) {
 
 // Current user contacts list
 
-exports.contacts = function (req, res, next) {
+exports.contacts = function (req, reply) {
 
     if (req.query.exclude) {
 
-        Project.load(req.query.exclude, req.api.userId, false, function (project, member, err) {
+        Project.load(req.query.exclude, req.hapi.userId, false, function (project, member, err) {
 
             if (err === null) {
 
@@ -453,8 +424,7 @@ exports.contacts = function (req, res, next) {
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -465,7 +435,7 @@ exports.contacts = function (req, res, next) {
 
     function getList(exclude) {
 
-        exports.load(req.api.userId, function (user, err) {
+        exports.load(req.hapi.userId, function (user, err) {
 
             if (user) {
 
@@ -539,14 +509,12 @@ exports.contacts = function (req, res, next) {
                         return 0;
                     });
 
-                    res.api.result = contacts;
-                    next();
+                    reply(contacts);
                 });
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -555,16 +523,15 @@ exports.contacts = function (req, res, next) {
 
 // Who am I?
 
-exports.who = function (req, res, next) {
+exports.who = function (req, reply) {
 
-    res.api.result = { user: req.api.userId };
-    next();
+    reply({ user: req.hapi.userId });
 };
 
 
 // Register new user
 
-exports.put = function (req, res, next) {
+exports.put = function (req, reply) {
 
     // Check invitation code
 
@@ -635,21 +602,18 @@ exports.put = function (req, res, next) {
                         }
                         else {
 
-                            res.api.error = Err.badRequest('Invalid invitation code');
-                            next();
+                            reply(Hapi.Error.badRequest('Invalid invitation code'));
                         }
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
             else {
 
-                res.api.error = Err.badRequest('Invalid invitation format');
-                next();
+                reply(Hapi.Error.badRequest('Invalid invitation format'));
             }
         }
         else {
@@ -667,36 +631,33 @@ exports.put = function (req, res, next) {
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
     }
     else {
 
-        res.api.error = Err.badRequest('Invitation code missing');
-        next();
+        reply(Hapi.Error.badRequest('Invitation code missing'));
     }
 
     function validate() {
 
         // Look for email address
 
-        email = (req.body.email ? req.body.email : (projectPid && projectPid.email ? projectPid.email : null));
+        email = (req.hapi.payload.email ? req.hapi.payload.email : (projectPid && projectPid.email ? projectPid.email : null));
         isEmailVerified = (projectPid && projectPid.email && projectPid.email === email ? true : false);
 
         // Check for at least one identifier
 
-        if (req.body.network ||
+        if (req.hapi.payload.network ||
             email) {
 
             validateEmail();
         }
         else {
 
-            res.api.error = Err.badRequest('Must include either a network id or email address');
-            next();
+            reply(Hapi.Error.badRequest('Must include either a network id or email address'));
         }
     }
 
@@ -714,14 +675,12 @@ exports.put = function (req, res, next) {
                     }
                     else {
 
-                        res.api.error = Err.badRequest('Email address already linked to an existing user');
-                        next();
+                        reply(Hapi.Error.badRequest('Email address already linked to an existing user'));
                     }
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
@@ -733,15 +692,15 @@ exports.put = function (req, res, next) {
 
     function validateNetwork() {
 
-        if (req.body.network) {
+        if (req.hapi.payload.network) {
 
             var isValid = true;
             var error = null;
 
-            if (req.body.network.length === 2) {
+            if (req.hapi.payload.network.length === 2) {
 
-                var network = req.body.network[0];
-                var networkId = req.body.network[1];
+                var network = req.hapi.payload.network[0];
+                var networkId = req.hapi.payload.network[1];
 
                 if (networkId) {
 
@@ -768,7 +727,7 @@ exports.put = function (req, res, next) {
             if (isValid) {
 
                 var criteria = {};
-                criteria[req.body.network[0]] = req.body.network[1];
+                criteria[req.hapi.payload.network[0]] = req.hapi.payload.network[1];
 
                 Db.count('user', criteria, function (count, err) {
 
@@ -780,21 +739,18 @@ exports.put = function (req, res, next) {
                         }
                         else {
 
-                            res.api.error = Err.badRequest(req.body.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user');
-                            next();
+                            reply(Hapi.Error.badRequest(req.hapi.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
                         }
                     }
                     else {
 
-                        res.api.error = err;
-                        next();
+                        reply(err);
                     }
                 });
             }
             else {
 
-                res.api.error = Err.badRequest(error);
-                next();
+                reply(Hapi.Error.badRequest(error));
             }
         }
         else {
@@ -805,19 +761,18 @@ exports.put = function (req, res, next) {
 
     function validateUsername() {
 
-        if (req.body.username) {
+        if (req.hapi.payload.username) {
 
-            internals.checkUsername(req.body.username, function (lookupUser, err) {
+            internals.checkUsername(req.hapi.payload.username, function (lookupUser, err) {
 
                 if (err &&
-                    err.code === Err.notFound().code) {
+                    err.code === Hapi.Error.notFound().code) {
 
                     createAccount();
                 }
                 else {
 
-                    res.api.error = (typeof err === 'string' ? Err.badRequest('Invalid username: ' + err) : err);
-                    next();
+                    reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
                 }
             });
         }
@@ -831,14 +786,14 @@ exports.put = function (req, res, next) {
 
         var user = { origin: origin };
 
-        if (req.body.name) {
+        if (req.hapi.payload.name) {
 
-            user.name = req.body.name;
+            user.name = req.hapi.payload.name;
         }
 
-        if (req.body.username) {
+        if (req.hapi.payload.username) {
 
-            user.username = req.body.username;
+            user.username = req.hapi.payload.username;
         }
 
         if (email) {
@@ -846,9 +801,9 @@ exports.put = function (req, res, next) {
             user.emails = [{ address: email, isVerified: isEmailVerified}];
         }
 
-        if (req.body.network) {
+        if (req.hapi.payload.network) {
 
-            user[req.body.network[0]] = req.body.network[1];
+            user[req.hapi.payload.network[0]] = req.hapi.payload.network[1];
         }
 
         Db.insert('user', user, function (items, err) {
@@ -880,8 +835,7 @@ exports.put = function (req, res, next) {
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
@@ -892,14 +846,12 @@ exports.put = function (req, res, next) {
                 }
                 else {
 
-                    res.api.error = Err.internal('Failed to retrieve new user id', user);
-                    next();
+                    reply(Hapi.Error.internal('Failed to retrieve new user id', user));
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -910,8 +862,7 @@ exports.put = function (req, res, next) {
 
         Email.sendWelcome(user, function (err) {    // Ignore error
 
-            res.api.result = { status: 'ok', id: user._id };
-            next();
+            reply({ status: 'ok', id: user._id });
         });
     }
 };
@@ -919,33 +870,30 @@ exports.put = function (req, res, next) {
 
 // Set Terms of Service version
 
-exports.tos = function (req, res, next) {
+exports.tos = function (req, reply) {
 
     exports.load(req.params.id, function (user, err) {
 
         if (user) {
 
             user.tos = user.tos || {};
-            user.tos[req.params.version] = Utils.getTimestamp();
+            user.tos[req.params.version] = Hapi.Utils.getTimestamp();
 
             Db.update('user', user._id, { $set: { 'tos': user.tos} }, function (err) {
 
                 if (err === null) {
 
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -953,7 +901,7 @@ exports.tos = function (req, res, next) {
 
 // Link other account
 
-exports.link = function (req, res, next) {
+exports.link = function (req, reply) {
 
     if (req.params.network === 'facebook' ||
         req.params.network === 'twitter' ||
@@ -979,60 +927,53 @@ exports.link = function (req, res, next) {
                             if (count === 0) {
 
                                 var changes = { $set: {} };
-                                changes.$set[req.params.network] = req.body.id;
+                                changes.$set[req.params.network] = req.hapi.payload.id;
 
                                 Db.update('user', user._id, changes, function (err) {
 
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, req);
-                                        res.api.result = { status: 'ok' };
-                                        next();
+                                        reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        res.api.error = err;
-                                        next();
+                                        reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                res.api.error = Err.badRequest('Network id already linked to another user');
-                                next();
+                                reply(Hapi.Error.badRequest('Network id already linked to another user'));
                             }
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
                 else {
                 
-                    res.api.error = Err.badRequest('Network already linked');
-                    next();
+                    reply(Hapi.Error.badRequest('Network already linked'));
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Unknown network');
-        next();
+        reply(Hapi.Error.badRequest('Unknown network'));
     }
 };
 
 
 // Unlink other account
 
-exports.unlink = function (req, res, next) {
+exports.unlink = function (req, reply) {
 
     if (req.params.network === 'facebook' ||
         req.params.network === 'twitter' ||
@@ -1061,46 +1002,40 @@ exports.unlink = function (req, res, next) {
                             if (err === null) {
 
                                 Stream.update({ object: 'profile', user: user._id }, req);
-                                res.api.result = { status: 'ok' };
-                                next();
+                                reply({ status: 'ok' });
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
                     else {
 
-                        res.api.error = Err.badRequest('Cannot remove last linked account');
-                        next();
+                        reply(Hapi.Error.badRequest('Cannot remove last linked account'));
                     }
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Account not linked');
-                    next();
+                    reply(Hapi.Error.badRequest('Account not linked'));
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Unknown network');
-        next();
+        reply(Hapi.Error.badRequest('Unknown network'));
     }
 };
 
 
 // Set default view
 
-exports.view = function (req, res, next) {
+exports.view = function (req, reply) {
 
     exports.load(req.params.id, function (user, err) {
 
@@ -1110,20 +1045,17 @@ exports.view = function (req, res, next) {
 
                 if (err === null) {
 
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -1131,7 +1063,7 @@ exports.view = function (req, res, next) {
 
 // Lookup user based on account and type
 
-exports.lookup = function (req, res, next) {
+exports.lookup = function (req, reply) {
 
     if (req.params.type === 'username') {
 
@@ -1139,19 +1071,17 @@ exports.lookup = function (req, res, next) {
 
             if (lookupUser) {
 
-                res.api.result = { user: lookupUser._id };
-                next();
+                reply({ user: lookupUser._id });
             }
             else {
 
-                res.api.error = (typeof err === 'string' ? Err.badRequest(err) : err);
-                next();
+                reply(typeof err === 'string' ? Hapi.Error.badRequest(err) : err);
             }
         });
     }
     else if (req.params.type === 'email') {
 
-        if (Utils.checkEmail(req.params.id)) {
+        if (Hapi.Utils.checkEmail(req.params.id)) {
 
             Db.queryUnique('user', { 'emails.address': req.params.id }, function (item, err) {
 
@@ -1159,26 +1089,22 @@ exports.lookup = function (req, res, next) {
 
                     if (item) {
 
-                        res.api.result = { user: item._id };
-                        next();
+                        reply({ user: item._id });
                     }
                     else {
 
-                        res.api.error = Err.notFound();
-                        next();
+                        reply(Hapi.Error.notFound());
                     }
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = Err.badRequest('Invalid email address');
-            next();
+            reply(Hapi.Error.badRequest('Invalid email address'));
         }
     }
     else if (req.params.type === 'facebook' ||
@@ -1194,39 +1120,35 @@ exports.lookup = function (req, res, next) {
 
                 if (item) {
 
-                    res.api.result = { user: item._id };
-                    next();
+                    reply({ user: item._id });
                 }
                 else {
 
-                    res.api.error = Err.notFound();
-                    next();
+                    reply(Hapi.Error.notFound());
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Unknown network type');
-        next();
+        reply(Hapi.Error.badRequest('Unknown network type'));
     }
 };
 
 
 // Send email reminder account based on email or username and take action
 
-exports.reminder = function (req, res, next) {
+exports.reminder = function (req, reply) {
 
-    var isEmail = req.body.account.indexOf('@') !== -1;
-    var account = req.body.account.toLowerCase();
+    var isEmail = req.hapi.payload.account.indexOf('@') !== -1;
+    var account = req.hapi.payload.account.toLowerCase();
 
     if (isEmail === false ||
-        Utils.checkEmail(account)) {
+        Hapi.Utils.checkEmail(account)) {
 
         var criteria = {};
         criteria[isEmail ? 'emails.address' : 'username'] = account;
@@ -1241,44 +1163,39 @@ exports.reminder = function (req, res, next) {
 
                         if (err === null) {
 
-                            res.api.result = { result: 'ok' };
-                            next();
+                            reply({ result: 'ok' });
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
                 else {
 
-                    res.api.error = Err.notFound();
-                    next();
+                    reply(Hapi.Error.notFound());
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest();
-        next();
+        reply(Hapi.Error.badRequest());
     }
 };
 
 
 // Delete account
 
-exports.del = function (req, res, next) {
+exports.del = function (req, reply) {
 
     // Check if user has any projects
 
-    Project.unsortedList(req.api.userId, function (projects, owner, notOwner, err) {
+    Project.unsortedList(req.hapi.userId, function (projects, owner, notOwner, err) {
 
         if (err === null) {
 
@@ -1310,43 +1227,37 @@ exports.del = function (req, res, next) {
                                 }
                                 else {
 
-                                    res.api.error = Err.badRequest('Must first delete project');
-                                    next();
+                                    reply(Hapi.Error.badRequest('Must first delete project'));
                                 }
                             }
                             else {
 
-                                res.api.error = err;
-                                next();
+                                reply(err);
                             }
                         });
                     }
                     else {
 
-                        res.api.error = Err.badRequest('Must first delete project (has participants)');
-                        next();
+                        reply(Hapi.Error.badRequest('Must first delete project (has participants)'));
                     }
                 }
                 else {
 
                     // Multiple own projects
 
-                    res.api.error = Err.badRequest('Must first delete all projects');
-                    next();
+                    reply(Hapi.Error.badRequest('Must first delete all projects'));
                 }
             }
             else {
 
                 // Member of projects
 
-                res.api.error = Err.badRequest('Must first leave all projects');
-                next();
+                reply(Hapi.Error.badRequest('Must first leave all projects'));
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 
@@ -1356,7 +1267,7 @@ exports.del = function (req, res, next) {
 
         // Delete account first
 
-        Db.remove('user', req.api.userId, function (err) {
+        Db.remove('user', req.hapi.userId, function (err) {
 
             if (err === null) {
 
@@ -1369,33 +1280,31 @@ exports.del = function (req, res, next) {
 
                 // Delete the projects sort list
 
-                Sort.del('project', req.api.userId, ignore);
+                Sort.del('project', req.hapi.userId, ignore);
 
                 // Remove grants
 
-                Session.delUser(req.api.userId, ignore);
+                Session.delUser(req.hapi.userId, ignore);
 
                 // Remove excluded suggestions
 
-                Suggestions.delUser(req.api.userId, ignore);
+                Suggestions.delUser(req.hapi.userId, ignore);
 
                 // Remove last
 
-                Last.delUser(req.api.userId, ignore);
+                Last.delUser(req.hapi.userId, ignore);
 
                 // Remove client storage
 
-                Storage.delUser(req.api.userId, ignore);
+                Storage.delUser(req.hapi.userId, ignore);
 
                 // Return result
 
-                res.api.result = { result: 'ok' }
-                next();
+                reply({ result: 'ok' });
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -1418,7 +1327,7 @@ exports.load = function (userId, callback) {
 
                 if (err === null) {
 
-                    callback(null, Err.notFound());
+                    callback(null, Hapi.Error.notFound());
                 }
                 else {
 
@@ -1429,7 +1338,7 @@ exports.load = function (userId, callback) {
     }
     else {
 
-        callback(null, Err.internal('Missing user id'));
+        callback(null, Hapi.Error.internal('Missing user id'));
     }
 };
 
@@ -1541,7 +1450,7 @@ internals.checkUsername = function (username, callback) {
                                         }
                                         else {
 
-                                            callback(null, Err.notFound());
+                                            callback(null, Hapi.Error.notFound());
                                         }
                                     }
                                     else {
@@ -1609,14 +1518,14 @@ exports.find = function (ids, callback) {
 
             // Email
 
-            if (Utils.checkEmail(ids[i])) {
+            if (Hapi.Utils.checkEmail(ids[i])) {
 
                 emails.push(ids[i].toLowerCase());
             }
             else {
 
                 isValid = false;
-                error = Err.badRequest('Invalid email address');
+                error = Hapi.Error.badRequest('Invalid email address');
                 break;
             }
         }
@@ -1657,7 +1566,7 @@ exports.find = function (ids, callback) {
 
                             // Remove potential duplicates between emails and across emails and users
 
-                            users = Utils.unique(users, '_id');
+                            users = Hapi.Utils.unique(users, '_id');
 
                             // Find which emails were not found
 
@@ -1682,7 +1591,7 @@ exports.find = function (ids, callback) {
                 }
                 else {
 
-                    callback(null, null, Err.badRequest('Invalid user ID: ' + JSON.stringify(notFound)));
+                    callback(null, null, Hapi.Error.badRequest('Invalid user ID: ' + JSON.stringify(notFound)));
                 }
             }
             else {

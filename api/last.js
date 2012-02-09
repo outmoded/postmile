@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Err = require('hapi').Error;
-var Utils = require('hapi').Utils;
 var Project = require('./project');
 var Task = require('./task');
 
@@ -19,9 +18,9 @@ var internals = {};
 
 // Last information for project (with tasks)
 
-exports.getProject = function (req, res, next) {
+exports.getProject = function (req, reply) {
 
-    exports.load(req.api.userId, function (last, err) {
+    exports.load(req.hapi.userId, function (last, err) {
 
         if (last &&
             last.projects &&
@@ -30,18 +29,15 @@ exports.getProject = function (req, res, next) {
             var record = { id: last._id, projects: {} };
             record.projects[req.params.id] = last.projects[req.params.id];
 
-            res.api.result = record;
-            next();
+            reply(record);
         }
         else if (err === null) {
 
-            res.api.result = { id: req.api.userId, projects: {} };
-            next();
+            reply({ id: req.hapi.userId, projects: {} });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -49,30 +45,27 @@ exports.getProject = function (req, res, next) {
 
 // Set last project timestamp
 
-exports.postProject = function (req, res, next) {
+exports.postProject = function (req, reply) {
 
-    Project.load(req.params.id, req.api.userId, false, function (project, member, err) {
+    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
 
         if (project) {
 
-            exports.setLast(req.api.userId, project, null, function (err) {
+            exports.setLast(req.hapi.userId, project, null, function (err) {
 
                 if (err === null) {
 
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -80,13 +73,13 @@ exports.postProject = function (req, res, next) {
 
 // Last information for single task
 
-exports.getTask = function (req, res, next) {
+exports.getTask = function (req, reply) {
 
-    Task.load(req.params.id, req.api.userId, false, function (task, err, project) {
+    Task.load(req.params.id, req.hapi.userId, false, function (task, err, project) {
 
         if (task) {
 
-            exports.load(req.api.userId, function (last, err) {
+            exports.load(req.hapi.userId, function (last, err) {
 
                 if (last &&
                     last.projects &&
@@ -98,25 +91,21 @@ exports.getTask = function (req, res, next) {
                     record.projects[task.project] = { tasks: {} };
                     record.projects[task.project].tasks[req.params.id] = last.projects[task.project].tasks[req.params.id];
 
-                    res.api.result = record;
-                    next();
+                    reply(record);
                 }
                 else if (err === null) {
 
-                    res.api.result = { id: req.api.userId, projects: {} };
-                    next();
+                    reply({ id: req.hapi.userId, projects: {} });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -124,30 +113,27 @@ exports.getTask = function (req, res, next) {
 
 // Set last task timestamp
 
-exports.postTask = function (req, res, next) {
+exports.postTask = function (req, reply) {
 
-    Task.load(req.params.id, req.api.userId, false, function (task, err, project) {
+    Task.load(req.params.id, req.hapi.userId, false, function (task, err, project) {
 
         if (task) {
 
-            exports.setLast(req.api.userId, project, task, function (err) {
+            exports.setLast(req.hapi.userId, project, task, function (err) {
 
                 if (err === null) {
 
-                    res.api.result = { status: 'ok' };
-                    next();
+                    reply({ status: 'ok' });
                 }
                 else {
 
-                    res.api.error = err;
-                    next();
+                    reply(err);
                 }
             });
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -215,7 +201,7 @@ exports.delProject = function (userId, projectId, callback) {
 
 exports.setLast = function (userId, project, task, callback) {
 
-    var now = Utils.getTimestamp();
+    var now = Hapi.Utils.getTimestamp();
 
     exports.load(userId, function (last, err) {
 

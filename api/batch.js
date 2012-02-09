@@ -5,10 +5,9 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Http = require('http');
 var MAC = require('mac');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
 var Config = require('./config');
 
 
@@ -27,7 +26,7 @@ exports.type = {
 
 // Batch processing
 
-exports.post = function (req, res, next) {
+exports.post = function (req, reply) {
 
     var requests = [];
     var results = [];
@@ -70,12 +69,12 @@ exports.post = function (req, res, next) {
             }
         };
 
-        for (var i = 0, il = req.body.get.length; i < il; ++i) {
+        for (var i = 0, il = req.hapi.payload.get.length; i < il; ++i) {
 
             // Break into parts
 
             var parts = [];
-            var result = req.body.get[i].replace(requestRegex, parseRequest);
+            var result = req.hapi.payload.get[i].replace(requestRegex, parseRequest);
 
             // Make sure entire string was processed (empty)
 
@@ -96,8 +95,7 @@ exports.post = function (req, res, next) {
         }
         else {
 
-            res.api.error = Err.badRequest(error);
-            next();
+            reply(Hapi.Error.badRequest(error));
         }
     }
 
@@ -107,8 +105,7 @@ exports.post = function (req, res, next) {
 
             // Return results
 
-            res.api.result = results;
-            next();
+            reply(results);
         });
     }
 
@@ -180,7 +177,7 @@ exports.post = function (req, res, next) {
 
                 // Make request
 
-                internals.call('GET', path, null, req.api.session, function (data, err) {
+                internals.call('GET', path, null, req.hapi.session, function (data, err) {
 
                     if (err === null) {
 
@@ -228,7 +225,7 @@ internals.call = function (method, path, content, arg1, arg2) {   // session, ca
 
     if (session) {
 
-        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session, body);
+        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session);
 
         if (authorization === null ||
             authorization === '') {
@@ -295,7 +292,6 @@ internals.call = function (method, path, content, arg1, arg2) {   // session, ca
 
     if (body !== null) {
 
-        hreq.setHeader('Content-Length', body.length);
         hreq.setHeader('Content-Type', 'application/json');
         hreq.write(body);
     }

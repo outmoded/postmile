@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
 
 
 // Declare internals
@@ -25,61 +24,54 @@ exports.type = {
 
 // User client data
 
-exports.get = function (req, res, next) {
+exports.get = function (req, reply) {
 
-    exports.load(req.api.userId, function (storage, err) {
+    exports.load(req.hapi.userId, function (storage, err) {
 
         if (storage &&
             storage.clients &&
-            storage.clients[req.api.clientId]) {
+            storage.clients[req.hapi.clientId]) {
 
             if (req.params.id) {
 
                 if (internals.checkKey(req.params.id)) {
 
-                    if (storage.clients[req.api.clientId][req.params.id]) {
+                    if (storage.clients[req.hapi.clientId][req.params.id]) {
 
                         var result = {};
-                        result[req.params.id] = storage.clients[req.api.clientId][req.params.id];
+                        result[req.params.id] = storage.clients[req.hapi.clientId][req.params.id];
 
-                        res.api.result = result;
-                        next();
+                        reply(result);
                     }
                     else {
 
-                        res.api.error = Err.notFound();
-                        next();
+                        reply(Hapi.Error.notFound());
                     }
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Invalid key');
-                    next();
+                    reply(Hapi.Error.badRequest('Invalid key'));
                 }
             }
             else {
 
-                res.api.result = storage.clients[req.api.clientId];
-                next();
+                reply(storage.clients[req.hapi.clientId]);
             }
         }
         else if (err === null) {
 
             if (req.params.id) {
 
-                res.api.error = Err.notFound();
-                next();
+                reply(Hapi.Error.notFound());
             }
             else {
 
-                res.api.result = {};
-                next();
+                reply({});
             }
         }
         else {
 
-            res.api.error = err;
-            next();
+            reply(err);
         }
     });
 };
@@ -87,11 +79,11 @@ exports.get = function (req, res, next) {
 
 // Set user client data
 
-exports.post = function (req, res, next) {
+exports.post = function (req, reply) {
 
     if (internals.checkKey(req.params.id)) {
 
-        exports.load(req.api.userId, function (storage, err) {
+        exports.load(req.hapi.userId, function (storage, err) {
 
             if (err === null) {
 
@@ -102,34 +94,32 @@ exports.post = function (req, res, next) {
                     var changes = { $set: {} };
                     if (storage.clients) {
 
-                        if (storage.clients[req.api.clientId]) {
+                        if (storage.clients[req.hapi.clientId]) {
 
-                            changes.$set['clients.' + req.api.clientId + '.' + req.params.id] = req.body.value;
+                            changes.$set['clients.' + req.hapi.clientId + '.' + req.params.id] = req.hapi.payload.value;
                         }
                         else {
 
-                            changes.$set['clients.' + req.api.clientId] = {};
-                            changes.$set['clients.' + req.api.clientId][req.params.id] = req.body.value;
+                            changes.$set['clients.' + req.hapi.clientId] = {};
+                            changes.$set['clients.' + req.hapi.clientId][req.params.id] = req.hapi.payload.value;
                         }
                     }
                     else {
 
                         changes.$set.clients = {};
-                        changes.$set.clients[req.api.clientId] = {};
-                        changes.$set.clients[req.api.clientId][req.params.id] = req.body.value;
+                        changes.$set.clients[req.hapi.clientId] = {};
+                        changes.$set.clients[req.hapi.clientId][req.params.id] = req.hapi.payload.value;
                     }
 
                     Db.update('user.storage', storage._id, changes, function (err) {
 
                         if (err === null) {
 
-                            res.api.result = { status: 'ok' };
-                            next();
+                            reply({ status: 'ok' });
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
@@ -137,94 +127,84 @@ exports.post = function (req, res, next) {
 
                     // First client data
 
-                    storage = { _id: req.api.userId, clients: {} };
-                    storage.clients[req.api.clientId] = {};
-                    storage.clients[req.api.clientId][req.params.id] = req.body.value;
+                    storage = { _id: req.hapi.userId, clients: {} };
+                    storage.clients[req.hapi.clientId] = {};
+                    storage.clients[req.hapi.clientId][req.params.id] = req.hapi.payload.value;
 
                     Db.insert('user.storage', storage, function (items, err) {
 
                         if (err === null) {
 
-                            res.api.result = { status: 'ok' };
-                            next();
+                            reply({ status: 'ok' });
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Invalid key');
-        next();
+        reply(Hapi.Error.badRequest('Invalid key'));
     }
 };
 
 
 // Delete user client data
 
-exports.del = function (req, res, next) {
+exports.del = function (req, reply) {
 
     if (internals.checkKey(req.params.id)) {
 
-        exports.load(req.api.userId, function (storage, err) {
+        exports.load(req.hapi.userId, function (storage, err) {
 
             if (storage) {
 
                 if (storage &&
                 storage.clients &&
-                storage.clients[req.api.clientId] &&
-                storage.clients[req.api.clientId][req.params.id]) {
+                storage.clients[req.hapi.clientId] &&
+                storage.clients[req.hapi.clientId][req.params.id]) {
 
                     var changes = { $unset: {} };
-                    changes.$unset['clients.' + req.api.clientId + '.' + req.params.id] = 1;
+                    changes.$unset['clients.' + req.hapi.clientId + '.' + req.params.id] = 1;
 
                     Db.update('user.storage', storage._id, changes, function (err) {
 
                         if (err === null) {
 
-                            res.api.result = { status: 'ok' };
-                            next();
+                            reply({ status: 'ok' });
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
                 else {
 
-                    res.api.error = Err.notFound();
-                    next();
+                    reply(Hapi.Error.notFound());
                 }
             }
             else if (err === null) {
 
-                res.api.error = Err.notFound();
-                next();
+                reply(Hapi.Error.notFound());
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Invalid key');
-        next();
+        reply(Hapi.Error.badRequest('Invalid key'));
     }
 };
 

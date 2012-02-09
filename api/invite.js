@@ -5,9 +5,8 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Db = require('./db');
-var Utils = require('hapi').Utils;
-var Err = require('hapi').Error;
 var Project = require('./project');
 var User = require('./user');
 var Stream = require('./stream');
@@ -15,7 +14,7 @@ var Stream = require('./stream');
 
 // Check invitation code
 
-exports.get = function (req, res, next) {
+exports.get = function (req, reply) {
 
     // Check invitation code type
 
@@ -72,20 +71,17 @@ exports.get = function (req, res, next) {
                             about.inviter = inviter.display;
                         }
 
-                        res.api.result = about;
-                        next();
+                        reply(about);
                     });
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Invalid invitation code');
-                    next();
+                    reply(Hapi.Error.badRequest('Invalid invitation code'));
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -97,13 +93,11 @@ exports.get = function (req, res, next) {
 
             if (err === null) {
 
-                res.api.result = invite;
-                next();
+                reply(invite);
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
@@ -112,7 +106,7 @@ exports.get = function (req, res, next) {
 
 // Claim a project invitation
 
-exports.claim = function (req, res, next) {
+exports.claim = function (req, reply) {
 
     var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
     var parts = inviteRegex.exec(req.params.id);
@@ -155,38 +149,33 @@ exports.claim = function (req, res, next) {
 
                 if (projectPid) {
 
-                    Project.replacePid(project, projectPid.pid, req.api.userId, function (err) {
+                    Project.replacePid(project, projectPid.pid, req.hapi.userId, function (err) {
 
                         if (err === null) {
 
                             Stream.update({ object: 'project', project: projectId }, req);
-                            res.api.result = { status: 'ok', project: projectId };
-                            next();
+                            reply({ status: 'ok', project: projectId });
                         }
                         else {
 
-                            res.api.error = err;
-                            next();
+                            reply(err);
                         }
                     });
                 }
                 else {
 
-                    res.api.error = Err.badRequest('Invalid invitation code');
-                    next();
+                    reply(Hapi.Error.badRequest('Invalid invitation code'));
                 }
             }
             else {
 
-                res.api.error = err;
-                next();
+                reply(err);
             }
         });
     }
     else {
 
-        res.api.error = Err.badRequest('Invalid invitation format');
-        next();
+        reply(Hapi.Error.badRequest('Invalid invitation format'));
     }
 };
 
@@ -210,7 +199,7 @@ exports.load = function (code, callback) {
 
                 // Check expiration
 
-                if ((invite.expires || Infinity) > Utils.getTimestamp()) {
+                if ((invite.expires || Infinity) > Hapi.Utils.getTimestamp()) {
 
                     // Check count
 
@@ -222,17 +211,17 @@ exports.load = function (code, callback) {
                     }
                     else {
 
-                        callback(null, Err.badRequest('Invitation code reached limit'));
+                        callback(null, Hapi.Error.badRequest('Invitation code reached limit'));
                     }
                 }
                 else {
 
-                    callback(null, Err.badRequest('Invitation Code expired'));
+                    callback(null, Hapi.Error.badRequest('Invitation Code expired'));
                 }
             }
             else {
 
-                callback(null, Err.notFound('Invitation code not found'));
+                callback(null, Hapi.Error.notFound('Invitation code not found'));
             }
         }
         else {
