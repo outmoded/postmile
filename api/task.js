@@ -304,7 +304,7 @@ exports.put = function (request, reply) {
 
                 Stream.update({ object: 'tasks', project: task.project }, request);
                 var result = { status: 'ok', id: items[0]._id };
-                var replyOptions = { created: '/task/' + items[0]._id };
+                var replyOptions = { created: 'task/' + items[0]._id };
 
                 if (request.query.position !== null &&
                     request.query.position !== undefined) {        // Must test explicitly as value can be 0

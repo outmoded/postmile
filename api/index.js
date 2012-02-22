@@ -64,7 +64,7 @@ Hapi.Process.initialize({
 
 var configuration = {
 
-    uri: Config.host.uri('api'),
+    name: 'http',
 
     // Terms of Service
 
@@ -88,7 +88,7 @@ var configuration = {
     }
 };
 
-var server = Hapi.Server.create(configuration, Routes.endpoints);
+var server = Hapi.Server.create(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
 
 // Initialize database connection
 

@@ -215,7 +215,7 @@ exports.put = function (request, reply) {
         if (err === null) {
 
             Stream.update({ object: 'projects', user: request.userId }, request);
-            reply({ status: 'ok', id: items[0]._id }, { created: '/project/' + items[0]._id });
+            reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
         }
         else {
 
