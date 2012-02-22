@@ -33,20 +33,20 @@ exports.type.put.participants.set = false;
 
 // Task information
 
-exports.get = function (req, reply) {
+exports.get = function (request, reply) {
 
-    exports.load(req.params.id, req.hapi.userId, false, function (task, err) {
+    exports.load(request.params.id, request.userId, false, function (task, err) {
 
         if (task) {
 
-            Details.expandIds([req.params.id], task.project, req.hapi.userId, function (details) {
+            Details.expandIds([request.params.id], task.project, request.userId, function (details) {
 
                 if (details &&
-                    details[req.params.id]) {
+                    details[request.params.id]) {
 
-                    task.detailsModified = details[req.params.id].modified;
-                    task.detailsModifiedBy = details[req.params.id].user;
-                    task.last = details[req.params.id].last;
+                    task.detailsModified = details[request.params.id].modified;
+                    task.detailsModifiedBy = details[request.params.id].user;
+                    task.last = details[request.params.id].last;
                 }
 
                 Hapi.Utils.hide(task, exports.type.post);
@@ -63,13 +63,13 @@ exports.get = function (req, reply) {
 
 // Get list of tasks for given project
 
-exports.list = function (req, reply) {
+exports.list = function (request, reply) {
 
-    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
+    Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
         if (project) {
 
-            Sort.list('task', req.params.id, 'project', function (tasks) {
+            Sort.list('task', request.params.id, 'project', function (tasks) {
 
                 if (tasks) {
 
@@ -89,7 +89,7 @@ exports.list = function (req, reply) {
 
                             for (var p = 0, pl = tasks[i].participants.length; p < pl; ++p) {
 
-                                if (tasks[i].participants[p] === req.hapi.userId) {
+                                if (tasks[i].participants[p] === request.userId) {
 
                                     task.isMe = true;
                                     break;
@@ -107,7 +107,7 @@ exports.list = function (req, reply) {
                         ids.push(tasks[i]._id);
                     }
 
-                    Details.expandIds(ids, req.params.id, req.hapi.userId, function (details) {
+                    Details.expandIds(ids, request.params.id, request.userId, function (details) {
 
                         if (details) {
 
@@ -141,37 +141,37 @@ exports.list = function (req, reply) {
 
 // Update task properties
 
-exports.post = function (req, reply) {
+exports.post = function (request, reply) {
 
-    exports.load(req.params.id, req.hapi.userId, true, function (task, err, project) {
+    exports.load(request.params.id, request.userId, true, function (task, err, project) {
 
         if (task) {
 
-            if (Object.keys(req.hapi.payload).length > 0) {
+            if (Object.keys(request.payload).length > 0) {
 
-                if (req.query.position === undefined) {
+                if (request.query.position === undefined) {
 
                     // Task fields
 
                     var isInvalid = false;
 
-                    if (req.hapi.payload.participants &&
-                        req.hapi.payload.participants.length > 0) {
+                    if (request.payload.participants &&
+                        request.payload.participants.length > 0) {
 
                         // Verify participants are members of the project
 
                         var error = null;
                         var index = {};
 
-                        for (var p = 0, pl = req.hapi.payload.participants.length; p < pl; ++p) {
+                        for (var p = 0, pl = request.payload.participants.length; p < pl; ++p) {
 
-                            if (index[req.hapi.payload.participants[p]] !== true) {
+                            if (index[request.payload.participants[p]] !== true) {
 
-                                index[req.hapi.payload.participants[p]] = true;
+                                index[request.payload.participants[p]] = true;
 
-                                if (Project.isMember(project, req.hapi.payload.participants[p]) === false) {
+                                if (Project.isMember(project, request.payload.participants[p]) === false) {
 
-                                    error = 'user ' + req.hapi.payload.participants[p] + ' is not a member of the Project';
+                                    error = 'user ' + request.payload.participants[p] + ' is not a member of the Project';
                                     break;
                                 }
                             }
@@ -191,11 +191,11 @@ exports.post = function (req, reply) {
 
                     if (isInvalid === false) {
 
-                        Db.update('task', task._id, Db.toChanges(req.hapi.payload), function (err) {
+                        Db.update('task', task._id, Db.toChanges(request.payload), function (err) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'task', project: task.project, task: task._id }, req);
+                                Stream.update({ object: 'task', project: task.project, task: task._id }, request);
                                 reply({ status: 'ok' });
                             }
                             else {
@@ -210,16 +210,16 @@ exports.post = function (req, reply) {
                     reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
                 }
             }
-            else if (req.query.position !== null &&
-                     req.query.position !== undefined) {        // Must test explicitly as value can be 0
+            else if (request.query.position !== null &&
+                     request.query.position !== undefined) {        // Must test explicitly as value can be 0
 
                 // Set task position in list
 
-                Sort.set('task', task.project, 'project', req.params.id, req.query.position, function (err) {
+                Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
 
                     if (err === null) {
 
-                        Stream.update({ object: 'tasks', project: task.project }, req);
+                        Stream.update({ object: 'tasks', project: task.project }, request);
                         reply({ status: 'ok' });
                     }
                     else {
@@ -243,19 +243,19 @@ exports.post = function (req, reply) {
 
 // Create new task
 
-exports.put = function (req, reply) {
+exports.put = function (request, reply) {
 
-    Project.load(req.params.id, req.hapi.userId, true, function (project, member, err) {
+    Project.load(request.params.id, request.userId, true, function (project, member, err) {
 
         if (project) {
 
-            if (req.query.suggestion) {
+            if (request.query.suggestion) {
 
                 // From suggestion
 
-                if (!req.hapi.rawBody) {
+                if (!request.rawBody) {
 
-                    Suggestions.get(req.query.suggestion, function (suggestion) {
+                    Suggestions.get(request.query.suggestion, function (suggestion) {
 
                         if (suggestion) {
 
@@ -277,9 +277,9 @@ exports.put = function (req, reply) {
 
                 // From body
 
-                if (req.hapi.payload.title) {
+                if (request.payload.title) {
 
-                    addTask(req.hapi.payload);
+                    addTask(request.payload);
                 }
                 else {
 
@@ -295,27 +295,27 @@ exports.put = function (req, reply) {
 
     function addTask(task) {
 
-        task.project = req.params.id;
+        task.project = request.params.id;
         task.status = task.status || 'open';
 
         Db.insert('task', task, function (items, err) {
 
             if (err === null) {
 
-                Stream.update({ object: 'tasks', project: task.project }, req);
+                Stream.update({ object: 'tasks', project: task.project }, request);
                 var result = { status: 'ok', id: items[0]._id };
                 var replyOptions = { created: '/task/' + items[0]._id };
 
-                if (req.query.position !== null &&
-                    req.query.position !== undefined) {        // Must test explicitly as value can be 0
+                if (request.query.position !== null &&
+                    request.query.position !== undefined) {        // Must test explicitly as value can be 0
 
                     // Set task position in list
 
-                    Sort.set('task', task.project, 'project', result.id, req.query.position, function (err) {
+                    Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
 
                         if (err === null) {
 
-                            result.position = req.query.position;
+                            result.position = request.query.position;
                         }
 
                         reply(result, replyOptions);
@@ -337,9 +337,9 @@ exports.put = function (req, reply) {
 
 // Delete a task
 
-exports.del = function (req, reply) {
+exports.del = function (request, reply) {
 
-    exports.load(req.params.id, req.hapi.userId, true, function (task, err) {
+    exports.load(request.params.id, request.userId, true, function (task, err) {
 
         if (task) {
 
@@ -349,7 +349,7 @@ exports.del = function (req, reply) {
 
                     Db.remove('task.details', task._id, function (err) { });
 
-                    Stream.update({ object: 'tasks', project: task.project }, req);
+                    Stream.update({ object: 'tasks', project: task.project }, request);
                     reply({ status: 'ok' });
                 }
                 else {

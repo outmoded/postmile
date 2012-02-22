@@ -56,16 +56,16 @@ exports.initialize = function () {
 
 // Remove suggestion from project
 
-exports.exclude = function (req, reply) {
+exports.exclude = function (request, reply) {
 
-    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
+    Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
         if (project) {
 
-            var suggestion = internals.suggestions[req.params.drop];
+            var suggestion = internals.suggestions[request.params.drop];
             if (suggestion) {
 
-                Db.get('user.exclude', req.hapi.userId, function (excludes, err) {
+                Db.get('user.exclude', request.userId, function (excludes, err) {
 
                     if (err === null) {
 
@@ -82,25 +82,25 @@ exports.exclude = function (req, reply) {
 
                                     if (excludes.projects[project._id].suggestions) {
 
-                                        changes.$set['projects.' + project._id + '.suggestions.' + req.params.drop] = now;
+                                        changes.$set['projects.' + project._id + '.suggestions.' + request.params.drop] = now;
                                     }
                                     else {
 
                                         changes.$set['projects.' + project._id + '.suggestions'] = {};
-                                        changes.$set['projects.' + project._id + '.suggestions'][req.params.drop] = now;
+                                        changes.$set['projects.' + project._id + '.suggestions'][request.params.drop] = now;
                                     }
                                 }
                                 else {
 
                                     changes.$set['projects.' + project._id] = { suggestions: {} };
-                                    changes.$set['projects.' + project._id].suggestions[req.params.drop] = now;
+                                    changes.$set['projects.' + project._id].suggestions[request.params.drop] = now;
                                 }
                             }
                             else {
 
                                 changes.$set.projects = {};
                                 changes.$set.projects[project._id] = { suggestions: {} };
-                                changes.$set.projects[project._id].suggestions[req.params.drop] = now;
+                                changes.$set.projects[project._id].suggestions[request.params.drop] = now;
                             }
 
                             Db.update('user.exclude', excludes._id, changes, function (err) {
@@ -119,9 +119,9 @@ exports.exclude = function (req, reply) {
 
                             // First exclude
 
-                            excludes = { _id: req.hapi.userId, projects: {} };
+                            excludes = { _id: request.userId, projects: {} };
                             excludes.projects[project._id] = { suggestions: {} };
-                            excludes.projects[project._id].suggestions[req.params.drop] = Hapi.Utils.getTimestamp();
+                            excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
 
                             Db.insert('user.exclude', excludes, function (items, err) {
 

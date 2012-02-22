@@ -49,19 +49,19 @@ exports.type.client = {
 
 // Get session token
 
-exports.token = function (req, reply) {
+exports.token = function (request, reply) {
 
-    exports.loadClient(req.hapi.payload.client_id, function (client, err) {
+    exports.loadClient(request.payload.client_id, function (client, err) {
 
         if (client) {
 
             // Check client secret
 
-            if ((client.secret || '') === (req.hapi.payload.client_secret || '')) {
+            if ((client.secret || '') === (request.payload.client_secret || '')) {
 
                 // Switch on grant type
 
-                switch (req.hapi.payload.grant_type) {
+                switch (request.payload.grant_type) {
 
                     case 'client_credentials':
 
@@ -74,9 +74,9 @@ exports.token = function (req, reply) {
 
                         // Refresh token
 
-                        if (req.hapi.payload.refresh_token) {
+                        if (request.payload.refresh_token) {
 
-                            var refresh = Hapi.Utils.decrypt(Vault.oauthRefresh.aes256Key, req.hapi.payload.refresh_token);
+                            var refresh = Hapi.Utils.decrypt(Vault.oauthRefresh.aes256Key, request.payload.refresh_token);
                             if (refresh &&
                                 refresh.user &&
                                 refresh.client) {
@@ -117,11 +117,11 @@ exports.token = function (req, reply) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.hapi.scope && req.hapi.scope.login === true)) {
+                            (request.scope && request.scope.login === true)) {
 
                             // Get user
 
-                            User.load(req.hapi.payload.x_user_id, function (user, err) {
+                            User.load(request.payload.x_user_id, function (user, err) {
 
                                 if (user) {
 
@@ -147,11 +147,11 @@ exports.token = function (req, reply) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.hapi.scope && req.hapi.scope.login === true)) {
+                            (request.scope && request.scope.login === true)) {
 
                             // Check Twitter identifier
 
-                            User.validate(req.hapi.payload.x_user_id, 'twitter', function (user, err) {
+                            User.validate(request.payload.x_user_id, 'twitter', function (user, err) {
 
                                 if (user) {
 
@@ -160,7 +160,7 @@ exports.token = function (req, reply) {
                                 else {
 
                                     // Unregistered Twitter account
-                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Twitter account: ' + req.hapi.payload.x_user_id));
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Twitter account: ' + request.payload.x_user_id));
                                 }
                             });
                         }
@@ -177,11 +177,11 @@ exports.token = function (req, reply) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.hapi.scope && req.hapi.scope.login === true)) {
+                            (request.scope && request.scope.login === true)) {
 
                             // Check Facebook identifier
 
-                            User.validate(req.hapi.payload.x_user_id, 'facebook', function (user, err) {
+                            User.validate(request.payload.x_user_id, 'facebook', function (user, err) {
 
                                 if (user) {
 
@@ -190,7 +190,7 @@ exports.token = function (req, reply) {
                                 else {
 
                                     // Unregistered Facebook account
-                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Facebook account: ' + req.hapi.payload.x_user_id));
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Facebook account: ' + request.payload.x_user_id));
                                 }
                             });
                         }
@@ -207,11 +207,11 @@ exports.token = function (req, reply) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.hapi.scope && req.hapi.scope.login === true)) {
+                            (request.scope && request.scope.login === true)) {
 
                             // Check Yahoo identifier
 
-                            User.validate(req.hapi.payload.x_user_id, 'yahoo', function (user, err) {
+                            User.validate(request.payload.x_user_id, 'yahoo', function (user, err) {
 
                                 if (user) {
 
@@ -220,7 +220,7 @@ exports.token = function (req, reply) {
                                 else {
 
                                     // Unregistered Yahoo account
-                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Yahoo! account: ' + req.hapi.payload.x_user_id));
+                                    reply(Hapi.Error.oauth('invalid_grant', 'Unknown Yahoo! account: ' + request.payload.x_user_id));
                                 }
                             });
                         }
@@ -237,11 +237,11 @@ exports.token = function (req, reply) {
                         // Check if client has 'login' scope
 
                         if ((client.scope && client.scope.login === true) ||
-                            (req.hapi.scope && req.hapi.scope.login === true)) {
+                            (request.scope && request.scope.login === true)) {
 
                             // Check email identifier
 
-                            Email.loadTicket(req.hapi.payload.x_email_token, function (ticket, user, err) {
+                            Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
 
                                 if (ticket) {
 
@@ -286,7 +286,7 @@ exports.token = function (req, reply) {
 
         if (user === null ||
             (client.scope && client.scope.authorized === true) ||
-            (req.hapi.scope && req.hapi.scope.authorized === true)) {
+            (request.scope && request.scope.authorized === true)) {
 
             // Client has static authorization
 
@@ -414,9 +414,9 @@ exports.token = function (req, reply) {
 
 // Get client information
 
-exports.client = function (req, reply) {
+exports.client = function (request, reply) {
 
-    exports.loadClient(req.params.id, function (client, err) {
+    exports.loadClient(request.params.id, function (client, err) {
 
         if (err === null) {
 

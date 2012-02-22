@@ -188,7 +188,7 @@ MAC.parseUri = function (URI) {
 
 // Adapted from http://www.webtoolkit.info/javascript-url-decode-encode.html
 
-MAC.utf8Ezncode = function (string) {
+MAC.utf8Encode = function (string) {
 
     string = string.replace(/\r\n/g, '\n');
     var utfString = '';

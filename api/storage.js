@@ -24,22 +24,22 @@ exports.type = {
 
 // User client data
 
-exports.get = function (req, reply) {
+exports.get = function (request, reply) {
 
-    exports.load(req.hapi.userId, function (storage, err) {
+    exports.load(request.userId, function (storage, err) {
 
         if (storage &&
             storage.clients &&
-            storage.clients[req.hapi.clientId]) {
+            storage.clients[request.clientId]) {
 
-            if (req.params.id) {
+            if (request.params.id) {
 
-                if (internals.checkKey(req.params.id)) {
+                if (internals.checkKey(request.params.id)) {
 
-                    if (storage.clients[req.hapi.clientId][req.params.id]) {
+                    if (storage.clients[request.clientId][request.params.id]) {
 
                         var result = {};
-                        result[req.params.id] = storage.clients[req.hapi.clientId][req.params.id];
+                        result[request.params.id] = storage.clients[request.clientId][request.params.id];
 
                         reply(result);
                     }
@@ -55,12 +55,12 @@ exports.get = function (req, reply) {
             }
             else {
 
-                reply(storage.clients[req.hapi.clientId]);
+                reply(storage.clients[request.clientId]);
             }
         }
         else if (err === null) {
 
-            if (req.params.id) {
+            if (request.params.id) {
 
                 reply(Hapi.Error.notFound());
             }
@@ -79,11 +79,11 @@ exports.get = function (req, reply) {
 
 // Set user client data
 
-exports.post = function (req, reply) {
+exports.post = function (request, reply) {
 
-    if (internals.checkKey(req.params.id)) {
+    if (internals.checkKey(request.params.id)) {
 
-        exports.load(req.hapi.userId, function (storage, err) {
+        exports.load(request.userId, function (storage, err) {
 
             if (err === null) {
 
@@ -94,21 +94,21 @@ exports.post = function (req, reply) {
                     var changes = { $set: {} };
                     if (storage.clients) {
 
-                        if (storage.clients[req.hapi.clientId]) {
+                        if (storage.clients[request.clientId]) {
 
-                            changes.$set['clients.' + req.hapi.clientId + '.' + req.params.id] = req.hapi.payload.value;
+                            changes.$set['clients.' + request.clientId + '.' + request.params.id] = request.payload.value;
                         }
                         else {
 
-                            changes.$set['clients.' + req.hapi.clientId] = {};
-                            changes.$set['clients.' + req.hapi.clientId][req.params.id] = req.hapi.payload.value;
+                            changes.$set['clients.' + request.clientId] = {};
+                            changes.$set['clients.' + request.clientId][request.params.id] = request.payload.value;
                         }
                     }
                     else {
 
                         changes.$set.clients = {};
-                        changes.$set.clients[req.hapi.clientId] = {};
-                        changes.$set.clients[req.hapi.clientId][req.params.id] = req.hapi.payload.value;
+                        changes.$set.clients[request.clientId] = {};
+                        changes.$set.clients[request.clientId][request.params.id] = request.payload.value;
                     }
 
                     Db.update('user.storage', storage._id, changes, function (err) {
@@ -127,9 +127,9 @@ exports.post = function (req, reply) {
 
                     // First client data
 
-                    storage = { _id: req.hapi.userId, clients: {} };
-                    storage.clients[req.hapi.clientId] = {};
-                    storage.clients[req.hapi.clientId][req.params.id] = req.hapi.payload.value;
+                    storage = { _id: request.userId, clients: {} };
+                    storage.clients[request.clientId] = {};
+                    storage.clients[request.clientId][request.params.id] = request.payload.value;
 
                     Db.insert('user.storage', storage, function (items, err) {
 
@@ -159,21 +159,21 @@ exports.post = function (req, reply) {
 
 // Delete user client data
 
-exports.del = function (req, reply) {
+exports.del = function (request, reply) {
 
-    if (internals.checkKey(req.params.id)) {
+    if (internals.checkKey(request.params.id)) {
 
-        exports.load(req.hapi.userId, function (storage, err) {
+        exports.load(request.userId, function (storage, err) {
 
             if (storage) {
 
                 if (storage &&
                 storage.clients &&
-                storage.clients[req.hapi.clientId] &&
-                storage.clients[req.hapi.clientId][req.params.id]) {
+                storage.clients[request.clientId] &&
+                storage.clients[request.clientId][request.params.id]) {
 
                     var changes = { $unset: {} };
-                    changes.$unset['clients.' + req.hapi.clientId + '.' + req.params.id] = 1;
+                    changes.$unset['clients.' + request.clientId + '.' + request.params.id] = 1;
 
                     Db.update('user.storage', storage._id, changes, function (err) {
 

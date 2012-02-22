@@ -18,22 +18,22 @@ var internals = {};
 
 // Last information for project (with tasks)
 
-exports.getProject = function (req, reply) {
+exports.getProject = function (request, reply) {
 
-    exports.load(req.hapi.userId, function (last, err) {
+    exports.load(request.userId, function (last, err) {
 
         if (last &&
             last.projects &&
-            last.projects[req.params.id]) {
+            last.projects[request.params.id]) {
 
             var record = { id: last._id, projects: {} };
-            record.projects[req.params.id] = last.projects[req.params.id];
+            record.projects[request.params.id] = last.projects[request.params.id];
 
             reply(record);
         }
         else if (err === null) {
 
-            reply({ id: req.hapi.userId, projects: {} });
+            reply({ id: request.userId, projects: {} });
         }
         else {
 
@@ -45,13 +45,13 @@ exports.getProject = function (req, reply) {
 
 // Set last project timestamp
 
-exports.postProject = function (req, reply) {
+exports.postProject = function (request, reply) {
 
-    Project.load(req.params.id, req.hapi.userId, false, function (project, member, err) {
+    Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
         if (project) {
 
-            exports.setLast(req.hapi.userId, project, null, function (err) {
+            exports.setLast(request.userId, project, null, function (err) {
 
                 if (err === null) {
 
@@ -73,29 +73,29 @@ exports.postProject = function (req, reply) {
 
 // Last information for single task
 
-exports.getTask = function (req, reply) {
+exports.getTask = function (request, reply) {
 
-    Task.load(req.params.id, req.hapi.userId, false, function (task, err, project) {
+    Task.load(request.params.id, request.userId, false, function (task, err, project) {
 
         if (task) {
 
-            exports.load(req.hapi.userId, function (last, err) {
+            exports.load(request.userId, function (last, err) {
 
                 if (last &&
                     last.projects &&
                     last.projects[task.project] &&
                     last.projects[task.project].tasks &&
-                    last.projects[task.project].tasks[req.params.id]) {
+                    last.projects[task.project].tasks[request.params.id]) {
 
                     var record = { id: last._id, projects: {} };
                     record.projects[task.project] = { tasks: {} };
-                    record.projects[task.project].tasks[req.params.id] = last.projects[task.project].tasks[req.params.id];
+                    record.projects[task.project].tasks[request.params.id] = last.projects[task.project].tasks[request.params.id];
 
                     reply(record);
                 }
                 else if (err === null) {
 
-                    reply({ id: req.hapi.userId, projects: {} });
+                    reply({ id: request.userId, projects: {} });
                 }
                 else {
 
@@ -113,13 +113,13 @@ exports.getTask = function (req, reply) {
 
 // Set last task timestamp
 
-exports.postTask = function (req, reply) {
+exports.postTask = function (request, reply) {
 
-    Task.load(req.params.id, req.hapi.userId, false, function (task, err, project) {
+    Task.load(request.params.id, request.userId, false, function (task, err, project) {
 
         if (task) {
 
-            exports.setLast(req.hapi.userId, project, task, function (err) {
+            exports.setLast(request.userId, project, task, function (err) {
 
                 if (err === null) {
 

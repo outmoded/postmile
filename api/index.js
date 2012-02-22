@@ -20,6 +20,39 @@ var Tips = require('./tips');
 var internals = {};
 
 
+// Post handler extension middleware
+
+internals.onPostHandler = function (req, res, next) {
+
+    if (res.hapi.result) {
+
+        // Sanitize database fields
+
+        if (res.hapi.result._id) {
+
+            res.hapi.result.id = res.hapi.result._id;
+            delete res.hapi.result._id;
+        }
+
+        if (res.hapi.result instanceof Object) {
+
+            for (var i in res.hapi.result) {
+
+                if (res.hapi.result.hasOwnProperty(i)) {
+
+                    if (i[0] === '_') {
+
+                        delete res.hapi.result[i];
+                    }
+                }
+            }
+        }
+    }
+
+    next();
+};
+
+
 // Create and configure server instance
 
 Hapi.Process.initialize({
@@ -44,7 +77,14 @@ var configuration = {
 
     authentication: {
 
-        loadSession: Session.load
+        loadSessionFunc: Session.load
+    },
+
+    // Extension points
+
+    ext: {
+
+        onPostHandler: internals.onPostHandler
     }
 };
 

@@ -26,7 +26,7 @@ exports.type = {
 
 // Batch processing
 
-exports.post = function (req, reply) {
+exports.post = function (request, reply) {
 
     var requests = [];
     var results = [];
@@ -69,12 +69,12 @@ exports.post = function (req, reply) {
             }
         };
 
-        for (var i = 0, il = req.hapi.payload.get.length; i < il; ++i) {
+        for (var i = 0, il = request.payload.get.length; i < il; ++i) {
 
             // Break into parts
 
             var parts = [];
-            var result = req.hapi.payload.get[i].replace(requestRegex, parseRequest);
+            var result = request.payload.get[i].replace(requestRegex, parseRequest);
 
             // Make sure entire string was processed (empty)
 
@@ -177,7 +177,7 @@ exports.post = function (req, reply) {
 
                 // Make request
 
-                internals.call('GET', path, null, req.hapi.session, function (data, err) {
+                internals.call('GET', path, null, request.session, function (data, err) {
 
                     if (err === null) {
 

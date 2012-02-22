@@ -26,19 +26,19 @@ exports.type = {
 
 // Task details
 
-exports.get = function (req, reply) {
+exports.get = function (request, reply) {
 
-    exports.load(req.params.id, req.hapi.userId, false, function (details, err, task, project) {
+    exports.load(request.params.id, request.userId, false, function (details, err, task, project) {
 
-        details = details || { id: req.params.id, thread: [] };
+        details = details || { id: request.params.id, thread: [] };
 
         if (err === null) {
 
             // Clear thread from old entries
 
-            if (req.query.since) {
+            if (request.query.since) {
 
-                var since = parseInt(req.query.since, 10);
+                var since = parseInt(request.query.since, 10);
                 if (since &&
                     since > 0) {
 
@@ -85,19 +85,19 @@ exports.get = function (req, reply) {
 
 // Add task detail
 
-exports.post = function (req, reply) {
+exports.post = function (request, reply) {
 
     var now = Hapi.Utils.getTimestamp();
 
-    exports.load(req.params.id, req.hapi.userId, true, function (details, err, task, project) {
+    exports.load(request.params.id, request.userId, true, function (details, err, task, project) {
 
         if (task) {
 
             if (err === null) {
 
-                var detail = req.hapi.payload;
+                var detail = request.payload;
                 detail.created = now;
-                detail.user = req.hapi.userId;
+                detail.user = request.userId;
 
                 if (details) {
 
@@ -148,13 +148,13 @@ exports.post = function (req, reply) {
 
     function finalize(task, project) {
 
-        if (req.query.last &&
-            req.query.last === 'true') {
+        if (request.query.last &&
+            request.query.last === 'true') {
 
-            Last.setLast(req.hapi.userId, project, task, function (err) {});    // Ignore response
+            Last.setLast(request.userId, project, task, function (err) {});    // Ignore response
         }
 
-        Stream.update({ object: 'details', project: task.project, task: task._id }, req);
+        Stream.update({ object: 'details', project: task.project, task: task._id }, request);
         reply({ status: 'ok' });
     }
 };

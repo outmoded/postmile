@@ -42,22 +42,21 @@ exports.initialize = function (server) {
 
 // Add update to queue
 
-exports.update = function (update, req) {
+exports.update = function (update, request) {
 
     update.type = 'update';
 
-    if (req &&
-        req.hapi) {
+    if (request) {
 
-        if (req.hapi.userId) {
+        if (request.userId) {
 
-            update.by = req.hapi.userId;
+            update.by = request.userId;
         }
 
-        if (req.hapi.session &&
-            req.hapi.session.id) {
+        if (request.session &&
+            request.session.id) {
 
-            update.macId = req.hapi.session.id.slice(0, 8);
+            update.macId = request.session.id.slice(0, 8);
         }
     }
 
@@ -67,34 +66,34 @@ exports.update = function (update, req) {
 
 // Subscribe
 
-exports.subscribe = function (req, reply) {
+exports.subscribe = function (request, reply) {
 
     // Lookup socket
 
-    if (internals.socketsById[req.params.id] &&
-        internals.socketsById[req.params.id].socket) {
+    if (internals.socketsById[request.params.id] &&
+        internals.socketsById[request.params.id].socket) {
 
-        if (internals.socketsById[req.params.id].userId) {
+        if (internals.socketsById[request.params.id].userId) {
 
-            if (internals.socketsById[req.params.id].userId === req.hapi.userId) {
+            if (internals.socketsById[request.params.id].userId === request.userId) {
 
-                var socket = internals.socketsById[req.params.id].socket;
+                var socket = internals.socketsById[request.params.id].socket;
 
                 // Lookup project
 
-                Project.load(req.params.project, req.hapi.userId, false, function (project, member, err) {
+                Project.load(request.params.project, request.userId, false, function (project, member, err) {
 
                     if (err === null) {
 
                         // Add to subscriber list
 
                         internals.idsByProject[project._id] = internals.idsByProject[project._id] || {};
-                        internals.idsByProject[project._id][req.params.id] = true;
+                        internals.idsByProject[project._id][request.params.id] = true;
 
                         // Add to cleanup list
 
-                        internals.projectsById[req.params.id] = internals.projectsById[req.params.id] || {};
-                        internals.projectsById[req.params.id][project._id] = true;
+                        internals.projectsById[request.params.id] = internals.projectsById[request.params.id] || {};
+                        internals.projectsById[request.params.id][project._id] = true;
 
                         // Send ack via the stream
 
@@ -129,36 +128,36 @@ exports.subscribe = function (req, reply) {
 
 // Unsubscribe
 
-exports.unsubscribe = function (req, reply) {
+exports.unsubscribe = function (request, reply) {
 
     // Lookup socket
 
-    if (internals.socketsById[req.params.id] &&
-        internals.socketsById[req.params.id].socket) {
+    if (internals.socketsById[request.params.id] &&
+        internals.socketsById[request.params.id].socket) {
 
-        if (internals.socketsById[req.params.id].userId) {
+        if (internals.socketsById[request.params.id].userId) {
 
-            if (internals.socketsById[req.params.id].userId === req.hapi.userId) {
+            if (internals.socketsById[request.params.id].userId === request.userId) {
 
-                var socket = internals.socketsById[req.params.id].socket;
+                var socket = internals.socketsById[request.params.id].socket;
 
                 // Remove from subscriber list
 
-                if (internals.idsByProject[req.params.project] &&
-                    internals.idsByProject[req.params.project][req.params.id]) {
+                if (internals.idsByProject[request.params.project] &&
+                    internals.idsByProject[request.params.project][request.params.id]) {
 
-                    delete internals.idsByProject[req.params.project][req.params.id];
+                    delete internals.idsByProject[request.params.project][request.params.id];
 
                     // Remove from cleanup list
 
-                    if (internals.projectsById[req.params.id]) {
+                    if (internals.projectsById[request.params.id]) {
 
-                        delete internals.projectsById[req.params.id][req.params.project];
+                        delete internals.projectsById[request.params.id][request.params.project];
                     }
 
                     // Send ack via the stream
 
-                    socket.json.send({ type: 'unsubscribe', project: req.params.project });
+                    socket.json.send({ type: 'unsubscribe', project: request.params.project });
 
                     // Send ack via the request
 

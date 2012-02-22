@@ -14,12 +14,12 @@ var Stream = require('./stream');
 
 // Check invitation code
 
-exports.get = function (req, reply) {
+exports.get = function (request, reply) {
 
     // Check invitation code type
 
     var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-    var parts = inviteRegex.exec(req.params.id);
+    var parts = inviteRegex.exec(request.params.id);
 
     if (parts &&
         parts.length === 4) {
@@ -89,7 +89,7 @@ exports.get = function (req, reply) {
 
         // Registration invitation code
 
-        exports.load(req.params.id, function (invite, err) {
+        exports.load(request.params.id, function (invite, err) {
 
             if (err === null) {
 
@@ -106,10 +106,10 @@ exports.get = function (req, reply) {
 
 // Claim a project invitation
 
-exports.claim = function (req, reply) {
+exports.claim = function (request, reply) {
 
     var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-    var parts = inviteRegex.exec(req.params.id);
+    var parts = inviteRegex.exec(request.params.id);
 
     if (parts &&
         parts.length === 4) {
@@ -149,11 +149,11 @@ exports.claim = function (req, reply) {
 
                 if (projectPid) {
 
-                    Project.replacePid(project, projectPid.pid, req.hapi.userId, function (err) {
+                    Project.replacePid(project, projectPid.pid, request.userId, function (err) {
 
                         if (err === null) {
 
-                            Stream.update({ object: 'project', project: projectId }, req);
+                            Stream.update({ object: 'project', project: projectId }, request);
                             reply({ status: 'ok', project: projectId });
                         }
                         else {

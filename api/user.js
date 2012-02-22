@@ -104,9 +104,9 @@ internals.forbiddenUsernames = {
 
 // Current user information
 
-exports.get = function (req, reply) {
+exports.get = function (request, reply) {
 
-    exports.load(req.hapi.userId, function (user, err) {
+    exports.load(request.userId, function (user, err) {
 
         if (user) {
 
@@ -123,34 +123,34 @@ exports.get = function (req, reply) {
 
 // Change profile properties
 
-exports.post = function (req, reply) {
+exports.post = function (request, reply) {
 
-    exports.load(req.hapi.userId, function (user, err) {
+    exports.load(request.userId, function (user, err) {
 
         if (user) {
 
             // Remove identical username
 
-            if (req.hapi.payload.username &&
-                req.hapi.payload.username === user.username) {
+            if (request.payload.username &&
+                request.payload.username === user.username) {
 
-                delete req.hapi.payload.username;
+                delete request.payload.username;
             }
 
             // Lookup username
 
-            if (req.hapi.payload.username) {
+            if (request.payload.username) {
 
-                internals.checkUsername(req.hapi.payload.username, function (lookupUser, err) {
+                internals.checkUsername(request.payload.username, function (lookupUser, err) {
 
                     if (err &&
                         err.code === Hapi.Error.notFound().code) {
 
-                        Db.update('user', user._id, Db.toChanges(req.hapi.payload), function (err) {
+                        Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'profile', user: user._id }, req);
+                                Stream.update({ object: 'profile', user: user._id }, request);
                                 reply({ status: 'ok' });
                             }
                             else {
@@ -167,11 +167,11 @@ exports.post = function (req, reply) {
             }
             else {
 
-                Db.update('user', user._id, Db.toChanges(req.hapi.payload), function (err) {
+                Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
 
                     if (err === null) {
 
-                        Stream.update({ object: 'profile', user: user._id }, req);
+                        Stream.update({ object: 'profile', user: user._id }, request);
                         reply({ status: 'ok' });
                     }
                     else {
@@ -191,11 +191,11 @@ exports.post = function (req, reply) {
 
 // Change profile email settings
 
-exports.email = function (req, reply) {
+exports.email = function (request, reply) {
 
-    var address = req.hapi.payload.address.toLowerCase();
+    var address = request.payload.address.toLowerCase();
 
-    exports.load(req.hapi.userId, function (user, err) {
+    exports.load(request.userId, function (user, err) {
 
         if (user) {
 
@@ -213,7 +213,7 @@ exports.email = function (req, reply) {
                 }
             }
 
-            switch (req.hapi.payload.action) {
+            switch (request.payload.action) {
 
                 case 'add':
 
@@ -241,10 +241,10 @@ exports.email = function (req, reply) {
 
                                                 if (err) {
 
-                                                    Hapi.Log.err(err, req);
+                                                    Hapi.Log.err(err, request);
                                                 }
 
-                                                Stream.update({ object: 'profile', user: user._id }, req);
+                                                Stream.update({ object: 'profile', user: user._id }, request);
                                                 reply({ status: 'ok' });
                                             });
                                         }
@@ -300,7 +300,7 @@ exports.email = function (req, reply) {
 
                                     if (err === null) {
 
-                                        Stream.update({ object: 'profile', user: user._id }, req);
+                                        Stream.update({ object: 'profile', user: user._id }, request);
                                         reply({ status: 'ok' });
                                     }
                                     else {
@@ -344,7 +344,7 @@ exports.email = function (req, reply) {
 
                                     if (err === null) {
 
-                                        Stream.update({ object: 'profile', user: user._id }, req);
+                                        Stream.update({ object: 'profile', user: user._id }, request);
                                         reply({ status: 'ok' });
                                     }
                                     else {
@@ -412,11 +412,11 @@ exports.email = function (req, reply) {
 
 // Current user contacts list
 
-exports.contacts = function (req, reply) {
+exports.contacts = function (request, reply) {
 
-    if (req.query.exclude) {
+    if (request.query.exclude) {
 
-        Project.load(req.query.exclude, req.hapi.userId, false, function (project, member, err) {
+        Project.load(request.query.exclude, request.userId, false, function (project, member, err) {
 
             if (err === null) {
 
@@ -435,7 +435,7 @@ exports.contacts = function (req, reply) {
 
     function getList(exclude) {
 
-        exports.load(req.hapi.userId, function (user, err) {
+        exports.load(request.userId, function (user, err) {
 
             if (user) {
 
@@ -523,15 +523,15 @@ exports.contacts = function (req, reply) {
 
 // Who am I?
 
-exports.who = function (req, reply) {
+exports.who = function (request, reply) {
 
-    reply({ user: req.hapi.userId });
+    reply({ user: request.userId });
 };
 
 
 // Register new user
 
-exports.put = function (req, reply) {
+exports.put = function (request, reply) {
 
     // Check invitation code
 
@@ -542,16 +542,16 @@ exports.put = function (req, reply) {
     var email = null;
     var isEmailVerified = null;
 
-    if (req.query.invite) {
+    if (request.query.invite) {
 
         // Check code source (invite or project participation)
 
-        if (req.query.invite.indexOf('project:') === 0) {
+        if (request.query.invite.indexOf('project:') === 0) {
 
             // Project participation
 
             var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-            var parts = inviteRegex.exec(req.query.invite);
+            var parts = inviteRegex.exec(request.query.invite);
 
             if (parts &&
                 parts.length === 4) {
@@ -620,7 +620,7 @@ exports.put = function (req, reply) {
 
             // Invite code
 
-            Invite.load(req.query.invite, function (invite, err) {
+            Invite.load(request.query.invite, function (invite, err) {
 
                 if (err === null) {
 
@@ -645,12 +645,12 @@ exports.put = function (req, reply) {
 
         // Look for email address
 
-        email = (req.hapi.payload.email ? req.hapi.payload.email : (projectPid && projectPid.email ? projectPid.email : null));
+        email = (request.payload.email ? request.payload.email : (projectPid && projectPid.email ? projectPid.email : null));
         isEmailVerified = (projectPid && projectPid.email && projectPid.email === email ? true : false);
 
         // Check for at least one identifier
 
-        if (req.hapi.payload.network ||
+        if (request.payload.network ||
             email) {
 
             validateEmail();
@@ -692,15 +692,15 @@ exports.put = function (req, reply) {
 
     function validateNetwork() {
 
-        if (req.hapi.payload.network) {
+        if (request.payload.network) {
 
             var isValid = true;
             var error = null;
 
-            if (req.hapi.payload.network.length === 2) {
+            if (request.payload.network.length === 2) {
 
-                var network = req.hapi.payload.network[0];
-                var networkId = req.hapi.payload.network[1];
+                var network = request.payload.network[0];
+                var networkId = request.payload.network[1];
 
                 if (networkId) {
 
@@ -727,7 +727,7 @@ exports.put = function (req, reply) {
             if (isValid) {
 
                 var criteria = {};
-                criteria[req.hapi.payload.network[0]] = req.hapi.payload.network[1];
+                criteria[request.payload.network[0]] = request.payload.network[1];
 
                 Db.count('user', criteria, function (count, err) {
 
@@ -739,7 +739,7 @@ exports.put = function (req, reply) {
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest(req.hapi.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
+                            reply(Hapi.Error.badRequest(request.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
                         }
                     }
                     else {
@@ -761,9 +761,9 @@ exports.put = function (req, reply) {
 
     function validateUsername() {
 
-        if (req.hapi.payload.username) {
+        if (request.payload.username) {
 
-            internals.checkUsername(req.hapi.payload.username, function (lookupUser, err) {
+            internals.checkUsername(request.payload.username, function (lookupUser, err) {
 
                 if (err &&
                     err.code === Hapi.Error.notFound().code) {
@@ -786,14 +786,14 @@ exports.put = function (req, reply) {
 
         var user = { origin: origin };
 
-        if (req.hapi.payload.name) {
+        if (request.payload.name) {
 
-            user.name = req.hapi.payload.name;
+            user.name = request.payload.name;
         }
 
-        if (req.hapi.payload.username) {
+        if (request.payload.username) {
 
-            user.username = req.hapi.payload.username;
+            user.username = request.payload.username;
         }
 
         if (email) {
@@ -801,9 +801,9 @@ exports.put = function (req, reply) {
             user.emails = [{ address: email, isVerified: isEmailVerified}];
         }
 
-        if (req.hapi.payload.network) {
+        if (request.payload.network) {
 
-            user[req.hapi.payload.network[0]] = req.hapi.payload.network[1];
+            user[request.payload.network[0]] = request.payload.network[1];
         }
 
         Db.insert('user', user, function (items, err) {
@@ -830,7 +830,7 @@ exports.put = function (req, reply) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'project', project: projectPid.project._id }, req);
+                                Stream.update({ object: 'project', project: projectPid.project._id }, request);
                                 sendWelcome(items[0]);
                             }
                             else {
@@ -870,14 +870,14 @@ exports.put = function (req, reply) {
 
 // Set Terms of Service version
 
-exports.tos = function (req, reply) {
+exports.tos = function (request, reply) {
 
-    exports.load(req.params.id, function (user, err) {
+    exports.load(request.params.id, function (user, err) {
 
         if (user) {
 
             user.tos = user.tos || {};
-            user.tos[req.params.version] = Hapi.Utils.getTimestamp();
+            user.tos[request.params.version] = Hapi.Utils.getTimestamp();
 
             Db.update('user', user._id, { $set: { 'tos': user.tos} }, function (err) {
 
@@ -901,24 +901,24 @@ exports.tos = function (req, reply) {
 
 // Link other account
 
-exports.link = function (req, reply) {
+exports.link = function (request, reply) {
 
-    if (req.params.network === 'facebook' ||
-        req.params.network === 'twitter' ||
-        req.params.network === 'yahoo') {
+    if (request.params.network === 'facebook' ||
+        request.params.network === 'twitter' ||
+        request.params.network === 'yahoo') {
 
-        exports.load(req.params.id, function (user, err) {
+        exports.load(request.params.id, function (user, err) {
 
             if (user) {
 
                 // Check if already has a linked account for this network
                 
-                if (!user[req.params.network]) {
+                if (!user[request.params.network]) {
                 
                     // Check if already assigned to someone else
 
                     var criteria = {};
-                    criteria[req.params.network] = req.params.id;
+                    criteria[request.params.network] = request.params.id;
 
                     Db.count('user', criteria, function (count, err) {
 
@@ -927,13 +927,13 @@ exports.link = function (req, reply) {
                             if (count === 0) {
 
                                 var changes = { $set: {} };
-                                changes.$set[req.params.network] = req.hapi.payload.id;
+                                changes.$set[request.params.network] = request.payload.id;
 
                                 Db.update('user', user._id, changes, function (err) {
 
                                     if (err === null) {
 
-                                        Stream.update({ object: 'profile', user: user._id }, req);
+                                        Stream.update({ object: 'profile', user: user._id }, request);
                                         reply({ status: 'ok' });
                                     }
                                     else {
@@ -973,19 +973,19 @@ exports.link = function (req, reply) {
 
 // Unlink other account
 
-exports.unlink = function (req, reply) {
+exports.unlink = function (request, reply) {
 
-    if (req.params.network === 'facebook' ||
-        req.params.network === 'twitter' ||
-        req.params.network === 'yahoo') {
+    if (request.params.network === 'facebook' ||
+        request.params.network === 'twitter' ||
+        request.params.network === 'yahoo') {
 
-        exports.load(req.params.id, function (user, err) {
+        exports.load(request.params.id, function (user, err) {
 
             if (user) {
 
                 // Is set?
 
-                if (user[req.params.network]) {
+                if (user[request.params.network]) {
 
                     // Is last (and no email)
 
@@ -995,13 +995,13 @@ exports.unlink = function (req, reply) {
                         linkCount > 1) {
 
                         var changes = { $unset: {} };
-                        changes.$unset[req.params.network] = 1;
+                        changes.$unset[request.params.network] = 1;
 
                         Db.update('user', user._id, changes, function (err) {
 
                             if (err === null) {
 
-                                Stream.update({ object: 'profile', user: user._id }, req);
+                                Stream.update({ object: 'profile', user: user._id }, request);
                                 reply({ status: 'ok' });
                             }
                             else {
@@ -1035,13 +1035,13 @@ exports.unlink = function (req, reply) {
 
 // Set default view
 
-exports.view = function (req, reply) {
+exports.view = function (request, reply) {
 
-    exports.load(req.params.id, function (user, err) {
+    exports.load(request.params.id, function (user, err) {
 
         if (user) {
 
-            Db.update('user', user._id, { $set: { 'view': req.params.path } }, function (err) {
+            Db.update('user', user._id, { $set: { 'view': request.params.path } }, function (err) {
 
                 if (err === null) {
 
@@ -1063,11 +1063,11 @@ exports.view = function (req, reply) {
 
 // Lookup user based on account and type
 
-exports.lookup = function (req, reply) {
+exports.lookup = function (request, reply) {
 
-    if (req.params.type === 'username') {
+    if (request.params.type === 'username') {
 
-        internals.checkUsername(req.params.id, function (lookupUser, err) {
+        internals.checkUsername(request.params.id, function (lookupUser, err) {
 
             if (lookupUser) {
 
@@ -1079,11 +1079,11 @@ exports.lookup = function (req, reply) {
             }
         });
     }
-    else if (req.params.type === 'email') {
+    else if (request.params.type === 'email') {
 
-        if (Hapi.Utils.checkEmail(req.params.id)) {
+        if (Hapi.Utils.checkEmail(request.params.id)) {
 
-            Db.queryUnique('user', { 'emails.address': req.params.id }, function (item, err) {
+            Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
 
                 if (err === null) {
 
@@ -1107,12 +1107,12 @@ exports.lookup = function (req, reply) {
             reply(Hapi.Error.badRequest('Invalid email address'));
         }
     }
-    else if (req.params.type === 'facebook' ||
-             req.params.type === 'twitter' ||
-             req.params.type === 'yahoo') {
+    else if (request.params.type === 'facebook' ||
+             request.params.type === 'twitter' ||
+             request.params.type === 'yahoo') {
 
         var criteria = {};
-        criteria[req.params.type] = req.params.id;
+        criteria[request.params.type] = request.params.id;
 
         Db.queryUnique('user', criteria, function (item, err) {
 
@@ -1142,10 +1142,10 @@ exports.lookup = function (req, reply) {
 
 // Send email reminder account based on email or username and take action
 
-exports.reminder = function (req, reply) {
+exports.reminder = function (request, reply) {
 
-    var isEmail = req.hapi.payload.account.indexOf('@') !== -1;
-    var account = req.hapi.payload.account.toLowerCase();
+    var isEmail = request.payload.account.indexOf('@') !== -1;
+    var account = request.payload.account.toLowerCase();
 
     if (isEmail === false ||
         Hapi.Utils.checkEmail(account)) {
@@ -1191,11 +1191,11 @@ exports.reminder = function (req, reply) {
 
 // Delete account
 
-exports.del = function (req, reply) {
+exports.del = function (request, reply) {
 
     // Check if user has any projects
 
-    Project.unsortedList(req.hapi.userId, function (projects, owner, notOwner, err) {
+    Project.unsortedList(request.userId, function (projects, owner, notOwner, err) {
 
         if (err === null) {
 
@@ -1267,7 +1267,7 @@ exports.del = function (req, reply) {
 
         // Delete account first
 
-        Db.remove('user', req.hapi.userId, function (err) {
+        Db.remove('user', request.userId, function (err) {
 
             if (err === null) {
 
@@ -1280,23 +1280,23 @@ exports.del = function (req, reply) {
 
                 // Delete the projects sort list
 
-                Sort.del('project', req.hapi.userId, ignore);
+                Sort.del('project', request.userId, ignore);
 
                 // Remove grants
 
-                Session.delUser(req.hapi.userId, ignore);
+                Session.delUser(request.userId, ignore);
 
                 // Remove excluded suggestions
 
-                Suggestions.delUser(req.hapi.userId, ignore);
+                Suggestions.delUser(request.userId, ignore);
 
                 // Remove last
 
-                Last.delUser(req.hapi.userId, ignore);
+                Last.delUser(request.userId, ignore);
 
                 // Remove client storage
 
-                Storage.delUser(req.hapi.userId, ignore);
+                Storage.delUser(request.userId, ignore);
 
                 // Return result
 
