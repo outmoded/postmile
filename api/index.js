@@ -13,6 +13,7 @@ var Session = require('./session');
 var Routes = require('./routes');
 var Suggestions = require('./suggestions');
 var Tips = require('./tips');
+var Vault = require('./vault');
 
 
 // Declare internals
@@ -77,7 +78,16 @@ var configuration = {
 
     authentication: {
 
-        loadSessionFunc: Session.load
+        loadClientFunc: Session.loadClient,
+        loadUserFunc: Session.loadUser,
+        extensionFunc: Session.extensionGrant,
+        checkAuthorizationFunc: Session.checkAuthorization,
+
+        aes256Keys: {
+
+            oauthRefresh: Vault.oauthRefresh.aes256Key,
+            oauthToken: Vault.oauthToken.aes256Key
+        }
     },
 
     // Extension points
@@ -104,7 +114,7 @@ Db.initialize(function (err) {
         // Start Server
 
         server.start();
-        Stream.initialize(server.getExpress());
+        Stream.initialize(server.getListener());
         Hapi.Process.finalize();
     }
     else {

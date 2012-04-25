@@ -23,7 +23,6 @@ var User = require('./user');
 
 exports.endpoints = [
 
-    { method: 'POST',   path: '/oauth/token',                   handler: Session.token,         schema: Session.type.endpoint, authentication: 'optional', user: 'any', tos: 'none' },
     { method: 'GET',    path: '/oauth/client/:id',              handler: Session.client,        scope: 'login', user: 'none' },
 
     { method: 'GET',    path: '/profile',                       handler: User.get,              tos: 'none' },
