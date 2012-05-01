@@ -98,7 +98,8 @@ var configuration = {
     }
 };
 
-var server = Hapi.Server.create(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
+var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
+
 
 // Initialize database connection
 
@@ -114,7 +115,7 @@ Db.initialize(function (err) {
         // Start Server
 
         server.start();
-        Stream.initialize(server.getListener());
+        Stream.initialize(server.listener);
         Hapi.Process.finalize();
     }
     else {
