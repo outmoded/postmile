@@ -60,7 +60,8 @@ Hapi.Process.initialize({
 
     name: Config.product.name + ' API Server',
     process: Config.process.api,
-    email: Config.email
+    email: Config.email,
+    log: Config.log
 });
 
 var configuration = {
