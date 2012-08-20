@@ -14,7 +14,7 @@ var Stream = require('./stream');
 
 // Check invitation code
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     // Check invitation code type
 
@@ -71,17 +71,17 @@ exports.get = function (request, reply) {
                             about.inviter = inviter.display;
                         }
 
-                        reply(about);
+                        request.reply(about);
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    request.reply(Hapi.Error.badRequest('Invalid invitation code'));
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -93,11 +93,11 @@ exports.get = function (request, reply) {
 
             if (err === null) {
 
-                reply(invite);
+                request.reply(invite);
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -106,7 +106,7 @@ exports.get = function (request, reply) {
 
 // Claim a project invitation
 
-exports.claim = function (request, reply) {
+exports.claim = function (request) {
 
     var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
     var parts = inviteRegex.exec(request.params.id);
@@ -154,28 +154,28 @@ exports.claim = function (request, reply) {
                         if (err === null) {
 
                             Stream.update({ object: 'project', project: projectId }, request);
-                            reply({ status: 'ok', project: projectId });
+                            request.reply({ status: 'ok', project: projectId });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    request.reply(Hapi.Error.badRequest('Invalid invitation code'));
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Invalid invitation format'));
+        request.reply(Hapi.Error.badRequest('Invalid invitation format'));
     }
 };
 

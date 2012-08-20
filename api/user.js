@@ -104,18 +104,18 @@ internals.forbiddenUsernames = {
 
 // Current user information
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     exports.load(request.userId, function (user, err) {
 
         if (user) {
 
             Hapi.Utils.hide(user, exports.type.user);
-            reply(user);
+            request.reply(user);
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -123,7 +123,7 @@ exports.get = function (request, reply) {
 
 // Change profile properties
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     exports.load(request.userId, function (user, err) {
 
@@ -151,17 +151,17 @@ exports.post = function (request, reply) {
                             if (err === null) {
 
                                 Stream.update({ object: 'profile', user: user._id }, request);
-                                reply({ status: 'ok' });
+                                request.reply({ status: 'ok' });
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
+                        request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
                     }
                 });
             }
@@ -172,18 +172,18 @@ exports.post = function (request, reply) {
                     if (err === null) {
 
                         Stream.update({ object: 'profile', user: user._id }, request);
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -191,7 +191,7 @@ exports.post = function (request, reply) {
 
 // Change profile email settings
 
-exports.email = function (request, reply) {
+exports.email = function (request) {
 
     var address = request.payload.address.toLowerCase();
 
@@ -245,29 +245,29 @@ exports.email = function (request, reply) {
                                                 }
 
                                                 Stream.update({ object: 'profile', user: user._id }, request);
-                                                reply({ status: 'ok' });
+                                                request.reply({ status: 'ok' });
                                             });
                                         }
                                         else {
 
-                                            reply(err);
+                                            request.reply(err);
                                         }
                                     });
                                 }
                                 else {
 
-                                    reply(Hapi.Error.badRequest('Email already assigned to another account'));
+                                    request.reply(Hapi.Error.badRequest('Email already assigned to another account'));
                                 }
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Address already present'));
+                        request.reply(Hapi.Error.badRequest('Address already present'));
                     }
 
                     break;
@@ -301,27 +301,27 @@ exports.email = function (request, reply) {
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, request);
-                                        reply({ status: 'ok' });
+                                        request.reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        reply(err);
+                                        request.reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                reply(Hapi.Error.badRequest('Email must be verified before made primary'));
+                                request.reply(Hapi.Error.badRequest('Email must be verified before made primary'));
                             }
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest('Address already primary'));
+                            request.reply(Hapi.Error.badRequest('Address already primary'));
                         }
                     }
                     else {
 
-                        reply(Hapi.Error.notFound('No such email address'));
+                        request.reply(Hapi.Error.notFound('No such email address'));
                     }
 
                     break;
@@ -345,27 +345,27 @@ exports.email = function (request, reply) {
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, request);
-                                        reply({ status: 'ok' });
+                                        request.reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        reply(err);
+                                        request.reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                reply(Hapi.Error.badRequest('Cannot remove the only address present'));
+                                request.reply(Hapi.Error.badRequest('Cannot remove the only address present'));
                             }
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest('Cannot remove primary address'));
+                            request.reply(Hapi.Error.badRequest('Cannot remove primary address'));
                         }
                     }
                     else {
 
-                        reply(Hapi.Error.notFound('No such email address'));
+                        request.reply(Hapi.Error.notFound('No such email address'));
                     }
 
                     break;
@@ -382,29 +382,29 @@ exports.email = function (request, reply) {
 
                                 if (err === null) {
 
-                                    reply({ result: 'ok' });
+                                    request.reply({ result: 'ok' });
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest('Account already verified'));
+                            request.reply(Hapi.Error.badRequest('Account already verified'));
                         }
                     }
                     else {
 
-                        reply(Hapi.Error.notFound('No such email address'));
+                        request.reply(Hapi.Error.notFound('No such email address'));
                     }
                     break;
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -412,7 +412,7 @@ exports.email = function (request, reply) {
 
 // Current user contacts list
 
-exports.contacts = function (request, reply) {
+exports.contacts = function (request) {
 
     if (request.query.exclude) {
 
@@ -424,7 +424,7 @@ exports.contacts = function (request, reply) {
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -509,12 +509,12 @@ exports.contacts = function (request, reply) {
                         return 0;
                     });
 
-                    reply(contacts);
+                    request.reply(contacts);
                 });
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -523,15 +523,15 @@ exports.contacts = function (request, reply) {
 
 // Who am I?
 
-exports.who = function (request, reply) {
+exports.who = function (request) {
 
-    reply({ user: request.userId });
+    request.reply({ user: request.userId });
 };
 
 
 // Register new user
 
-exports.put = function (request, reply) {
+exports.put = function (request) {
 
     // Check invitation code
 
@@ -602,18 +602,18 @@ exports.put = function (request, reply) {
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest('Invalid invitation code'));
+                            request.reply(Hapi.Error.badRequest('Invalid invitation code'));
                         }
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.badRequest('Invalid invitation format'));
+                request.reply(Hapi.Error.badRequest('Invalid invitation format'));
             }
         }
         else {
@@ -631,14 +631,14 @@ exports.put = function (request, reply) {
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
     }
     else {
 
-        reply(Hapi.Error.badRequest('Invitation code missing'));
+        request.reply(Hapi.Error.badRequest('Invitation code missing'));
     }
 
     function validate() {
@@ -657,7 +657,7 @@ exports.put = function (request, reply) {
         }
         else {
 
-            reply(Hapi.Error.badRequest('Must include either a network id or email address'));
+            request.reply(Hapi.Error.badRequest('Must include either a network id or email address'));
         }
     }
 
@@ -675,12 +675,12 @@ exports.put = function (request, reply) {
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Email address already linked to an existing user'));
+                        request.reply(Hapi.Error.badRequest('Email address already linked to an existing user'));
                     }
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
@@ -739,18 +739,18 @@ exports.put = function (request, reply) {
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest(request.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
+                            request.reply(Hapi.Error.badRequest(request.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
                         }
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.badRequest(error));
+                request.reply(Hapi.Error.badRequest(error));
             }
         }
         else {
@@ -772,7 +772,7 @@ exports.put = function (request, reply) {
                 }
                 else {
 
-                    reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
+                    request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
                 }
             });
         }
@@ -835,7 +835,7 @@ exports.put = function (request, reply) {
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
@@ -846,12 +846,12 @@ exports.put = function (request, reply) {
                 }
                 else {
 
-                    reply(Hapi.Error.internal('Failed to retrieve new user id', user));
+                    request.reply(Hapi.Error.internal('Failed to retrieve new user id', user));
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -862,7 +862,7 @@ exports.put = function (request, reply) {
 
         Email.sendWelcome(user, function (err) {    // Ignore error
 
-            reply({ status: 'ok', id: user._id });
+            request.reply({ status: 'ok', id: user._id });
         });
     }
 };
@@ -870,7 +870,7 @@ exports.put = function (request, reply) {
 
 // Set Terms of Service version
 
-exports.tos = function (request, reply) {
+exports.tos = function (request) {
 
     exports.load(request.params.id, function (user, err) {
 
@@ -883,17 +883,17 @@ exports.tos = function (request, reply) {
 
                 if (err === null) {
 
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -901,7 +901,7 @@ exports.tos = function (request, reply) {
 
 // Link other account
 
-exports.link = function (request, reply) {
+exports.link = function (request) {
 
     if (request.params.network === 'facebook' ||
         request.params.network === 'twitter' ||
@@ -934,46 +934,46 @@ exports.link = function (request, reply) {
                                     if (err === null) {
 
                                         Stream.update({ object: 'profile', user: user._id }, request);
-                                        reply({ status: 'ok' });
+                                        request.reply({ status: 'ok' });
                                     }
                                     else {
 
-                                        reply(err);
+                                        request.reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                reply(Hapi.Error.badRequest('Network id already linked to another user'));
+                                request.reply(Hapi.Error.badRequest('Network id already linked to another user'));
                             }
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
                 else {
                 
-                    reply(Hapi.Error.badRequest('Network already linked'));
+                    request.reply(Hapi.Error.badRequest('Network already linked'));
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Unknown network'));
+        request.reply(Hapi.Error.badRequest('Unknown network'));
     }
 };
 
 
 // Unlink other account
 
-exports.unlink = function (request, reply) {
+exports.unlink = function (request) {
 
     if (request.params.network === 'facebook' ||
         request.params.network === 'twitter' ||
@@ -1002,40 +1002,40 @@ exports.unlink = function (request, reply) {
                             if (err === null) {
 
                                 Stream.update({ object: 'profile', user: user._id }, request);
-                                reply({ status: 'ok' });
+                                request.reply({ status: 'ok' });
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Cannot remove last linked account'));
+                        request.reply(Hapi.Error.badRequest('Cannot remove last linked account'));
                     }
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Account not linked'));
+                    request.reply(Hapi.Error.badRequest('Account not linked'));
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Unknown network'));
+        request.reply(Hapi.Error.badRequest('Unknown network'));
     }
 };
 
 
 // Set default view
 
-exports.view = function (request, reply) {
+exports.view = function (request) {
 
     exports.load(request.params.id, function (user, err) {
 
@@ -1045,17 +1045,17 @@ exports.view = function (request, reply) {
 
                 if (err === null) {
 
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -1063,7 +1063,7 @@ exports.view = function (request, reply) {
 
 // Lookup user based on account and type
 
-exports.lookup = function (request, reply) {
+exports.lookup = function (request) {
 
     if (request.params.type === 'username') {
 
@@ -1071,17 +1071,17 @@ exports.lookup = function (request, reply) {
 
             if (lookupUser) {
 
-                reply({ user: lookupUser._id });
+                request.reply({ user: lookupUser._id });
             }
             else {
 
-                reply(typeof err === 'string' ? Hapi.Error.badRequest(err) : err);
+                request.reply(typeof err === 'string' ? Hapi.Error.badRequest(err) : err);
             }
         });
     }
     else if (request.params.type === 'email') {
 
-        if (Hapi.Utils.checkEmail(request.params.id)) {
+        if (Hapi.Email.checkAddress(request.params.id)) {
 
             Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
 
@@ -1089,22 +1089,22 @@ exports.lookup = function (request, reply) {
 
                     if (item) {
 
-                        reply({ user: item._id });
+                        request.reply({ user: item._id });
                     }
                     else {
 
-                        reply(Hapi.Error.notFound());
+                        request.reply(Hapi.Error.notFound());
                     }
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(Hapi.Error.badRequest('Invalid email address'));
+            request.reply(Hapi.Error.badRequest('Invalid email address'));
         }
     }
     else if (request.params.type === 'facebook' ||
@@ -1120,35 +1120,35 @@ exports.lookup = function (request, reply) {
 
                 if (item) {
 
-                    reply({ user: item._id });
+                    request.reply({ user: item._id });
                 }
                 else {
 
-                    reply(Hapi.Error.notFound());
+                    request.reply(Hapi.Error.notFound());
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Unknown network type'));
+        request.reply(Hapi.Error.badRequest('Unknown network type'));
     }
 };
 
 
 // Send email reminder account based on email or username and take action
 
-exports.reminder = function (request, reply) {
+exports.reminder = function (request) {
 
     var isEmail = request.payload.account.indexOf('@') !== -1;
     var account = request.payload.account.toLowerCase();
 
     if (isEmail === false ||
-        Hapi.Utils.checkEmail(account)) {
+        Hapi.Email.checkAddress(account)) {
 
         var criteria = {};
         criteria[isEmail ? 'emails.address' : 'username'] = account;
@@ -1163,35 +1163,35 @@ exports.reminder = function (request, reply) {
 
                         if (err === null) {
 
-                            reply({ result: 'ok' });
+                            request.reply({ result: 'ok' });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.notFound());
+                    request.reply(Hapi.Error.notFound());
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest());
+        request.reply(Hapi.Error.badRequest());
     }
 };
 
 
 // Delete account
 
-exports.del = function (request, reply) {
+exports.del = function (request) {
 
     // Check if user has any projects
 
@@ -1227,37 +1227,37 @@ exports.del = function (request, reply) {
                                 }
                                 else {
 
-                                    reply(Hapi.Error.badRequest('Must first delete project'));
+                                    request.reply(Hapi.Error.badRequest('Must first delete project'));
                                 }
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Must first delete project (has participants)'));
+                        request.reply(Hapi.Error.badRequest('Must first delete project (has participants)'));
                     }
                 }
                 else {
 
                     // Multiple own projects
 
-                    reply(Hapi.Error.badRequest('Must first delete all projects'));
+                    request.reply(Hapi.Error.badRequest('Must first delete all projects'));
                 }
             }
             else {
 
                 // Member of projects
 
-                reply(Hapi.Error.badRequest('Must first leave all projects'));
+                request.reply(Hapi.Error.badRequest('Must first leave all projects'));
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 
@@ -1300,11 +1300,11 @@ exports.del = function (request, reply) {
 
                 // Return result
 
-                reply({ result: 'ok' });
+                request.reply({ result: 'ok' });
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -1518,7 +1518,7 @@ exports.find = function (ids, callback) {
 
             // Email
 
-            if (Hapi.Utils.checkEmail(ids[i])) {
+            if (Hapi.Email.checkAddress(ids[i])) {
 
                 emails.push(ids[i].toLowerCase());
             }

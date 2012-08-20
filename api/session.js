@@ -32,7 +32,7 @@ exports.type.client = {
 
 // Get client information endpoint
 
-exports.client = function (request, reply) {
+exports.client = function (request) {
 
     exports.loadClient(request.params.id, function (client, err) {
 
@@ -41,16 +41,16 @@ exports.client = function (request, reply) {
             if (client) {
 
                 Hapi.Utils.hide(client, exports.type.client);
-                reply(client);
+                request.reply(client);
             }
             else {
 
-                reply(Hapi.Error.notFound());
+                request.reply(Hapi.Error.notFound());
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -185,81 +185,83 @@ exports.extensionGrant = function (request, client, callback) {
     if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
 
         // Unsupported grant type namespace
-        reply(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
-    }
-
-    var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
-
-    // Check if client has 'login' scope
-
-    if ((client.scope && client.scope.login === true) ||
-        (request.scope && request.scope.login === true)) {
-
-        // Switch on grant type
-
-        if (grantType === 'id') {
-
-            // Get user
-
-            User.load(request.payload.x_user_id, function (user, err) {
-
-                if (user) {
-
-                    callback(user, null);
-                }
-                else {
-
-                    // Unknown local account
-                    callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
-                }
-            });
-        }
-        else if (grantType === 'twitter' ||
-                 grantType === 'facebook' ||
-                 grantType === 'yahoo') {
-
-            // Check network identifier
-
-            User.validate(request.payload.x_user_id, grantType, function (user, err) {
-
-                if (user) {
-
-                    callback(user, null);
-                }
-                else {
-
-                    // Unregistered network account
-                    callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
-                }
-            });
-        }
-        else if (grantType === 'email') {
-
-            // Check email identifier
-
-            Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
-
-                if (ticket) {
-
-                    callback(user, null, { 'x_action': ticket.action });
-                }
-                else {
-
-                    // Invalid email token
-                    callback(null, Hapi.Error.oauth('invalid_grant', err.message));
-                }
-            });
-        }
-        else {
-
-            // Unsupported grant type
-            callback(null, Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
-        }
+        callback(null, Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
     }
     else {
 
-        // No client scope for local account access
-        callback(null, Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
+        var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
+
+        // Check if client has 'login' scope
+
+        if ((client.scope && client.scope.login === true) ||
+            (request.scope && request.scope.login === true)) {
+
+            // Switch on grant type
+
+            if (grantType === 'id') {
+
+                // Get user
+
+                User.load(request.payload.x_user_id, function (user, err) {
+
+                    if (user) {
+
+                        callback(user, null);
+                    }
+                    else {
+
+                        // Unknown local account
+                        callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
+                    }
+                });
+            }
+            else if (grantType === 'twitter' ||
+                     grantType === 'facebook' ||
+                     grantType === 'yahoo') {
+
+                    // Check network identifier
+
+                User.validate(request.payload.x_user_id, grantType, function (user, err) {
+
+                    if (user) {
+
+                        callback(user, null);
+                    }
+                    else {
+
+                        // Unregistered network account
+                        callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
+                    }
+                });
+            }
+            else if (grantType === 'email') {
+
+                    // Check email identifier
+
+                Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
+
+                    if (ticket) {
+
+                        callback(user, null, { 'x_action': ticket.action });
+                    }
+                    else {
+
+                        // Invalid email token
+                        callback(null, Hapi.Error.oauth('invalid_grant', err.message));
+                    }
+                });
+            }
+            else {
+
+                // Unsupported grant type
+                callback(null, Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
+            }
+        }
+        else {
+
+            // No client scope for local account access
+            callback(null, Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
+        }
     }
 };
 

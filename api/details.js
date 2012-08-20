@@ -26,7 +26,7 @@ exports.type = {
 
 // Task details
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     exports.load(request.params.id, request.userId, false, function (details, err, task, project) {
 
@@ -72,12 +72,12 @@ exports.get = function (request, reply) {
                     details.thread[i].user = usersMap[details.thread[i].user] || { id: details.thread[i].user };
                 }
 
-                reply(details);
+                request.reply(details);
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -85,7 +85,7 @@ exports.get = function (request, reply) {
 
 // Add task detail
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     var now = Hapi.Utils.getTimestamp();
 
@@ -111,7 +111,7 @@ exports.post = function (request, reply) {
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
@@ -130,19 +130,19 @@ exports.post = function (request, reply) {
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 
@@ -155,7 +155,7 @@ exports.post = function (request, reply) {
         }
 
         Stream.update({ object: 'details', project: task.project, task: task._id }, request);
-        reply({ status: 'ok' });
+        request.reply({ status: 'ok' });
     }
 };
 

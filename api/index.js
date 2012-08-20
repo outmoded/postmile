@@ -23,27 +23,30 @@ var internals = {};
 
 // Post handler extension middleware
 
-internals.onPostHandler = function (req, res, next) {
+internals.onPostHandler = function (request, next) {
 
-    if (res.hapi.result) {
+    if (request.response &&
+        request.response.result) {
+
+        var result = request.response.result;
 
         // Sanitize database fields
 
-        if (res.hapi.result._id) {
+        if (result._id) {
 
-            res.hapi.result.id = res.hapi.result._id;
-            delete res.hapi.result._id;
+            result.id = result._id;
+            delete result._id;
         }
 
-        if (res.hapi.result instanceof Object) {
+        if (result instanceof Object) {
 
-            for (var i in res.hapi.result) {
+            for (var i in result) {
 
-                if (res.hapi.result.hasOwnProperty(i)) {
+                if (result.hasOwnProperty(i)) {
 
                     if (i[0] === '_') {
 
-                        delete res.hapi.result[i];
+                        delete result[i];
                     }
                 }
             }

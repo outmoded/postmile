@@ -20,7 +20,7 @@ exports.type = {};
 
 exports.type.post = {
 
-    project:           { type: 'id',       set: false },
+    project:        { type: 'id',       set: false },
     title:          { type: 'string' },
     status:         { type: 'enum',                    values: { open: 1, pending: 2, close: 3 } },
     participants:   { type: 'id',                      array: true, empty: true },
@@ -33,7 +33,7 @@ exports.type.put.participants.set = false;
 
 // Task information
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     exports.load(request.params.id, request.userId, false, function (task, err) {
 
@@ -50,12 +50,12 @@ exports.get = function (request, reply) {
                 }
 
                 Hapi.Utils.hide(task, exports.type.post);
-                reply(task);
+                request.reply(task);
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -63,7 +63,7 @@ exports.get = function (request, reply) {
 
 // Get list of tasks for given project
 
-exports.list = function (request, reply) {
+exports.list = function (request) {
 
     Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
@@ -122,18 +122,18 @@ exports.list = function (request, reply) {
                             }
                         }
 
-                        reply(list);
+                        request.reply(list);
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.notFound());
+                    request.reply(Hapi.Error.notFound());
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -141,7 +141,7 @@ exports.list = function (request, reply) {
 
 // Update task properties
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     exports.load(request.params.id, request.userId, true, function (task, err, project) {
 
@@ -185,7 +185,7 @@ exports.post = function (request, reply) {
                         if (error) {
 
                             isInvalid = true;
-                            reply(Hapi.Error.badRequest(error));
+                            request.reply(Hapi.Error.badRequest(error));
                         }
                     }
 
@@ -196,18 +196,18 @@ exports.post = function (request, reply) {
                             if (err === null) {
 
                                 Stream.update({ object: 'task', project: task.project, task: task._id }, request);
-                                reply({ status: 'ok' });
+                                request.reply({ status: 'ok' });
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
+                    request.reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
                 }
             }
             else if (request.query.position !== null &&
@@ -220,22 +220,22 @@ exports.post = function (request, reply) {
                     if (err === null) {
 
                         Stream.update({ object: 'tasks', project: task.project }, request);
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.badRequest('Missing position parameter or task object in body'));
+                request.reply(Hapi.Error.badRequest('Missing position parameter or task object in body'));
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -243,7 +243,7 @@ exports.post = function (request, reply) {
 
 // Create new task
 
-exports.put = function (request, reply) {
+exports.put = function (request) {
 
     Project.load(request.params.id, request.userId, true, function (project, member, err) {
 
@@ -264,13 +264,13 @@ exports.put = function (request, reply) {
                         }
                         else {
 
-                            reply(Hapi.Error.badRequest('Suggestion not found'));
+                            request.reply(Hapi.Error.badRequest('Suggestion not found'));
                         }
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('New task cannot have both body and suggestion id'));
+                    request.reply(Hapi.Error.badRequest('New task cannot have both body and suggestion id'));
                 }
             }
             else {
@@ -283,13 +283,13 @@ exports.put = function (request, reply) {
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('New task must include a title or a suggestion id'));
+                    request.reply(Hapi.Error.badRequest('New task must include a title or a suggestion id'));
                 }
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 
@@ -318,17 +318,17 @@ exports.put = function (request, reply) {
                             result.position = request.query.position;
                         }
 
-                        reply(result, replyOptions);
+                        request.reply(result, replyOptions);
                     });
                 }
                 else {
 
-                    reply(result, replyOptions);
+                    request.reply(result, replyOptions);
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -337,7 +337,7 @@ exports.put = function (request, reply) {
 
 // Delete a task
 
-exports.del = function (request, reply) {
+exports.del = function (request) {
 
     exports.load(request.params.id, request.userId, true, function (task, err) {
 
@@ -350,17 +350,17 @@ exports.del = function (request, reply) {
                     Db.remove('task.details', task._id, function (err) { });
 
                     Stream.update({ object: 'tasks', project: task.project }, request);
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };

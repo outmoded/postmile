@@ -56,7 +56,7 @@ exports.initialize = function () {
 
 // Remove suggestion from project
 
-exports.exclude = function (request, reply) {
+exports.exclude = function (request) {
 
     Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
@@ -107,11 +107,11 @@ exports.exclude = function (request, reply) {
 
                                 if (err === null) {
 
-                                    reply({ status: 'ok' });
+                                    request.reply({ status: 'ok' });
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
@@ -127,29 +127,29 @@ exports.exclude = function (request, reply) {
 
                                 if (err === null) {
 
-                                    reply({ status: 'ok' });
+                                    request.reply({ status: 'ok' });
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.notFound());
+                request.reply(Hapi.Error.notFound());
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };

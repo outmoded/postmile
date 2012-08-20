@@ -18,7 +18,7 @@ var internals = {};
 
 // Last information for project (with tasks)
 
-exports.getProject = function (request, reply) {
+exports.getProject = function (request) {
 
     exports.load(request.userId, function (last, err) {
 
@@ -29,15 +29,15 @@ exports.getProject = function (request, reply) {
             var record = { id: last._id, projects: {} };
             record.projects[request.params.id] = last.projects[request.params.id];
 
-            reply(record);
+            request.reply(record);
         }
         else if (err === null) {
 
-            reply({ id: request.userId, projects: {} });
+            request.reply({ id: request.userId, projects: {} });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -45,7 +45,7 @@ exports.getProject = function (request, reply) {
 
 // Set last project timestamp
 
-exports.postProject = function (request, reply) {
+exports.postProject = function (request) {
 
     Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
@@ -55,17 +55,17 @@ exports.postProject = function (request, reply) {
 
                 if (err === null) {
 
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -73,7 +73,7 @@ exports.postProject = function (request, reply) {
 
 // Last information for single task
 
-exports.getTask = function (request, reply) {
+exports.getTask = function (request) {
 
     Task.load(request.params.id, request.userId, false, function (task, err, project) {
 
@@ -91,21 +91,21 @@ exports.getTask = function (request, reply) {
                     record.projects[task.project] = { tasks: {} };
                     record.projects[task.project].tasks[request.params.id] = last.projects[task.project].tasks[request.params.id];
 
-                    reply(record);
+                    request.reply(record);
                 }
                 else if (err === null) {
 
-                    reply({ id: request.userId, projects: {} });
+                    request.reply({ id: request.userId, projects: {} });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -113,7 +113,7 @@ exports.getTask = function (request, reply) {
 
 // Set last task timestamp
 
-exports.postTask = function (request, reply) {
+exports.postTask = function (request) {
 
     Task.load(request.params.id, request.userId, false, function (task, err, project) {
 
@@ -123,17 +123,17 @@ exports.postTask = function (request, reply) {
 
                 if (err === null) {
 
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };

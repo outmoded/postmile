@@ -55,7 +55,7 @@ exports.type.uninvite = {
 
 // Get project information
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
@@ -65,12 +65,12 @@ exports.get = function (request, reply) {
 
                 project.participants = participants;
 
-                reply(project);
+                request.reply(project);
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -78,7 +78,7 @@ exports.get = function (request, reply) {
 
 // Get list of projects for current user
 
-exports.list = function (request, reply) {
+exports.list = function (request) {
 
     Sort.list('project', request.userId, 'participants.id', function (projects) {
 
@@ -122,12 +122,12 @@ exports.list = function (request, reply) {
                     }
                 }
 
-                reply(list);
+                request.reply(list);
             });
         }
         else {
 
-            reply(Hapi.Error.notFound());
+            request.reply(Hapi.Error.notFound());
         }
     });
 };
@@ -135,7 +135,7 @@ exports.list = function (request, reply) {
 
 // Update project properties
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     exports.load(request.params.id, request.userId, true, function (project, member, err) {
 
@@ -162,17 +162,17 @@ exports.post = function (request, reply) {
                                 }
                             }
 
-                            reply({ status: 'ok' });
+                            request.reply({ status: 'ok' });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Cannot include both position parameter and project object in body'));
+                    request.reply(Hapi.Error.badRequest('Cannot include both position parameter and project object in body'));
                 }
             }
             else if (request.query.position) {
@@ -182,22 +182,22 @@ exports.post = function (request, reply) {
                     if (err === null) {
 
                         Stream.update({ object: 'projects', user: request.userId }, request);
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.badRequest('Missing position parameter or project object in body'));
+                request.reply(Hapi.Error.badRequest('Missing position parameter or project object in body'));
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -205,7 +205,7 @@ exports.post = function (request, reply) {
 
 // Create new project
 
-exports.put = function (request, reply) {
+exports.put = function (request) {
 
     var project = request.payload;
     project.participants = [{ id: request.userId}];
@@ -215,11 +215,11 @@ exports.put = function (request, reply) {
         if (err === null) {
 
             Stream.update({ object: 'projects', user: request.userId }, request);
-            reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
+            request.reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -227,7 +227,7 @@ exports.put = function (request, reply) {
 
 // Delete a project
 
-exports.del = function (request, reply) {
+exports.del = function (request) {
 
     exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
@@ -262,17 +262,17 @@ exports.del = function (request, reply) {
                                     }
                                 }
 
-                                reply({ status: 'ok' });
+                                request.reply({ status: 'ok' });
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
@@ -288,18 +288,18 @@ exports.del = function (request, reply) {
                         Stream.update({ object: 'projects', user: request.userId }, request);
                         Stream.drop(request.userId, project._id);
 
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -307,7 +307,7 @@ exports.del = function (request, reply) {
 
 // Get list of project tips
 
-exports.tips = function (request, reply) {
+exports.tips = function (request) {
 
     // Get project
 
@@ -319,12 +319,12 @@ exports.tips = function (request, reply) {
 
             Tips.list(project, function (results) {
 
-                reply(results);
+                request.reply(results);
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -332,7 +332,7 @@ exports.tips = function (request, reply) {
 
 // Get list of project suggestions
 
-exports.suggestions = function (request, reply) {
+exports.suggestions = function (request) {
 
     // Get project
 
@@ -344,12 +344,12 @@ exports.suggestions = function (request, reply) {
 
             Suggestions.list(project, request.userId, function (results) {
 
-                reply(results);
+                request.reply(results);
             });
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -357,7 +357,7 @@ exports.suggestions = function (request, reply) {
 
 // Add new participants to a project
 
-exports.participants = function (request, reply) {
+exports.participants = function (request) {
 
     if (request.query.message) {
 
@@ -369,12 +369,12 @@ exports.participants = function (request, reply) {
             }
             else {
 
-                reply(Hapi.Error.badRequest('Message cannot contain links'));
+                request.reply(Hapi.Error.badRequest('Message cannot contain links'));
             }
         }
         else {
 
-            reply(Hapi.Error.badRequest('Message length is greater than ' + internals.maxMessageLength));
+            request.reply(Hapi.Error.badRequest('Message length is greater than ' + internals.maxMessageLength));
         }
     }
     else {
@@ -417,7 +417,7 @@ exports.participants = function (request, reply) {
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
@@ -530,37 +530,37 @@ exports.participants = function (request, reply) {
                                                 }
                                                 else {
 
-                                                    reply(err);
+                                                    request.reply(err);
                                                 }
                                             });
                                         }
                                         else {
 
-                                            reply(Hapi.Error.badRequest('All users are already project participants'));
+                                            request.reply(Hapi.Error.badRequest('All users are already project participants'));
                                         }
                                     }
                                     else {
 
-                                        reply(err);
+                                        request.reply(err);
                                     }
                                 });
                             }
                             else {
 
-                                reply(Hapi.Error.internal(err));
+                                request.reply(Hapi.Error.internal(err));
                             }
                         });
                     }
                 }
                 else {
 
-                    reply(err);
+                    request.reply(err);
                 }
             });
         }
         else {
 
-            reply(Hapi.Error.badRequest('Body must contain a participants or names array'));
+            request.reply(Hapi.Error.badRequest('Body must contain a participants or names array'));
         }
     }
 
@@ -578,12 +578,12 @@ exports.participants = function (request, reply) {
 
                     var response = { status: 'ok', participants: participants };
 
-                    reply(response);
+                    request.reply(response);
                 });
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -592,7 +592,7 @@ exports.participants = function (request, reply) {
 
 // Remove participant from project
 
-exports.uninvite = function (request, reply) {
+exports.uninvite = function (request) {
 
     // Load project for write
 
@@ -630,18 +630,18 @@ exports.uninvite = function (request, reply) {
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
                         else {
 
-                            reply(Hapi.Error.notFound('Not a project participant'));
+                            request.reply(Hapi.Error.notFound('Not a project participant'));
                         }
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Cannot uninvite self'));
+                        request.reply(Hapi.Error.badRequest('Cannot uninvite self'));
                     }
                 }
                 else if (request.payload.participants) {
@@ -696,28 +696,28 @@ exports.uninvite = function (request, reply) {
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(error);
+                        request.reply(error);
                     }
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('No participant for removal included'));
+                    request.reply(Hapi.Error.badRequest('No participant for removal included'));
                 }
             }
             else {
 
-                reply(Hapi.Error.badRequest('Not an owner'));
+                request.reply(Hapi.Error.badRequest('Not an owner'));
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 
@@ -765,12 +765,12 @@ exports.uninvite = function (request, reply) {
 
                     var response = { status: 'ok', participants: participants };
 
-                    reply(response);
+                    request.reply(response);
                 });
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
@@ -779,7 +779,7 @@ exports.uninvite = function (request, reply) {
 
 // Accept project invitation
 
-exports.join = function (request, reply) {
+exports.join = function (request) {
 
     // The only place allowed to request a non-writable copy for modification
     exports.load(request.params.id, request.userId, false, function (project, member, err) {
@@ -799,22 +799,22 @@ exports.join = function (request, reply) {
                         Stream.update({ object: 'project', project: project._id }, request);
                         Stream.update({ object: 'projects', user: request.userId }, request);
 
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.badRequest('Already a member of the project'));
+                request.reply(Hapi.Error.badRequest('Already a member of the project'));
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };

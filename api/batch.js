@@ -26,7 +26,7 @@ exports.type = {
 
 // Batch processing
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     var requests = [];
     var results = [];
@@ -95,7 +95,7 @@ exports.post = function (request, reply) {
         }
         else {
 
-            reply(Hapi.Error.badRequest(error));
+            request.reply(Hapi.Error.badRequest(error));
         }
     }
 
@@ -105,7 +105,7 @@ exports.post = function (request, reply) {
 
             // Return results
 
-            reply(results);
+            request.reply(results);
         });
     }
 

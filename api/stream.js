@@ -66,7 +66,7 @@ exports.update = function (update, request) {
 
 // Subscribe
 
-exports.subscribe = function (request, reply) {
+exports.subscribe = function (request) {
 
     // Lookup socket
 
@@ -101,34 +101,34 @@ exports.subscribe = function (request, reply) {
 
                         // Send ack via the request
 
-                        reply({ status: 'ok' });
+                        request.reply({ status: 'ok' });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(err);
                     }
                 });
             }
             else {
 
-                reply(Hapi.Error.forbidden());
+                request.reply(Hapi.Error.forbidden());
             }
         }
         else {
 
-            reply(Hapi.Error.badRequest('Stream not initialized'));
+            request.reply(Hapi.Error.badRequest('Stream not initialized'));
         }
     }
     else {
 
-        reply(Hapi.Error.notFound('Stream not found'));
+        request.reply(Hapi.Error.notFound('Stream not found'));
     }
 };
 
 
 // Unsubscribe
 
-exports.unsubscribe = function (request, reply) {
+exports.unsubscribe = function (request) {
 
     // Lookup socket
 
@@ -161,26 +161,26 @@ exports.unsubscribe = function (request, reply) {
 
                     // Send ack via the request
 
-                    reply({ status: 'ok' });
+                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    reply(Hapi.Error.notFound('Project subscription not found'));
+                    request.reply(Hapi.Error.notFound('Project subscription not found'));
                 }
             }
             else {
 
-                reply(Hapi.Error.forbidden());
+                request.reply(Hapi.Error.forbidden());
             }
         }
         else {
 
-            reply(Hapi.Error.badRequest('Stream not initialized'));
+            request.reply(Hapi.Error.badRequest('Stream not initialized'));
         }
     }
     else {
 
-        reply(Hapi.Error.notFound('Stream not found'));
+        request.reply(Hapi.Error.notFound('Stream not found'));
     }
 };
 

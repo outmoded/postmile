@@ -24,7 +24,7 @@ exports.type = {
 
 // User client data
 
-exports.get = function (request, reply) {
+exports.get = function (request) {
 
     exports.load(request.userId, function (storage, err) {
 
@@ -41,37 +41,37 @@ exports.get = function (request, reply) {
                         var result = {};
                         result[request.params.id] = storage.clients[request.clientId][request.params.id];
 
-                        reply(result);
+                        request.reply(result);
                     }
                     else {
 
-                        reply(Hapi.Error.notFound());
+                        request.reply(Hapi.Error.notFound());
                     }
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('Invalid key'));
+                    request.reply(Hapi.Error.badRequest('Invalid key'));
                 }
             }
             else {
 
-                reply(storage.clients[request.clientId]);
+                request.reply(storage.clients[request.clientId]);
             }
         }
         else if (err === null) {
 
             if (request.params.id) {
 
-                reply(Hapi.Error.notFound());
+                request.reply(Hapi.Error.notFound());
             }
             else {
 
-                reply({});
+                request.reply({});
             }
         }
         else {
 
-            reply(err);
+            request.reply(err);
         }
     });
 };
@@ -79,7 +79,7 @@ exports.get = function (request, reply) {
 
 // Set user client data
 
-exports.post = function (request, reply) {
+exports.post = function (request) {
 
     if (internals.checkKey(request.params.id)) {
 
@@ -115,11 +115,11 @@ exports.post = function (request, reply) {
 
                         if (err === null) {
 
-                            reply({ status: 'ok' });
+                            request.reply({ status: 'ok' });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
@@ -135,31 +135,31 @@ exports.post = function (request, reply) {
 
                         if (err === null) {
 
-                            reply({ status: 'ok' });
+                            request.reply({ status: 'ok' });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Invalid key'));
+        request.reply(Hapi.Error.badRequest('Invalid key'));
     }
 };
 
 
 // Delete user client data
 
-exports.del = function (request, reply) {
+exports.del = function (request) {
 
     if (internals.checkKey(request.params.id)) {
 
@@ -179,32 +179,32 @@ exports.del = function (request, reply) {
 
                         if (err === null) {
 
-                            reply({ status: 'ok' });
+                            request.reply({ status: 'ok' });
                         }
                         else {
 
-                            reply(err);
+                            request.reply(err);
                         }
                     });
                 }
                 else {
 
-                    reply(Hapi.Error.notFound());
+                    request.reply(Hapi.Error.notFound());
                 }
             }
             else if (err === null) {
 
-                reply(Hapi.Error.notFound());
+                request.reply(Hapi.Error.notFound());
             }
             else {
 
-                reply(err);
+                request.reply(err);
             }
         });
     }
     else {
 
-        reply(Hapi.Error.badRequest('Invalid key'));
+        request.reply(Hapi.Error.badRequest('Invalid key'));
     }
 };
 
