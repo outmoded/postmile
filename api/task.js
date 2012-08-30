@@ -14,210 +14,366 @@ var Details = require('./details');
 var Stream = require('./stream');
 
 
-// Task definition
-
-exports.type = {};
-
-exports.type.post = {
-
-    project:        { type: 'id',       set: false },
-    title:          { type: 'string' },
-    status:         { type: 'enum',                    values: { open: 1, pending: 2, close: 3 } },
-    participants:   { type: 'id',                      array: true, empty: true },
-    origin:         { type: 'object',   set: false,    hide: true }
-};
-
-exports.type.put = Hapi.Utils.clone(exports.type.post);
-exports.type.put.participants.set = false;
-
-
 // Task information
 
-exports.get = function (request) {
+exports.get = {
+    
+    handler: function (request) {
 
-    exports.load(request.params.id, request.userId, false, function (task, err) {
+        exports.load(request.params.id, request.userId, false, function (task, err) {
 
-        if (task) {
+            if (task) {
 
-            Details.expandIds([request.params.id], task.project, request.userId, function (details) {
+                Details.expandIds([request.params.id], task.project, request.userId, function (details) {
 
-                if (details &&
-                    details[request.params.id]) {
+                    if (details &&
+                        details[request.params.id]) {
 
-                    task.detailsModified = details[request.params.id].modified;
-                    task.detailsModifiedBy = details[request.params.id].user;
-                    task.last = details[request.params.id].last;
-                }
+                        task.detailsModified = details[request.params.id].modified;
+                        task.detailsModifiedBy = details[request.params.id].user;
+                        task.last = details[request.params.id].last;
+                    }
 
-                Hapi.Utils.hide(task, exports.type.post);
-                request.reply(task);
-            });
-        }
-        else {
+                    Hapi.Utils.hide(task, exports.post.schema);
+                    request.reply(task);
+                });
+            }
+            else {
 
-            request.reply(err);
-        }
-    });
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Get list of tasks for given project
 
-exports.list = function (request) {
+exports.list = {
+    
+    handler: function (request) {
 
-    Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            Sort.list('task', request.params.id, 'project', function (tasks) {
+                Sort.list('task', request.params.id, 'project', function (tasks) {
 
-                if (tasks) {
+                    if (tasks) {
 
-                    var list = [];
-                    var ids = [];
+                        var list = [];
+                        var ids = [];
 
-                    for (var i = 0, il = tasks.length; i < il; ++i) {
+                        for (var i = 0, il = tasks.length; i < il; ++i) {
 
-                        var task = {
+                            var task = {
 
-                            id: tasks[i]._id,
-                            title: tasks[i].title,
-                            status: tasks[i].status
-                        };
+                                id: tasks[i]._id,
+                                title: tasks[i].title,
+                                status: tasks[i].status
+                            };
 
-                        if (tasks[i].participants) {
+                            if (tasks[i].participants) {
 
-                            for (var p = 0, pl = tasks[i].participants.length; p < pl; ++p) {
+                                for (var p = 0, pl = tasks[i].participants.length; p < pl; ++p) {
 
-                                if (tasks[i].participants[p] === request.userId) {
+                                    if (tasks[i].participants[p] === request.userId) {
 
-                                    task.isMe = true;
-                                    break;
+                                        task.isMe = true;
+                                        break;
+                                    }
+                                }
+
+                                task.participantsCount = tasks[i].participants.length;
+                            }
+                            else {
+
+                                task.participantsCount = 0;
+                            }
+
+                            list.push(task);
+                            ids.push(tasks[i]._id);
+                        }
+
+                        Details.expandIds(ids, request.params.id, request.userId, function (details) {
+
+                            if (details) {
+
+                                for (var i = 0, il = list.length; i < il; ++i) {
+
+                                    if (details[list[i].id]) {
+
+                                        list[i].detailsModified = details[list[i].id].modified;
+                                        list[i].detailsModifiedBy = details[list[i].id].user;
+                                        list[i].last = details[list[i].id].last;
+                                    }
                                 }
                             }
 
-                            task.participantsCount = tasks[i].participants.length;
-                        }
-                        else {
-
-                            task.participantsCount = 0;
-                        }
-
-                        list.push(task);
-                        ids.push(tasks[i]._id);
+                            request.reply(list);
+                        });
                     }
+                    else {
 
-                    Details.expandIds(ids, request.params.id, request.userId, function (details) {
+                        request.reply(Hapi.Error.notFound());
+                    }
+                });
+            }
+            else {
 
-                        if (details) {
-
-                            for (var i = 0, il = list.length; i < il; ++i) {
-
-                                if (details[list[i].id]) {
-
-                                    list[i].detailsModified = details[list[i].id].modified;
-                                    list[i].detailsModifiedBy = details[list[i].id].user;
-                                    list[i].last = details[list[i].id].last;
-                                }
-                            }
-                        }
-
-                        request.reply(list);
-                    });
-                }
-                else {
-
-                    request.reply(Hapi.Error.notFound());
-                }
-            });
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Update task properties
 
-exports.post = function (request) {
+exports.post = {
+    
+    query: {
+        
+        position: Hapi.Types.Number().min(0)
+    },
+    
+    schema: {
 
-    exports.load(request.params.id, request.userId, true, function (task, err, project) {
+        project: { type: 'id', set: false },
+        title: { type: 'string' },
+        status: { type: 'enum', values: { open: 1, pending: 2, close: 3 } },
+        participants: { type: 'id', array: true, empty: true },
+        origin: { type: 'object', set: false, hide: true }
+    },
 
-        if (task) {
+    handler: function (request) {
 
-            if (Object.keys(request.payload).length > 0) {
+        exports.load(request.params.id, request.userId, true, function (task, err, project) {
 
-                if (request.query.position === undefined) {
+            if (task) {
 
-                    // Task fields
+                if (Object.keys(request.payload).length > 0) {
 
-                    var isInvalid = false;
+                    if (request.query.position === undefined) {
 
-                    if (request.payload.participants &&
-                        request.payload.participants.length > 0) {
+                        // Task fields
 
-                        // Verify participants are members of the project
+                        var isInvalid = false;
 
-                        var error = null;
-                        var index = {};
+                        if (request.payload.participants &&
+                            request.payload.participants.length > 0) {
 
-                        for (var p = 0, pl = request.payload.participants.length; p < pl; ++p) {
+                            // Verify participants are members of the project
 
-                            if (index[request.payload.participants[p]] !== true) {
+                            var error = null;
+                            var index = {};
 
-                                index[request.payload.participants[p]] = true;
+                            for (var p = 0, pl = request.payload.participants.length; p < pl; ++p) {
 
-                                if (Project.isMember(project, request.payload.participants[p]) === false) {
+                                if (index[request.payload.participants[p]] !== true) {
 
-                                    error = 'user ' + request.payload.participants[p] + ' is not a member of the Project';
+                                    index[request.payload.participants[p]] = true;
+
+                                    if (Project.isMember(project, request.payload.participants[p]) === false) {
+
+                                        error = 'user ' + request.payload.participants[p] + ' is not a member of the Project';
+                                        break;
+                                    }
+                                }
+                                else {
+
+                                    error = 'duplicate participant in list';
                                     break;
                                 }
                             }
-                            else {
 
-                                error = 'duplicate participant in list';
-                                break;
+                            if (error) {
+
+                                isInvalid = true;
+                                request.reply(Hapi.Error.badRequest(error));
                             }
                         }
 
-                        if (error) {
+                        if (isInvalid === false) {
 
-                            isInvalid = true;
-                            request.reply(Hapi.Error.badRequest(error));
+                            Db.update('task', task._id, Db.toChanges(request.payload), function (err) {
+
+                                if (err === null) {
+
+                                    Stream.update({ object: 'task', project: task.project, task: task._id }, request);
+                                    request.reply({ status: 'ok' });
+                                }
+                                else {
+
+                                    request.reply(err);
+                                }
+                            });
                         }
                     }
+                    else {
 
-                    if (isInvalid === false) {
+                        request.reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
+                    }
+                }
+                else if (request.query.position !== null &&
+                         request.query.position !== undefined) {        // Must test explicitly as value can be 0
 
-                        Db.update('task', task._id, Db.toChanges(request.payload), function (err) {
+                        // Set task position in list
 
-                            if (err === null) {
+                    Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
 
-                                Stream.update({ object: 'task', project: task.project, task: task._id }, request);
-                                request.reply({ status: 'ok' });
+                        if (err === null) {
+
+                            Stream.update({ object: 'tasks', project: task.project }, request);
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.badRequest('Missing position parameter or task object in body'));
+                }
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
+};
+
+
+// Create new task
+
+exports.put = {
+    
+    query: {
+
+        position: Hapi.Types.Number(),
+        suggestion: Hapi.Types.String()
+    },
+
+    schema: {
+
+        project: { type: 'id', set: false },
+        title: { type: 'string' },
+        status: { type: 'enum', values: { open: 1, pending: 2, close: 3 } },
+        participants: { type: 'id', array: true, empty: true, set: false },
+        origin: { type: 'object', set: false, hide: true }
+    },
+
+    handler: function (request) {
+
+        Project.load(request.params.id, request.userId, true, function (project, member, err) {
+
+            if (project) {
+
+                if (request.query.suggestion) {
+
+                    // From suggestion
+
+                    if (!request.rawBody) {
+
+                        Suggestions.get(request.query.suggestion, function (suggestion) {
+
+                            if (suggestion) {
+
+                                var task = { title: suggestion.title, origin: { type: 'suggestion', suggestion: suggestion._id } };
+                                addTask(task);
                             }
                             else {
 
-                                request.reply(err);
+                                request.reply(Hapi.Error.badRequest('Suggestion not found'));
                             }
                         });
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('New task cannot have both body and suggestion id'));
                     }
                 }
                 else {
 
-                    request.reply(Hapi.Error.badRequest('Cannot include both position parameter and task object in body'));
+                    // From body
+
+                    if (request.payload.title) {
+
+                        addTask(request.payload);
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('New task must include a title or a suggestion id'));
+                    }
                 }
             }
-            else if (request.query.position !== null &&
-                     request.query.position !== undefined) {        // Must test explicitly as value can be 0
+            else {
 
-                // Set task position in list
+                request.reply(err);
+            }
+        });
 
-                Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
+        function addTask(task) {
+
+            task.project = request.params.id;
+            task.status = task.status || 'open';
+
+            Db.insert('task', task, function (items, err) {
+
+                if (err === null) {
+
+                    Stream.update({ object: 'tasks', project: task.project }, request);
+                    var result = { status: 'ok', id: items[0]._id };
+                    var replyOptions = { created: 'task/' + items[0]._id };
+
+                    if (request.query.position !== null &&
+                        request.query.position !== undefined) {        // Must test explicitly as value can be 0
+
+                        // Set task position in list
+
+                        Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
+
+                            if (err === null) {
+
+                                result.position = request.query.position;
+                            }
+
+                            request.reply(result, replyOptions);
+                        });
+                    }
+                    else {
+
+                        request.reply(result, replyOptions);
+                    }
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+    }
+};
+
+
+// Delete a task
+
+exports.del = {
+    
+    handler: function (request) {
+
+        exports.load(request.params.id, request.userId, true, function (task, err) {
+
+            if (task) {
+
+                Db.remove('task', task._id, function (err) {
 
                     if (err === null) {
+
+                        Db.remove('task.details', task._id, function (err) { });
 
                         Stream.update({ object: 'tasks', project: task.project }, request);
                         request.reply({ status: 'ok' });
@@ -230,139 +386,10 @@ exports.post = function (request) {
             }
             else {
 
-                request.reply(Hapi.Error.badRequest('Missing position parameter or task object in body'));
-            }
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
-};
-
-
-// Create new task
-
-exports.put = function (request) {
-
-    Project.load(request.params.id, request.userId, true, function (project, member, err) {
-
-        if (project) {
-
-            if (request.query.suggestion) {
-
-                // From suggestion
-
-                if (!request.rawBody) {
-
-                    Suggestions.get(request.query.suggestion, function (suggestion) {
-
-                        if (suggestion) {
-
-                            var task = { title: suggestion.title, origin: { type: 'suggestion', suggestion: suggestion._id} };
-                            addTask(task);
-                        }
-                        else {
-
-                            request.reply(Hapi.Error.badRequest('Suggestion not found'));
-                        }
-                    });
-                }
-                else {
-
-                    request.reply(Hapi.Error.badRequest('New task cannot have both body and suggestion id'));
-                }
-            }
-            else {
-
-                // From body
-
-                if (request.payload.title) {
-
-                    addTask(request.payload);
-                }
-                else {
-
-                    request.reply(Hapi.Error.badRequest('New task must include a title or a suggestion id'));
-                }
-            }
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
-
-    function addTask(task) {
-
-        task.project = request.params.id;
-        task.status = task.status || 'open';
-
-        Db.insert('task', task, function (items, err) {
-
-            if (err === null) {
-
-                Stream.update({ object: 'tasks', project: task.project }, request);
-                var result = { status: 'ok', id: items[0]._id };
-                var replyOptions = { created: 'task/' + items[0]._id };
-
-                if (request.query.position !== null &&
-                    request.query.position !== undefined) {        // Must test explicitly as value can be 0
-
-                    // Set task position in list
-
-                    Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
-
-                        if (err === null) {
-
-                            result.position = request.query.position;
-                        }
-
-                        request.reply(result, replyOptions);
-                    });
-                }
-                else {
-
-                    request.reply(result, replyOptions);
-                }
-            }
-            else {
-
                 request.reply(err);
             }
         });
     }
-};
-
-
-// Delete a task
-
-exports.del = function (request) {
-
-    exports.load(request.params.id, request.userId, true, function (task, err) {
-
-        if (task) {
-
-            Db.remove('task', task._id, function (err) {
-
-                if (err === null) {
-
-                    Db.remove('task.details', task._id, function (err) { });
-
-                    Stream.update({ object: 'tasks', project: task.project }, request);
-                    request.reply({ status: 'ok' });
-                }
-                else {
-
-                    request.reply(err);
-                }
-            });
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
 };
 
 

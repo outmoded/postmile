@@ -14,134 +14,53 @@ var Db = require('./db');
 var internals = {};
 
 
-// Type definition
-
-exports.type = {
-
-    value: { type: 'string', required: true }
-};
-
-
 // User client data
 
-exports.get = function (request) {
-
-    exports.load(request.userId, function (storage, err) {
-
-        if (storage &&
-            storage.clients &&
-            storage.clients[request.clientId]) {
-
-            if (request.params.id) {
-
-                if (internals.checkKey(request.params.id)) {
-
-                    if (storage.clients[request.clientId][request.params.id]) {
-
-                        var result = {};
-                        result[request.params.id] = storage.clients[request.clientId][request.params.id];
-
-                        request.reply(result);
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.notFound());
-                    }
-                }
-                else {
-
-                    request.reply(Hapi.Error.badRequest('Invalid key'));
-                }
-            }
-            else {
-
-                request.reply(storage.clients[request.clientId]);
-            }
-        }
-        else if (err === null) {
-
-            if (request.params.id) {
-
-                request.reply(Hapi.Error.notFound());
-            }
-            else {
-
-                request.reply({});
-            }
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
-};
-
-
-// Set user client data
-
-exports.post = function (request) {
-
-    if (internals.checkKey(request.params.id)) {
+exports.get = {
+    
+    handler: function (request) {
 
         exports.load(request.userId, function (storage, err) {
 
-            if (err === null) {
+            if (storage &&
+                storage.clients &&
+                storage.clients[request.clientId]) {
 
-                if (storage) {
+                if (request.params.id) {
 
-                    // Existing storage
+                    if (internals.checkKey(request.params.id)) {
 
-                    var changes = { $set: {} };
-                    if (storage.clients) {
+                        if (storage.clients[request.clientId][request.params.id]) {
 
-                        if (storage.clients[request.clientId]) {
+                            var result = {};
+                            result[request.params.id] = storage.clients[request.clientId][request.params.id];
 
-                            changes.$set['clients.' + request.clientId + '.' + request.params.id] = request.payload.value;
+                            request.reply(result);
                         }
                         else {
 
-                            changes.$set['clients.' + request.clientId] = {};
-                            changes.$set['clients.' + request.clientId][request.params.id] = request.payload.value;
+                            request.reply(Hapi.Error.notFound());
                         }
                     }
                     else {
 
-                        changes.$set.clients = {};
-                        changes.$set.clients[request.clientId] = {};
-                        changes.$set.clients[request.clientId][request.params.id] = request.payload.value;
+                        request.reply(Hapi.Error.badRequest('Invalid key'));
                     }
-
-                    Db.update('user.storage', storage._id, changes, function (err) {
-
-                        if (err === null) {
-
-                            request.reply({ status: 'ok' });
-                        }
-                        else {
-
-                            request.reply(err);
-                        }
-                    });
                 }
                 else {
 
-                    // First client data
+                    request.reply(storage.clients[request.clientId]);
+                }
+            }
+            else if (err === null) {
 
-                    storage = { _id: request.userId, clients: {} };
-                    storage.clients[request.clientId] = {};
-                    storage.clients[request.clientId][request.params.id] = request.payload.value;
+                if (request.params.id) {
 
-                    Db.insert('user.storage', storage, function (items, err) {
+                    request.reply(Hapi.Error.notFound());
+                }
+                else {
 
-                        if (err === null) {
-
-                            request.reply({ status: 'ok' });
-                        }
-                        else {
-
-                            request.reply(err);
-                        }
-                    });
+                    request.reply({});
                 }
             }
             else {
@@ -150,61 +69,148 @@ exports.post = function (request) {
             }
         });
     }
-    else {
+};
 
-        request.reply(Hapi.Error.badRequest('Invalid key'));
+
+// Set user client data
+
+exports.post = {
+
+    schema: {
+
+        value: { type: 'string', required: true }
+    },
+
+    handler: function (request) {
+
+        if (internals.checkKey(request.params.id)) {
+
+            exports.load(request.userId, function (storage, err) {
+
+                if (err === null) {
+
+                    if (storage) {
+
+                        // Existing storage
+
+                        var changes = { $set: {} };
+                        if (storage.clients) {
+
+                            if (storage.clients[request.clientId]) {
+
+                                changes.$set['clients.' + request.clientId + '.' + request.params.id] = request.payload.value;
+                            }
+                            else {
+
+                                changes.$set['clients.' + request.clientId] = {};
+                                changes.$set['clients.' + request.clientId][request.params.id] = request.payload.value;
+                            }
+                        }
+                        else {
+
+                            changes.$set.clients = {};
+                            changes.$set.clients[request.clientId] = {};
+                            changes.$set.clients[request.clientId][request.params.id] = request.payload.value;
+                        }
+
+                        Db.update('user.storage', storage._id, changes, function (err) {
+
+                            if (err === null) {
+
+                                request.reply({ status: 'ok' });
+                            }
+                            else {
+
+                                request.reply(err);
+                            }
+                        });
+                    }
+                    else {
+
+                        // First client data
+
+                        storage = { _id: request.userId, clients: {} };
+                        storage.clients[request.clientId] = {};
+                        storage.clients[request.clientId][request.params.id] = request.payload.value;
+
+                        Db.insert('user.storage', storage, function (items, err) {
+
+                            if (err === null) {
+
+                                request.reply({ status: 'ok' });
+                            }
+                            else {
+
+                                request.reply(err);
+                            }
+                        });
+                    }
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+        else {
+
+            request.reply(Hapi.Error.badRequest('Invalid key'));
+        }
     }
 };
 
 
 // Delete user client data
 
-exports.del = function (request) {
+exports.del = {
+    
+    handler: function (request) {
 
-    if (internals.checkKey(request.params.id)) {
+        if (internals.checkKey(request.params.id)) {
 
-        exports.load(request.userId, function (storage, err) {
+            exports.load(request.userId, function (storage, err) {
 
-            if (storage) {
+                if (storage) {
 
-                if (storage &&
-                storage.clients &&
-                storage.clients[request.clientId] &&
-                storage.clients[request.clientId][request.params.id]) {
+                    if (storage &&
+                    storage.clients &&
+                    storage.clients[request.clientId] &&
+                    storage.clients[request.clientId][request.params.id]) {
 
-                    var changes = { $unset: {} };
-                    changes.$unset['clients.' + request.clientId + '.' + request.params.id] = 1;
+                        var changes = { $unset: {} };
+                        changes.$unset['clients.' + request.clientId + '.' + request.params.id] = 1;
 
-                    Db.update('user.storage', storage._id, changes, function (err) {
+                        Db.update('user.storage', storage._id, changes, function (err) {
 
-                        if (err === null) {
+                            if (err === null) {
 
-                            request.reply({ status: 'ok' });
-                        }
-                        else {
+                                request.reply({ status: 'ok' });
+                            }
+                            else {
 
-                            request.reply(err);
-                        }
-                    });
+                                request.reply(err);
+                            }
+                        });
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.notFound());
+                    }
                 }
-                else {
+                else if (err === null) {
 
                     request.reply(Hapi.Error.notFound());
                 }
-            }
-            else if (err === null) {
+                else {
 
-                request.reply(Hapi.Error.notFound());
-            }
-            else {
+                    request.reply(err);
+                }
+            });
+        }
+        else {
 
-                request.reply(err);
-            }
-        });
-    }
-    else {
-
-        request.reply(Hapi.Error.badRequest('Invalid key'));
+            request.reply(Hapi.Error.badRequest('Invalid key'));
+        }
     }
 };
 

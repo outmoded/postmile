@@ -5,6 +5,7 @@
 
 // Load modules
 
+var Hapi = require('hapi');
 var Batch = require('./batch');
 var Details = require('./details');
 var Invite = require('./invite');
@@ -23,61 +24,61 @@ var User = require('./user');
 
 exports.endpoints = [
 
-    { method: 'GET',    path: '/oauth/client/:id',              handler: Session.client,        scope: 'login', user: 'none' },
+    { method: 'GET', path: '/oauth/client/:id', config: Session.client },
 
-    { method: 'GET',    path: '/profile',                       handler: User.get,              tos: 'none' },
-    { method: 'POST',   path: '/profile',                       handler: User.post,             schema: User.type.user, tos: 'none' },
-    { method: 'POST',   path: '/profile/email',                 handler: User.email,            schema: User.type.email, tos: 'none' },
-    { method: 'GET',    path: '/contacts',                      handler: User.contacts,         query: ['exclude'], tos: 'none' },
-    { method: 'GET',    path: '/who',                           handler: User.who,              tos: 'none' },
+    { method: 'GET', path: '/profile', config: User.get },
+    { method: 'POST', path: '/profile', config: User.post },
+    { method: 'POST', path: '/profile/email', config: User.email },
+    { method: 'GET', path: '/contacts', config: User.contacts },
+    { method: 'GET', path: '/who', config: User.who },
 
-    { method: 'PUT',    path: '/user',                          handler: User.put,              query: ['invite'], schema: User.type.put, scope: 'signup', user: 'none' },
-    { method: 'POST',   path: '/user/:id/tos/:version',         handler: User.tos,              scope: 'tos', user: 'none' },
-    { method: 'POST',   path: '/user/:id/link/:network',        handler: User.link,             schema: User.type.link, scope: 'login', user: 'none' },
-    { method: 'DELETE', path: '/user/:id/link/:network',        handler: User.unlink,           scope: 'login', user: 'none' },
-    { method: 'POST',   path: '/user/:id/view/:path',           handler: User.view,             scope: 'view', user: 'none' },
-    { method: 'GET',    path: '/user/lookup/:type/:id',         handler: User.lookup,           authentication: 'none' },
-    { method: 'POST',   path: '/user/reminder',                 handler: User.reminder,         schema: User.type.reminder, scope: 'reminder', user: 'none' },
-    { method: 'DELETE', path: '/user',                          handler: User.del,              scope: 'quit', tos: 'none' },
+    { method: 'PUT', path: '/user', config: User.put },
+    { method: 'POST', path: '/user/:id/tos/:version', config: User.tos },
+    { method: 'POST', path: '/user/:id/link/:network', config: User.link },
+    { method: 'DELETE', path: '/user/:id/link/:network', config: User.unlink },
+    { method: 'POST', path: '/user/:id/view/:path', config: User.view },
+    { method: 'GET', path: '/user/lookup/:type/:id', config: User.lookup },
+    { method: 'POST', path: '/user/reminder', config: User.reminder },
+    { method: 'DELETE', path: '/user', config: User.del },
 
-    { method: 'GET',    path: '/projects',                      handler: Project.list },
-    { method: 'GET',    path: '/project/:id',                   handler: Project.get },
-    { method: 'POST',   path: '/project/:id',                   handler: Project.post,          query: ['position'], schema: Project.type.post },
-    { method: 'PUT',    path: '/project',                       handler: Project.put,           schema: Project.type.put },
-    { method: 'DELETE', path: '/project/:id',                   handler: Project.del },
-    { method: 'GET',    path: '/project/:id/tips',              handler: Project.tips },
-    { method: 'GET',    path: '/project/:id/suggestions',       handler: Project.suggestions },
-    { method: 'POST',   path: '/project/:id/participants',      handler: Project.participants,  query: ['message'], schema: Project.type.participants },
-    { method: 'DELETE', path: '/project/:id/participants',      handler: Project.uninvite,      schema: Project.type.uninvite },
-    { method: 'DELETE', path: '/project/:id/participant/:user', handler: Project.uninvite },
-    { method: 'POST',   path: '/project/:id/join',              handler: Project.join },
+    { method: 'GET', path: '/projects', config: Project.list },
+    { method: 'GET', path: '/project/:id', config: Project.get },
+    { method: 'POST', path: '/project/:id', config: Project.post },
+    { method: 'PUT', path: '/project', config: Project.put },
+    { method: 'DELETE', path: '/project/:id', config: Project.del },
+    { method: 'GET', path: '/project/:id/tips', config: Project.tips },
+    { method: 'GET', path: '/project/:id/suggestions', config: Project.suggestions },
+    { method: 'POST', path: '/project/:id/participants', config: Project.participants },
+    { method: 'DELETE', path: '/project/:id/participants', config: Project.uninvite },
+    { method: 'DELETE', path: '/project/:id/participant/:user', config: Project.uninvite },
+    { method: 'POST', path: '/project/:id/join', config: Project.join },
 
-    { method: 'GET',    path: '/project/:id/tasks',             handler: Task.list },
-    { method: 'GET',    path: '/task/:id',                      handler: Task.get },
-    { method: 'POST',   path: '/task/:id',                      handler: Task.post,             query: ['position'], schema: Task.type.post },
-    { method: 'PUT',    path: '/project/:id/task',              handler: Task.put,              query: ['suggestion', 'position'],  schema: Task.type.put },
-    { method: 'DELETE', path: '/task/:id',                      handler: Task.del },
+    { method: 'GET', path: '/project/:id/tasks', config: Task.list },
+    { method: 'GET', path: '/task/:id', config: Task.get },
+    { method: 'POST', path: '/task/:id', config: Task.post },
+    { method: 'PUT', path: '/project/:id/task', config: Task.put },
+    { method: 'DELETE', path: '/task/:id', config: Task.del },
 
-    { method: 'GET',    path: '/task/:id/details',              handler: Details.get,           query: ['since'] },
-    { method: 'POST',   path: '/task/:id/detail',               handler: Details.post,          query: ['last'], schema: Details.type },
+    { method: 'GET', path: '/task/:id/details', config: Details.get },
+    { method: 'POST', path: '/task/:id/detail', config: Details.post },
 
-    { method: 'DELETE', path: '/project/:id/suggestion/:drop',  handler: Suggestions.exclude },
+    { method: 'DELETE', path: '/project/:id/suggestion/:drop', config: Suggestions.exclude },
 
-    { method: 'GET',    path: '/project/:id/last',              handler: Last.getProject },
-    { method: 'POST',   path: '/project/:id/last',              handler: Last.postProject },
-    { method: 'GET',    path: '/task/:id/last',                 handler: Last.getTask },
-    { method: 'POST',   path: '/task/:id/last',                 handler: Last.postTask },
+    { method: 'GET', path: '/project/:id/last', config: Last.getProject },
+    { method: 'POST', path: '/project/:id/last', config: Last.postProject },
+    { method: 'GET', path: '/task/:id/last', config: Last.getTask },
+    { method: 'POST', path: '/task/:id/last', config: Last.postTask },
 
-    { method: 'GET',    path: '/storage/:id?',                  handler: Storage.get },
-    { method: 'POST',   path: '/storage/:id',                   handler: Storage.post,          schema: Storage.type },
-    { method: 'DELETE', path: '/storage/:id',                   handler: Storage.del },
+    { method: 'GET', path: '/storage/:id?', config: Storage.get },
+    { method: 'POST', path: '/storage/:id', config: Storage.post },
+    { method: 'DELETE', path: '/storage/:id', config: Storage.del },
 
-    { method: 'GET',    path: '/invite/:id',                    handler: Invite.get,            authentication: 'none'},
-    { method: 'POST',   path: '/invite/:id/claim',              handler: Invite.claim },
-    
-    { method: 'POST',   path: '/stream/:id/project/:project',   handler: Stream.subscribe },
-    { method: 'DELETE', path: '/stream/:id/project/:project',   handler: Stream.unsubscribe },
-    
-    { method: 'POST',   path: '/batch',                         handler: Batch.post,            schema: Batch.type }
+    { method: 'GET', path: '/invite/:id', config: Invite.get },
+    { method: 'POST', path: '/invite/:id/claim', config: Invite.claim },
+
+    { method: 'POST', path: '/stream/:id/project/:project', config: Stream.subscribe },
+    { method: 'DELETE', path: '/stream/:id/project/:project', config: Stream.unsubscribe },
+
+    { method: 'POST', path: '/batch', config: Batch.post }
 ];
 

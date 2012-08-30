@@ -14,168 +14,176 @@ var Stream = require('./stream');
 
 // Check invitation code
 
-exports.get = function (request) {
+exports.get = {
+    
+    authentication: 'none',
 
-    // Check invitation code type
+    handler: function (request) {
 
-    var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-    var parts = inviteRegex.exec(request.params.id);
+        // Check invitation code type
 
-    if (parts &&
-        parts.length === 4) {
+        var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
+        var parts = inviteRegex.exec(request.params.id);
 
-        // Project invitation code
+        if (parts &&
+            parts.length === 4) {
 
-        var projectId = parts[1];
-        var pid = parts[2];
-        var code = parts[3];
+            // Project invitation code
 
-        // Load project (not using Project.load since active user is not a member)
+            var projectId = parts[1];
+            var pid = parts[2];
+            var code = parts[3];
 
-        Db.get('project', projectId, function (project, err) {
+            // Load project (not using Project.load since active user is not a member)
 
-            if (project) {
+            Db.get('project', projectId, function (project, err) {
 
-                // Lookup code
+                if (project) {
 
-                var projectPid = null;
+                    // Lookup code
 
-                for (var i = 0, il = project.participants.length; i < il; ++i) {
+                    var projectPid = null;
 
-                    if (project.participants[i].pid &&
-                        project.participants[i].pid === pid) {
+                    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                        if (project.participants[i].code &&
-                            project.participants[i].code === code) {
+                        if (project.participants[i].pid &&
+                            project.participants[i].pid === pid) {
 
-                            projectPid = project.participants[i];
-                            break;
-                        }
-                        else {
+                            if (project.participants[i].code &&
+                                project.participants[i].code === code) {
 
-                            // Invalid code
-                            break;
+                                projectPid = project.participants[i];
+                                break;
+                            }
+                            else {
+
+                                // Invalid code
+                                break;
+                            }
                         }
                     }
-                }
 
-                if (projectPid) {
+                    if (projectPid) {
 
-                    User.quick(projectPid.inviter, function (inviter) {
+                        User.quick(projectPid.inviter, function (inviter) {
 
-                        var about = { title: project.title, project: project._id };
+                            var about = { title: project.title, project: project._id };
 
-                        if (inviter &&
-                            inviter.display) {
+                            if (inviter &&
+                                inviter.display) {
 
-                            about.inviter = inviter.display;
-                        }
+                                about.inviter = inviter.display;
+                            }
 
-                        request.reply(about);
-                    });
+                            request.reply(about);
+                        });
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    }
                 }
                 else {
 
-                    request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    request.reply(err);
                 }
-            }
-            else {
+            });
+        }
+        else {
 
-                request.reply(err);
-            }
-        });
-    }
-    else {
+            // Registration invitation code
 
-        // Registration invitation code
+            exports.load(request.params.id, function (invite, err) {
 
-        exports.load(request.params.id, function (invite, err) {
+                if (err === null) {
 
-            if (err === null) {
+                    request.reply(invite);
+                }
+                else {
 
-                request.reply(invite);
-            }
-            else {
-
-                request.reply(err);
-            }
-        });
+                    request.reply(err);
+                }
+            });
+        }
     }
 };
 
 
 // Claim a project invitation
 
-exports.claim = function (request) {
+exports.claim = {
+    
+    handler: function (request) {
 
-    var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-    var parts = inviteRegex.exec(request.params.id);
+        var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
+        var parts = inviteRegex.exec(request.params.id);
 
-    if (parts &&
-        parts.length === 4) {
+        if (parts &&
+            parts.length === 4) {
 
-        var projectId = parts[1];
-        var pid = parts[2];
-        var code = parts[3];
+            var projectId = parts[1];
+            var pid = parts[2];
+            var code = parts[3];
 
-        // Load project (not using Project.load since active user is not a member)
+            // Load project (not using Project.load since active user is not a member)
 
-        Db.get('project', projectId, function (project, err) {
+            Db.get('project', projectId, function (project, err) {
 
-            if (project) {
+                if (project) {
 
-                // Lookup code
+                    // Lookup code
 
-                var projectPid = null;
+                    var projectPid = null;
 
-                for (var i = 0, il = project.participants.length; i < il; ++i) {
+                    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                    if (project.participants[i].pid &&
-                        project.participants[i].pid === pid) {
+                        if (project.participants[i].pid &&
+                            project.participants[i].pid === pid) {
 
-                        if (project.participants[i].code &&
-                            project.participants[i].code === code) {
+                            if (project.participants[i].code &&
+                                project.participants[i].code === code) {
 
-                            projectPid = project.participants[i];
-                            break;
-                        }
-                        else {
+                                projectPid = project.participants[i];
+                                break;
+                            }
+                            else {
 
-                            // Invalid code
-                            break;
+                                // Invalid code
+                                break;
+                            }
                         }
                     }
-                }
 
-                if (projectPid) {
+                    if (projectPid) {
 
-                    Project.replacePid(project, projectPid.pid, request.userId, function (err) {
+                        Project.replacePid(project, projectPid.pid, request.userId, function (err) {
 
-                        if (err === null) {
+                            if (err === null) {
 
-                            Stream.update({ object: 'project', project: projectId }, request);
-                            request.reply({ status: 'ok', project: projectId });
-                        }
-                        else {
+                                Stream.update({ object: 'project', project: projectId }, request);
+                                request.reply({ status: 'ok', project: projectId });
+                            }
+                            else {
 
-                            request.reply(err);
-                        }
-                    });
+                                request.reply(err);
+                            }
+                        });
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    }
                 }
                 else {
 
-                    request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                    request.reply(err);
                 }
-            }
-            else {
+            });
+        }
+        else {
 
-                request.reply(err);
-            }
-        });
-    }
-    else {
-
-        request.reply(Hapi.Error.badRequest('Invalid invitation format'));
+            request.reply(Hapi.Error.badRequest('Invalid invitation format'));
+        }
     }
 };
 

@@ -12,6 +12,11 @@ var User = require('./user');
 var Config = require('./config');
 
 
+// Declare internals
+
+var internals = {};
+
+
 // Generate email ticket
 
 exports.generateTicket = function (user, email, arg1, arg2) {
@@ -274,7 +279,7 @@ exports.sendReminder = function (user, callback) {
                        'Use this link to sign into ' + Config.product.name + ': \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                Hapi.Email.send(user.emails[0].address, subject, text);
+                internals.sendEmail(user.emails[0].address, subject, text);
                 callback(null);
             }
             else {
@@ -306,7 +311,7 @@ exports.sendValidation = function (user, address, callback) {
                        'Use this link to verify your email address: \n\n' +
                        '    ' + Config.host.uri('web') + '/t/' + ticket;
 
-                Hapi.Email.send(address, subject, text);
+                internals.sendEmail(address, subject, text);
                 callback(null);
             }
             else {
@@ -349,7 +354,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Use this link to verify your email address: \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    Hapi.Email.send(address, subject, text);
+                    internals.sendEmail(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -367,7 +372,7 @@ exports.sendWelcome = function (user, callback) {
             text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
             text += '    ' + Config.host.uri('web') + '/\n\n';
 
-            Hapi.Email.send(address, subject, text);
+            internals.sendEmail(address, subject, text);
             callback(null);
         }
         else {
@@ -382,7 +387,7 @@ exports.sendWelcome = function (user, callback) {
                     text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
                     text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
-                    Hapi.Email.send(address, subject, text);
+                    internals.sendEmail(address, subject, text);
                     callback(null);
                 }
                 else {
@@ -428,9 +433,9 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
 
-                Hapi.Email.send(users[i].emails[0].address,
-                            subject,
-                            'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
+                internals.sendEmail(users[i].emails[0].address,
+                                    subject,
+                                    'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
             }
         }
 
@@ -447,7 +452,7 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
-                Hapi.Email.send(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, null, function (err) {
+                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, function (err) {
 
                     if (err === null) {
 
@@ -467,6 +472,11 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
     }
 };
 
+
+internals.sendEmail = function (address, subject, text, callback) {
+
+    Hapi.Email.send(address, subject, text, '', Config.email, callback);
+};
 
 
 

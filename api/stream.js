@@ -66,38 +66,103 @@ exports.update = function (update, request) {
 
 // Subscribe
 
-exports.subscribe = function (request) {
+exports.subscribe = {
+    
+    handler: function (request) {
 
-    // Lookup socket
+        // Lookup socket
 
-    if (internals.socketsById[request.params.id] &&
-        internals.socketsById[request.params.id].socket) {
+        if (internals.socketsById[request.params.id] &&
+            internals.socketsById[request.params.id].socket) {
 
-        if (internals.socketsById[request.params.id].userId) {
+            if (internals.socketsById[request.params.id].userId) {
 
-            if (internals.socketsById[request.params.id].userId === request.userId) {
+                if (internals.socketsById[request.params.id].userId === request.userId) {
 
-                var socket = internals.socketsById[request.params.id].socket;
+                    var socket = internals.socketsById[request.params.id].socket;
 
-                // Lookup project
+                    // Lookup project
 
-                Project.load(request.params.project, request.userId, false, function (project, member, err) {
+                    Project.load(request.params.project, request.userId, false, function (project, member, err) {
 
-                    if (err === null) {
+                        if (err === null) {
 
-                        // Add to subscriber list
+                            // Add to subscriber list
 
-                        internals.idsByProject[project._id] = internals.idsByProject[project._id] || {};
-                        internals.idsByProject[project._id][request.params.id] = true;
+                            internals.idsByProject[project._id] = internals.idsByProject[project._id] || {};
+                            internals.idsByProject[project._id][request.params.id] = true;
 
-                        // Add to cleanup list
+                            // Add to cleanup list
 
-                        internals.projectsById[request.params.id] = internals.projectsById[request.params.id] || {};
-                        internals.projectsById[request.params.id][project._id] = true;
+                            internals.projectsById[request.params.id] = internals.projectsById[request.params.id] || {};
+                            internals.projectsById[request.params.id][project._id] = true;
+
+                            // Send ack via the stream
+
+                            socket.json.send({ type: 'subscribe', project: project._id });
+
+                            // Send ack via the request
+
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.forbidden());
+                }
+            }
+            else {
+
+                request.reply(Hapi.Error.badRequest('Stream not initialized'));
+            }
+        }
+        else {
+
+            request.reply(Hapi.Error.notFound('Stream not found'));
+        }
+    }
+};
+
+
+// Unsubscribe
+
+exports.unsubscribe = {
+    
+    handler: function (request) {
+
+        // Lookup socket
+
+        if (internals.socketsById[request.params.id] &&
+            internals.socketsById[request.params.id].socket) {
+
+            if (internals.socketsById[request.params.id].userId) {
+
+                if (internals.socketsById[request.params.id].userId === request.userId) {
+
+                    var socket = internals.socketsById[request.params.id].socket;
+
+                    // Remove from subscriber list
+
+                    if (internals.idsByProject[request.params.project] &&
+                        internals.idsByProject[request.params.project][request.params.id]) {
+
+                        delete internals.idsByProject[request.params.project][request.params.id];
+
+                        // Remove from cleanup list
+
+                        if (internals.projectsById[request.params.id]) {
+
+                            delete internals.projectsById[request.params.id][request.params.project];
+                        }
 
                         // Send ack via the stream
 
-                        socket.json.send({ type: 'subscribe', project: project._id });
+                        socket.json.send({ type: 'unsubscribe', project: request.params.project });
 
                         // Send ack via the request
 
@@ -105,82 +170,23 @@ exports.subscribe = function (request) {
                     }
                     else {
 
-                        request.reply(err);
+                        request.reply(Hapi.Error.notFound('Project subscription not found'));
                     }
-                });
-            }
-            else {
-
-                request.reply(Hapi.Error.forbidden());
-            }
-        }
-        else {
-
-            request.reply(Hapi.Error.badRequest('Stream not initialized'));
-        }
-    }
-    else {
-
-        request.reply(Hapi.Error.notFound('Stream not found'));
-    }
-};
-
-
-// Unsubscribe
-
-exports.unsubscribe = function (request) {
-
-    // Lookup socket
-
-    if (internals.socketsById[request.params.id] &&
-        internals.socketsById[request.params.id].socket) {
-
-        if (internals.socketsById[request.params.id].userId) {
-
-            if (internals.socketsById[request.params.id].userId === request.userId) {
-
-                var socket = internals.socketsById[request.params.id].socket;
-
-                // Remove from subscriber list
-
-                if (internals.idsByProject[request.params.project] &&
-                    internals.idsByProject[request.params.project][request.params.id]) {
-
-                    delete internals.idsByProject[request.params.project][request.params.id];
-
-                    // Remove from cleanup list
-
-                    if (internals.projectsById[request.params.id]) {
-
-                        delete internals.projectsById[request.params.id][request.params.project];
-                    }
-
-                    // Send ack via the stream
-
-                    socket.json.send({ type: 'unsubscribe', project: request.params.project });
-
-                    // Send ack via the request
-
-                    request.reply({ status: 'ok' });
                 }
                 else {
 
-                    request.reply(Hapi.Error.notFound('Project subscription not found'));
+                    request.reply(Hapi.Error.forbidden());
                 }
             }
             else {
 
-                request.reply(Hapi.Error.forbidden());
+                request.reply(Hapi.Error.badRequest('Stream not initialized'));
             }
         }
         else {
 
-            request.reply(Hapi.Error.badRequest('Stream not initialized'));
+            request.reply(Hapi.Error.notFound('Stream not found'));
         }
-    }
-    else {
-
-        request.reply(Hapi.Error.notFound('Stream not found'));
     }
 };
 

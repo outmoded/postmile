@@ -16,200 +16,200 @@ var Config = require('./config');
 var internals = {};
 
 
-// Type definition
-
-exports.type = {
-
-    get: { type: 'string', array: true, required: true }
-};
-
-
 // Batch processing
 
-exports.post = function (request) {
+exports.post = {
 
-    var requests = [];
-    var results = [];
-    var resultsMap = {};
+    schema: {
 
-    function entry() {
+        get: { type: 'string', array: true, required: true }
+    },
+    
+    handler: function (request) {
 
-        var requestRegex = /(?:\/)(?:\$(\d)+\.)?([\w:\.]+)/g;       // /project/$1.project/tasks, does not allow using array responses
+        var requests = [];
+        var results = [];
+        var resultsMap = {};
 
-        // Validate requests
+        function entry() {
 
-        var error = null;
-        var parseRequest = function ($0, $1, $2) {
+            var requestRegex = /(?:\/)(?:\$(\d)+\.)?([\w:\.]+)/g;       // /project/$1.project/tasks, does not allow using array responses
 
-            if ($1) {
+            // Validate requests
 
-                if ($1 < i) {
+            var error = null;
+            var parseRequest = function ($0, $1, $2) {
 
-                    if ($1.indexOf(':') === -1) {
+                if ($1) {
 
-                        parts.push({ type: 'ref', index: $1, value: $2 });
-                        return '';
+                    if ($1 < i) {
+
+                        if ($1.indexOf(':') === -1) {
+
+                            parts.push({ type: 'ref', index: $1, value: $2 });
+                            return '';
+                        }
+                        else {
+
+                            error = 'Request reference includes invalid ":" character (' + i + ')';
+                            return $0;
+                        }
                     }
                     else {
 
-                        error = 'Request reference includes invalid ":" character (' + i + ')';
+                        error = 'Request reference is beyond array size (' + i + ')';
                         return $0;
                     }
                 }
                 else {
 
-                    error = 'Request reference is beyond array size (' + i + ')';
-                    return $0;
+                    parts.push({ type: 'text', value: $2 });
+                    return '';
                 }
-            }
-            else {
+            };
 
-                parts.push({ type: 'text', value: $2 });
-                return '';
-            }
-        };
+            for (var i = 0, il = request.payload.get.length; i < il; ++i) {
 
-        for (var i = 0, il = request.payload.get.length; i < il; ++i) {
+                // Break into parts
 
-            // Break into parts
+                var parts = [];
+                var result = request.payload.get[i].replace(requestRegex, parseRequest);
 
-            var parts = [];
-            var result = request.payload.get[i].replace(requestRegex, parseRequest);
+                // Make sure entire string was processed (empty)
 
-            // Make sure entire string was processed (empty)
+                if (result === '') {
 
-            if (result === '') {
-
-                requests.push(parts);
-            }
-            else {
-
-                error = error || 'Invalid request format (' + i + ')';
-                break;
-            }
-        }
-
-        if (error === null) {
-
-            process();
-        }
-        else {
-
-            request.reply(Hapi.Error.badRequest(error));
-        }
-    }
-
-    function process() {
-
-        batch(0, function () {
-
-            // Return results
-
-            request.reply(results);
-        });
-    }
-
-    function batch(pos, callback) {
-
-        if (pos >= requests.length) {
-
-            callback();
-        }
-        else {
-
-            // Prepare request
-
-            var parts = requests[pos];
-            var path = '';
-            var error = null;
-
-            for (var i = 0, il = parts.length; i < il; ++i) {
-
-                path += '/';
-
-                if (parts[i].type === 'ref') {
-
-                    var ref = resultsMap[parts[i].index];
-                    if (ref) {
-
-                        var value = null;
-
-                        try {
-
-                            eval('value = ref.' + parts[i].value + ';');
-                        }
-                        catch (e) {
-
-                            error = e.message;
-                        }
-
-                        if (value) {
-
-                            if (value.match(/^[\w:]+$/)) {
-
-                                path += value;
-                            }
-                            else {
-
-                                error = 'Reference value includes illegal characters';
-                                break;
-                            }
-                        }
-                        else {
-
-                            error = error || 'Reference not found';
-                            break;
-                        }
-                    }
-                    else {
-
-                        error = 'Missing reference response';
-                        break;
-                    }
+                    requests.push(parts);
                 }
                 else {
 
-                    path += parts[i].value;
+                    error = error || 'Invalid request format (' + i + ')';
+                    break;
                 }
             }
 
             if (error === null) {
 
-                // Make request
+                process();
+            }
+            else {
 
-                internals.call('GET', path, null, request.session, function (data, err) {
+                request.reply(Hapi.Error.badRequest(error));
+            }
+        }
 
-                    if (err === null) {
+        function process() {
 
-                        // Process response
+            batch(0, function () {
 
-                        results.push(data);
-                        resultsMap[pos] = data;
+                // Return results
+
+                request.reply(results);
+            });
+        }
+
+        function batch(pos, callback) {
+
+            if (pos >= requests.length) {
+
+                callback();
+            }
+            else {
+
+                // Prepare request
+
+                var parts = requests[pos];
+                var path = '';
+                var error = null;
+
+                for (var i = 0, il = parts.length; i < il; ++i) {
+
+                    path += '/';
+
+                    if (parts[i].type === 'ref') {
+
+                        var ref = resultsMap[parts[i].index];
+                        if (ref) {
+
+                            var value = null;
+
+                            try {
+
+                                eval('value = ref.' + parts[i].value + ';');
+                            }
+                            catch (e) {
+
+                                error = e.message;
+                            }
+
+                            if (value) {
+
+                                if (value.match(/^[\w:]+$/)) {
+
+                                    path += value;
+                                }
+                                else {
+
+                                    error = 'Reference value includes illegal characters';
+                                    break;
+                                }
+                            }
+                            else {
+
+                                error = error || 'Reference not found';
+                                break;
+                            }
+                        }
+                        else {
+
+                            error = 'Missing reference response';
+                            break;
+                        }
                     }
                     else {
 
-                        results.push(err);
+                        path += parts[i].value;
                     }
+                }
+
+                if (error === null) {
+
+                    // Make request
+
+                    internals.call('GET', path, null, request.session, function (data, err) {
+
+                        if (err === null) {
+
+                            // Process response
+
+                            results.push(data);
+                            resultsMap[pos] = data;
+                        }
+                        else {
+
+                            results.push(err);
+                        }
+
+                        // Call next
+
+                        batch(pos + 1, callback);
+                    });
+                }
+                else {
+
+                    // Set error response (as string)
+
+                    results.push(error);
 
                     // Call next
 
                     batch(pos + 1, callback);
-                });
-            }
-            else {
-
-                // Set error response (as string)
-
-                results.push(error);
-
-                // Call next
-
-                batch(pos + 1, callback);
+                }
             }
         }
-    }
 
-    entry();
+        entry();
+    }
 };
 
 

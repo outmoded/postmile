@@ -32,27 +32,33 @@ exports.type.client = {
 
 // Get client information endpoint
 
-exports.client = function (request) {
+exports.client = {
+    
+    scope: 'login',
+    user: 'none',
+    
+    handler: function (request) {
 
-    exports.loadClient(request.params.id, function (client, err) {
+        exports.loadClient(request.params.id, function (client, err) {
 
-        if (err === null) {
+            if (err === null) {
 
-            if (client) {
+                if (client) {
 
-                Hapi.Utils.hide(client, exports.type.client);
-                request.reply(client);
+                    Hapi.Utils.hide(client, exports.type.client);
+                    request.reply(client);
+                }
+                else {
+
+                    request.reply(Hapi.Error.notFound());
+                }
             }
             else {
 
-                request.reply(Hapi.Error.notFound());
+                request.reply(err);
             }
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
+        });
+    }
 };
 
 

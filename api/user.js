@@ -23,52 +23,6 @@ var Suggestions = require('./suggestions');
 var internals = {};
 
 
-// Definition
-
-exports.type = {};
-
-exports.type.user = {
-
-    name:       { type: 'string' },
-    emails:     { type: 'object',       set: false,     array: true },
-    contacts:   { type: 'object',       set: false,                     hide: true },
-
-    username:   { type: 'string',                       empty: true },
-    twitter:    { type: 'string',       set: false },
-    facebook:   { type: 'string',       set: false },
-    yahoo:      { type: 'string',       set: false },
-
-    origin:     { type: 'object',       set: false,                     hide: true },
-    tos:        { type: 'object',       set: false,                     hide: true },
-    tickets:    { type: 'object',       set: false,                     hide: true },
-    view:       { type: 'string',       set: false }
-};
-
-exports.type.put = {
-
-    username:   { type: 'string' },
-    name:       { type: 'string' },
-    network:    { type: 'string',       array: true },
-    email:      { type: 'email' }
-};
-
-exports.type.link = {
-
-    id:         { type: 'string',       required: true }
-};
-
-exports.type.reminder = {
-
-    account:    { type: 'string',       required: true }
-};
-
-exports.type.email = {
-
-    address:    { type: 'string',       required: true },
-    action:     { type: 'enum',         required: true, values: { remove: 1, primary: 2, add: 3, verify: 4 } }
-};
-
-
 // Forbidden usernames
 
 internals.forbiddenUsernames = {
@@ -104,285 +58,80 @@ internals.forbiddenUsernames = {
 
 // Current user information
 
-exports.get = function (request) {
+exports.get = {
+    
+    tos: 'none',
 
-    exports.load(request.userId, function (user, err) {
+    handler: function (request) {
 
-        if (user) {
+        exports.load(request.userId, function (user, err) {
 
-            Hapi.Utils.hide(user, exports.type.user);
-            request.reply(user);
-        }
-        else {
+            if (user) {
 
-            request.reply(err);
-        }
-    });
+                Hapi.Utils.hide(user, exports.post.schema);
+                request.reply(user);
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Change profile properties
 
-exports.post = function (request) {
+exports.post = {
 
-    exports.load(request.userId, function (user, err) {
+    schema: {
 
-        if (user) {
+        name: { type: 'string' },
+        emails: { type: 'object', set: false, array: true },
+        contacts: { type: 'object', set: false, hide: true },
 
-            // Remove identical username
+        username: { type: 'string', empty: true },
+        twitter: { type: 'string', set: false },
+        facebook: { type: 'string', set: false },
+        yahoo: { type: 'string', set: false },
 
-            if (request.payload.username &&
-                request.payload.username === user.username) {
+        origin: { type: 'object', set: false, hide: true },
+        tos: { type: 'object', set: false, hide: true },
+        tickets: { type: 'object', set: false, hide: true },
+        view: { type: 'string', set: false }
+    },
 
-                delete request.payload.username;
-            }
+    tos: 'none',
 
-            // Lookup username
+    handler: function (request) {
 
-            if (request.payload.username) {
+        exports.load(request.userId, function (user, err) {
 
-                internals.checkUsername(request.payload.username, function (lookupUser, err) {
+            if (user) {
 
-                    if (err &&
-                        err.code === Hapi.Error.notFound().code) {
+                // Remove identical username
 
-                        Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
+                if (request.payload.username &&
+                    request.payload.username === user.username) {
 
-                            if (err === null) {
-
-                                Stream.update({ object: 'profile', user: user._id }, request);
-                                request.reply({ status: 'ok' });
-                            }
-                            else {
-
-                                request.reply(err);
-                            }
-                        });
-                    }
-                    else {
-
-                        request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
-                    }
-                });
-            }
-            else {
-
-                Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
-
-                    if (err === null) {
-
-                        Stream.update({ object: 'profile', user: user._id }, request);
-                        request.reply({ status: 'ok' });
-                    }
-                    else {
-
-                        request.reply(err);
-                    }
-                });
-            }
-        }
-        else {
-
-            request.reply(err);
-        }
-    });
-};
-
-
-// Change profile email settings
-
-exports.email = function (request) {
-
-    var address = request.payload.address.toLowerCase();
-
-    exports.load(request.userId, function (user, err) {
-
-        if (user) {
-
-            var isFound = false;
-
-            // Find the address
-
-            user.emails = user.emails || [];
-            for (var i = 0, il = user.emails.length; i < il; ++i) {
-
-                if (user.emails[i].address === address) {
-
-                    isFound = true;
-                    break;
+                    delete request.payload.username;
                 }
-            }
 
-            switch (request.payload.action) {
+                // Lookup username
 
-                case 'add':
+                if (request.payload.username) {
 
-                    // Add
+                    internals.checkUsername(request.payload.username, function (lookupUser, err) {
 
-                    if (isFound === false) {
+                        if (err &&
+                            err.code === Hapi.Error.notFound().code) {
 
-                        // Check is already used by someone else
-
-                        Db.count('user', { 'emails.address': address }, function (count, err) {
-
-                            if (err === null) {
-
-                                if (count === 0) {
-
-                                    // Save
-
-                                    Db.update('user', user._id, { '$push': { emails: { address: address, isVerified: false}} }, function (err) {
-
-                                        if (err === null) {
-
-                                            Email.sendValidation(user, address, function (err) {
-
-                                                // Ignore errors
-
-                                                if (err) {
-
-                                                    Hapi.Log.err(err, request);
-                                                }
-
-                                                Stream.update({ object: 'profile', user: user._id }, request);
-                                                request.reply({ status: 'ok' });
-                                            });
-                                        }
-                                        else {
-
-                                            request.reply(err);
-                                        }
-                                    });
-                                }
-                                else {
-
-                                    request.reply(Hapi.Error.badRequest('Email already assigned to another account'));
-                                }
-                            }
-                            else {
-
-                                request.reply(err);
-                            }
-                        });
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.badRequest('Address already present'));
-                    }
-
-                    break;
-
-                case 'primary':
-
-                    // Primary
-
-                    if (isFound) {
-
-                        // Check if current primary
-
-                        if (i !== 0) {
-
-                            // Check if verified
-
-                            if (user.emails[i].isVerified) {
-
-                                // Remove from list
-
-                                user.emails.splice(i, 1);
-
-                                // Add back at head
-
-                                user.emails.unshift({ address: address, isVerified: true });
-
-                                // OVerride entire array
-
-                                Db.update('user', user._id, { '$set': { 'emails': user.emails} }, function (err) {
-
-                                    if (err === null) {
-
-                                        Stream.update({ object: 'profile', user: user._id }, request);
-                                        request.reply({ status: 'ok' });
-                                    }
-                                    else {
-
-                                        request.reply(err);
-                                    }
-                                });
-                            }
-                            else {
-
-                                request.reply(Hapi.Error.badRequest('Email must be verified before made primary'));
-                            }
-                        }
-                        else {
-
-                            request.reply(Hapi.Error.badRequest('Address already primary'));
-                        }
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.notFound('No such email address'));
-                    }
-
-                    break;
-
-                case 'remove':
-
-                    // Remove
-
-                    if (isFound) {
-
-                        // Check if current primary
-
-                        if (i !== 0) {
-
-                            if (user.emails.length > 1) {
-
-                                // Save
-
-                                Db.update('user', user._id, { '$pull': { emails: { address: address}} }, function (err) {
-
-                                    if (err === null) {
-
-                                        Stream.update({ object: 'profile', user: user._id }, request);
-                                        request.reply({ status: 'ok' });
-                                    }
-                                    else {
-
-                                        request.reply(err);
-                                    }
-                                });
-                            }
-                            else {
-
-                                request.reply(Hapi.Error.badRequest('Cannot remove the only address present'));
-                            }
-                        }
-                        else {
-
-                            request.reply(Hapi.Error.badRequest('Cannot remove primary address'));
-                        }
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.notFound('No such email address'));
-                    }
-
-                    break;
-
-                case 'verify':
-
-                    // Verify
-
-                    if (isFound) {
-
-                        if (user.emails[i].isVerified !== true) {
-
-                            Email.sendValidation(user, address, function (err) {
+                            Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
 
                                 if (err === null) {
 
-                                    request.reply({ result: 'ok' });
+                                    Stream.update({ object: 'profile', user: user._id }, request);
+                                    request.reply({ status: 'ok' });
                                 }
                                 else {
 
@@ -392,35 +141,25 @@ exports.email = function (request) {
                         }
                         else {
 
-                            request.reply(Hapi.Error.badRequest('Account already verified'));
+                            request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
                         }
-                    }
-                    else {
+                    });
+                }
+                else {
 
-                        request.reply(Hapi.Error.notFound('No such email address'));
-                    }
-                    break;
-            }
-        }
-        else {
+                    Db.update('user', user._id, Db.toChanges(request.payload), function (err) {
 
-            request.reply(err);
-        }
-    });
-};
+                        if (err === null) {
 
+                            Stream.update({ object: 'profile', user: user._id }, request);
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
 
-// Current user contacts list
-
-exports.contacts = function (request) {
-
-    if (request.query.exclude) {
-
-        Project.load(request.query.exclude, request.userId, false, function (project, member, err) {
-
-            if (err === null) {
-
-                getList(Project.participantsMap(project));
+                            request.reply(err);
+                        }
+                    });
+                }
             }
             else {
 
@@ -428,513 +167,213 @@ exports.contacts = function (request) {
             }
         });
     }
-    else {
+};
 
-        getList(null);
-    }
 
-    function getList(exclude) {
+// Change profile email settings
+
+exports.email = {
+    
+    schema: {
+
+        address: { type: 'string', required: true },
+        action: { type: 'enum', required: true, values: { remove: 1, primary: 2, add: 3, verify: 4 } }
+    },
+
+    tos: 'none',
+
+    handler: function (request) {
+
+        var address = request.payload.address.toLowerCase();
 
         exports.load(request.userId, function (user, err) {
 
             if (user) {
 
-                var userIds = [];
-                for (var i in user.contacts) {
+                var isFound = false;
 
-                    if (user.contacts.hasOwnProperty(i)) {
+                // Find the address
 
-                        if (user.contacts[i].type === 'user' &&
-                            (exclude === null || exclude.users[i] !== true)) {
+                user.emails = user.emails || [];
+                for (var i = 0, il = user.emails.length; i < il; ++i) {
 
-                            userIds.push(i);
-                        }
+                    if (user.emails[i].address === address) {
+
+                        isFound = true;
+                        break;
                     }
                 }
 
-                exports.expandIds(userIds, function (users, usersMap) {
+                switch (request.payload.action) {
 
-                    var contacts = [];
-                    for (var i in user.contacts) {
+                    case 'add':
 
-                        if (user.contacts.hasOwnProperty(i)) {
+                        // Add
 
-                            var contact = null;
-                            if (user.contacts[i].type === 'user') {
+                        if (isFound === false) {
 
-                                // Registered user
+                            // Check is already used by someone else
 
-                                contact = usersMap[i];
-                                if (contact) {
+                            Db.count('user', { 'emails.address': address }, function (count, err) {
 
-                                    contact.type = 'user';
-                                    contact.last = user.contacts[i].last;
-                                    contacts.push(contact);
-                                }
-                            }
-                            else if (user.contacts[i].type === 'email') {
+                                if (err === null) {
 
-                                // Email contact
+                                    if (count === 0) {
 
-                                var email = Db.decodeKey(i);
-                                if (exclude === null ||
-                                    exclude.emails[email] !== true) {
+                                        // Save
 
-                                    contact = {
+                                        Db.update('user', user._id, { '$push': { emails: { address: address, isVerified: false } } }, function (err) {
 
-                                        id: email,
-                                        display: email,
-                                        last: user.contacts[i].last,
-                                        type: 'email'
-                                    };
+                                            if (err === null) {
 
-                                    contacts.push(contact);
-                                }
-                            }
-                        }
-                    }
+                                                Email.sendValidation(user, address, function (err) {
 
-                    contacts.sort(function (a, b) {
+                                                    // Ignore errors
 
-                        if (a.last > b.last) {
+                                                    if (err) {
 
-                            return -1;
-                        }
+                                                        Hapi.Log.err(err, request);
+                                                    }
 
-                        if (a.last < b.last) {
+                                                    Stream.update({ object: 'profile', user: user._id }, request);
+                                                    request.reply({ status: 'ok' });
+                                                });
+                                            }
+                                            else {
 
-                            return 1;
-                        }
-
-                        return 0;
-                    });
-
-                    request.reply(contacts);
-                });
-            }
-            else {
-
-                request.reply(err);
-            }
-        });
-    }
-};
-
-
-// Who am I?
-
-exports.who = function (request) {
-
-    request.reply({ user: request.userId });
-};
-
-
-// Register new user
-
-exports.put = function (request) {
-
-    // Check invitation code
-
-    var inviteId = null;
-    var origin = null;
-    var projectPid = null;
-
-    var email = null;
-    var isEmailVerified = null;
-
-    if (request.query.invite) {
-
-        // Check code source (invite or project participation)
-
-        if (request.query.invite.indexOf('project:') === 0) {
-
-            // Project participation
-
-            var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
-            var parts = inviteRegex.exec(request.query.invite);
-
-            if (parts &&
-                parts.length === 4) {
-
-                var projectId = parts[1];
-                var pid = parts[2];
-                var code = parts[3];
-
-                // Load project (not using Project.load since there is no active user)
-
-                Db.get('project', projectId, function (project, err) {
-
-                    if (project) {
-
-                        // Lookup code
-
-                        for (var i = 0, il = project.participants.length; i < il; ++i) {
-
-                            if (project.participants[i].pid &&
-                                project.participants[i].pid === pid) {
-
-                                if (project.participants[i].code &&
-                                    project.participants[i].code === code) {
-
-                                    projectPid = project.participants[i];
-                                    projectPid.project = project;                // Pass on for later use
-
-                                    origin = { type: 'project', project: project._id };
-
-                                    if (project.participants[i].inviter) {
-
-                                        origin.user = project.participants[i].inviter;
+                                                request.reply(err);
+                                            }
+                                        });
                                     }
+                                    else {
 
-                                    break;
+                                        request.reply(Hapi.Error.badRequest('Email already assigned to another account'));
+                                    }
                                 }
                                 else {
 
-                                    // Invalid code
-                                    break;
+                                    request.reply(err);
                                 }
-                            }
-                        }
-
-                        if (origin) {
-
-                            validate();
+                            });
                         }
                         else {
 
-                            request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                            request.reply(Hapi.Error.badRequest('Address already present'));
                         }
-                    }
-                    else {
 
-                        request.reply(err);
-                    }
-                });
-            }
-            else {
+                        break;
 
-                request.reply(Hapi.Error.badRequest('Invalid invitation format'));
-            }
-        }
-        else {
+                    case 'primary':
 
-            // Invite code
+                        // Primary
 
-            Invite.load(request.query.invite, function (invite, err) {
+                        if (isFound) {
 
-                if (err === null) {
+                            // Check if current primary
 
-                    inviteId = invite._id;
-                    origin = { type: 'invite', invite: inviteId };
+                            if (i !== 0) {
 
-                    validate();
-                }
-                else {
+                                // Check if verified
 
-                    request.reply(err);
-                }
-            });
-        }
-    }
-    else {
+                                if (user.emails[i].isVerified) {
 
-        request.reply(Hapi.Error.badRequest('Invitation code missing'));
-    }
+                                    // Remove from list
 
-    function validate() {
+                                    user.emails.splice(i, 1);
 
-        // Look for email address
+                                    // Add back at head
 
-        email = (request.payload.email ? request.payload.email : (projectPid && projectPid.email ? projectPid.email : null));
-        isEmailVerified = (projectPid && projectPid.email && projectPid.email === email ? true : false);
+                                    user.emails.unshift({ address: address, isVerified: true });
 
-        // Check for at least one identifier
+                                    // OVerride entire array
 
-        if (request.payload.network ||
-            email) {
+                                    Db.update('user', user._id, { '$set': { 'emails': user.emails } }, function (err) {
 
-            validateEmail();
-        }
-        else {
+                                        if (err === null) {
 
-            request.reply(Hapi.Error.badRequest('Must include either a network id or email address'));
-        }
-    }
+                                            Stream.update({ object: 'profile', user: user._id }, request);
+                                            request.reply({ status: 'ok' });
+                                        }
+                                        else {
 
-    function validateEmail() {
+                                            request.reply(err);
+                                        }
+                                    });
+                                }
+                                else {
 
-        if (email) {
-
-            Db.count('user', { 'emails.address': email }, function (count, err) {
-
-                if (err === null) {
-
-                    if (count === 0) {
-
-                        validateNetwork();
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.badRequest('Email address already linked to an existing user'));
-                    }
-                }
-                else {
-
-                    request.reply(err);
-                }
-            });
-        }
-        else {
-
-            validateNetwork();
-        }
-    }
-
-    function validateNetwork() {
-
-        if (request.payload.network) {
-
-            var isValid = true;
-            var error = null;
-
-            if (request.payload.network.length === 2) {
-
-                var network = request.payload.network[0];
-                var networkId = request.payload.network[1];
-
-                if (networkId) {
-
-                    if (network !== 'twitter' &&
-                        network !== 'facebook' &&
-                        network !== 'yahoo') {
-
-                        isValid = false;
-                        error = 'Unknown network';
-                    }
-                }
-                else {
-
-                    isValid = false;
-                    error = 'Empty network id';
-                }
-            }
-            else {
-
-                isValid = false;
-                error = 'Bad network array size';
-            }
-
-            if (isValid) {
-
-                var criteria = {};
-                criteria[request.payload.network[0]] = request.payload.network[1];
-
-                Db.count('user', criteria, function (count, err) {
-
-                    if (err === null) {
-
-                        if (count === 0) {
-
-                            validateUsername();
-                        }
-                        else {
-
-                            request.reply(Hapi.Error.badRequest(request.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
-                        }
-                    }
-                    else {
-
-                        request.reply(err);
-                    }
-                });
-            }
-            else {
-
-                request.reply(Hapi.Error.badRequest(error));
-            }
-        }
-        else {
-
-            validateUsername();
-        }
-    }
-
-    function validateUsername() {
-
-        if (request.payload.username) {
-
-            internals.checkUsername(request.payload.username, function (lookupUser, err) {
-
-                if (err &&
-                    err.code === Hapi.Error.notFound().code) {
-
-                    createAccount();
-                }
-                else {
-
-                    request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
-                }
-            });
-        }
-        else {
-
-            createAccount();
-        }
-    }
-
-    function createAccount() {
-
-        var user = { origin: origin };
-
-        if (request.payload.name) {
-
-            user.name = request.payload.name;
-        }
-
-        if (request.payload.username) {
-
-            user.username = request.payload.username;
-        }
-
-        if (email) {
-
-            user.emails = [{ address: email, isVerified: isEmailVerified}];
-        }
-
-        if (request.payload.network) {
-
-            user[request.payload.network[0]] = request.payload.network[1];
-        }
-
-        Db.insert('user', user, function (items, err) {
-
-            if (err === null) {
-
-                if (items.length === 1 &&
-                    items[0]._id) {
-
-                    var userId = items[0]._id;
-
-                    if (inviteId) {
-
-                        // Decrease invitation count
-
-                        Db.update('invite', inviteId, { $inc: { count: 1} }, function (err) { });
-                    }
-
-                    if (projectPid) {
-
-                        // Update project with new participant
-
-                        Project.replacePid(projectPid.project, projectPid.pid, userId, function (err) {
-
-                            if (err === null) {
-
-                                Stream.update({ object: 'project', project: projectPid.project._id }, request);
-                                sendWelcome(items[0]);
+                                    request.reply(Hapi.Error.badRequest('Email must be verified before made primary'));
+                                }
                             }
                             else {
 
-                                request.reply(err);
+                                request.reply(Hapi.Error.badRequest('Address already primary'));
                             }
-                        });
-                    }
-                    else {
+                        }
+                        else {
 
-                        sendWelcome(items[0]);
-                    }
-                }
-                else {
+                            request.reply(Hapi.Error.notFound('No such email address'));
+                        }
 
-                    request.reply(Hapi.Error.internal('Failed to retrieve new user id', user));
-                }
-            }
-            else {
+                        break;
 
-                request.reply(err);
-            }
-        });
-    }
+                    case 'remove':
 
-    function sendWelcome(user) {
+                        // Remove
 
-        // Send welcome email (also serves as verification email)
+                        if (isFound) {
 
-        Email.sendWelcome(user, function (err) {    // Ignore error
+                            // Check if current primary
 
-            request.reply({ status: 'ok', id: user._id });
-        });
-    }
-};
+                            if (i !== 0) {
 
+                                if (user.emails.length > 1) {
 
-// Set Terms of Service version
+                                    // Save
 
-exports.tos = function (request) {
+                                    Db.update('user', user._id, { '$pull': { emails: { address: address } } }, function (err) {
 
-    exports.load(request.params.id, function (user, err) {
+                                        if (err === null) {
 
-        if (user) {
+                                            Stream.update({ object: 'profile', user: user._id }, request);
+                                            request.reply({ status: 'ok' });
+                                        }
+                                        else {
 
-            user.tos = user.tos || {};
-            user.tos[request.params.version] = Hapi.Utils.getTimestamp();
+                                            request.reply(err);
+                                        }
+                                    });
+                                }
+                                else {
 
-            Db.update('user', user._id, { $set: { 'tos': user.tos} }, function (err) {
+                                    request.reply(Hapi.Error.badRequest('Cannot remove the only address present'));
+                                }
+                            }
+                            else {
 
-                if (err === null) {
+                                request.reply(Hapi.Error.badRequest('Cannot remove primary address'));
+                            }
+                        }
+                        else {
 
-                    request.reply({ status: 'ok' });
-                }
-                else {
+                            request.reply(Hapi.Error.notFound('No such email address'));
+                        }
 
-                    request.reply(err);
-                }
-            });
-        }
-        else {
+                        break;
 
-            request.reply(err);
-        }
-    });
-};
+                    case 'verify':
 
+                        // Verify
 
-// Link other account
+                        if (isFound) {
 
-exports.link = function (request) {
+                            if (user.emails[i].isVerified !== true) {
 
-    if (request.params.network === 'facebook' ||
-        request.params.network === 'twitter' ||
-        request.params.network === 'yahoo') {
-
-        exports.load(request.params.id, function (user, err) {
-
-            if (user) {
-
-                // Check if already has a linked account for this network
-                
-                if (!user[request.params.network]) {
-                
-                    // Check if already assigned to someone else
-
-                    var criteria = {};
-                    criteria[request.params.network] = request.params.id;
-
-                    Db.count('user', criteria, function (count, err) {
-
-                        if (err === null) {
-
-                            if (count === 0) {
-
-                                var changes = { $set: {} };
-                                changes.$set[request.params.network] = request.payload.id;
-
-                                Db.update('user', user._id, changes, function (err) {
+                                Email.sendValidation(user, address, function (err) {
 
                                     if (err === null) {
 
-                                        Stream.update({ object: 'profile', user: user._id }, request);
-                                        request.reply({ status: 'ok' });
+                                        request.reply({ result: 'ok' });
                                     }
                                     else {
 
@@ -944,18 +383,14 @@ exports.link = function (request) {
                             }
                             else {
 
-                                request.reply(Hapi.Error.badRequest('Network id already linked to another user'));
+                                request.reply(Hapi.Error.badRequest('Account already verified'));
                             }
                         }
                         else {
 
-                            request.reply(err);
+                            request.reply(Hapi.Error.notFound('No such email address'));
                         }
-                    });
-                }
-                else {
-                
-                    request.reply(Hapi.Error.badRequest('Network already linked'));
+                        break;
                 }
             }
             else {
@@ -964,88 +399,29 @@ exports.link = function (request) {
             }
         });
     }
-    else {
-
-        request.reply(Hapi.Error.badRequest('Unknown network'));
-    }
 };
 
 
-// Unlink other account
+// Current user contacts list
 
-exports.unlink = function (request) {
+exports.contacts = {
 
-    if (request.params.network === 'facebook' ||
-        request.params.network === 'twitter' ||
-        request.params.network === 'yahoo') {
+    query: {
 
-        exports.load(request.params.id, function (user, err) {
+        exclude: Hapi.Types.String()
+    },
 
-            if (user) {
+    tos: 'none',
 
-                // Is set?
+    handler: function (request) {
 
-                if (user[request.params.network]) {
+        if (request.query.exclude) {
 
-                    // Is last (and no email)
-
-                    var linkCount = (user.facebook ? 1 : 0) + (user.twitter ? 1 : 0) + (user.yahoo ? 1 : 0);
-
-                    if ((user.emails && user.emails.length > 0) ||
-                        linkCount > 1) {
-
-                        var changes = { $unset: {} };
-                        changes.$unset[request.params.network] = 1;
-
-                        Db.update('user', user._id, changes, function (err) {
-
-                            if (err === null) {
-
-                                Stream.update({ object: 'profile', user: user._id }, request);
-                                request.reply({ status: 'ok' });
-                            }
-                            else {
-
-                                request.reply(err);
-                            }
-                        });
-                    }
-                    else {
-
-                        request.reply(Hapi.Error.badRequest('Cannot remove last linked account'));
-                    }
-                }
-                else {
-
-                    request.reply(Hapi.Error.badRequest('Account not linked'));
-                }
-            }
-            else {
-
-                request.reply(err);
-            }
-        });
-    }
-    else {
-
-        request.reply(Hapi.Error.badRequest('Unknown network'));
-    }
-};
-
-
-// Set default view
-
-exports.view = function (request) {
-
-    exports.load(request.params.id, function (user, err) {
-
-        if (user) {
-
-            Db.update('user', user._id, { $set: { 'view': request.params.path } }, function (err) {
+            Project.load(request.query.exclude, request.userId, false, function (project, member, err) {
 
                 if (err === null) {
 
-                    request.reply({ status: 'ok' });
+                    getList(Project.participantsMap(project));
                 }
                 else {
 
@@ -1055,35 +431,750 @@ exports.view = function (request) {
         }
         else {
 
-            request.reply(err);
+            getList(null);
         }
-    });
+
+        function getList(exclude) {
+
+            exports.load(request.userId, function (user, err) {
+
+                if (user) {
+
+                    var userIds = [];
+                    for (var i in user.contacts) {
+
+                        if (user.contacts.hasOwnProperty(i)) {
+
+                            if (user.contacts[i].type === 'user' &&
+                                (exclude === null || exclude.users[i] !== true)) {
+
+                                userIds.push(i);
+                            }
+                        }
+                    }
+
+                    exports.expandIds(userIds, function (users, usersMap) {
+
+                        var contacts = [];
+                        for (var i in user.contacts) {
+
+                            if (user.contacts.hasOwnProperty(i)) {
+
+                                var contact = null;
+                                if (user.contacts[i].type === 'user') {
+
+                                    // Registered user
+
+                                    contact = usersMap[i];
+                                    if (contact) {
+
+                                        contact.type = 'user';
+                                        contact.last = user.contacts[i].last;
+                                        contacts.push(contact);
+                                    }
+                                }
+                                else if (user.contacts[i].type === 'email') {
+
+                                        // Email contact
+
+                                    var email = Db.decodeKey(i);
+                                    if (exclude === null ||
+                                        exclude.emails[email] !== true) {
+
+                                        contact = {
+
+                                            id: email,
+                                            display: email,
+                                            last: user.contacts[i].last,
+                                            type: 'email'
+                                        };
+
+                                        contacts.push(contact);
+                                    }
+                                }
+                            }
+                        }
+
+                        contacts.sort(function (a, b) {
+
+                            if (a.last > b.last) {
+
+                                return -1;
+                            }
+
+                            if (a.last < b.last) {
+
+                                return 1;
+                            }
+
+                            return 0;
+                        });
+
+                        request.reply(contacts);
+                    });
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+    }
+};
+
+
+// Who am I?
+
+exports.who = {
+    
+    tos: 'none',
+
+    handler: function (request) {
+
+        request.reply({ user: request.userId });
+    }
+};
+
+
+// Register new user
+
+exports.put = {
+    
+    query: {
+
+        invite: Hapi.Types.String().required()
+    },
+
+    schema: {
+
+        username: { type: 'string' },
+        name: { type: 'string' },
+        network: { type: 'string', array: true },
+        email: { type: 'email' }
+    },
+
+    scope: 'signup',
+    user: 'none',
+
+    handler: function (request) {
+
+        // Check invitation code
+
+        var inviteId = null;
+        var origin = null;
+        var projectPid = null;
+
+        var email = null;
+        var isEmailVerified = null;
+
+        if (request.query.invite) {
+
+            // Check code source (invite or project participation)
+
+            if (request.query.invite.indexOf('project:') === 0) {
+
+                // Project participation
+
+                var inviteRegex = /^project:([^:]+):([^:]+):([^:]+)$/;
+                var parts = inviteRegex.exec(request.query.invite);
+
+                if (parts &&
+                    parts.length === 4) {
+
+                    var projectId = parts[1];
+                    var pid = parts[2];
+                    var code = parts[3];
+
+                    // Load project (not using Project.load since there is no active user)
+
+                    Db.get('project', projectId, function (project, err) {
+
+                        if (project) {
+
+                            // Lookup code
+
+                            for (var i = 0, il = project.participants.length; i < il; ++i) {
+
+                                if (project.participants[i].pid &&
+                                    project.participants[i].pid === pid) {
+
+                                    if (project.participants[i].code &&
+                                        project.participants[i].code === code) {
+
+                                        projectPid = project.participants[i];
+                                        projectPid.project = project;                // Pass on for later use
+
+                                        origin = { type: 'project', project: project._id };
+
+                                        if (project.participants[i].inviter) {
+
+                                            origin.user = project.participants[i].inviter;
+                                        }
+
+                                        break;
+                                    }
+                                    else {
+
+                                        // Invalid code
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (origin) {
+
+                                validate();
+                            }
+                            else {
+
+                                request.reply(Hapi.Error.badRequest('Invalid invitation code'));
+                            }
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.badRequest('Invalid invitation format'));
+                }
+            }
+            else {
+
+                // Invite code
+
+                Invite.load(request.query.invite, function (invite, err) {
+
+                    if (err === null) {
+
+                        inviteId = invite._id;
+                        origin = { type: 'invite', invite: inviteId };
+
+                        validate();
+                    }
+                    else {
+
+                        request.reply(err);
+                    }
+                });
+            }
+        }
+        else {
+
+            request.reply(Hapi.Error.badRequest('Invitation code missing'));
+        }
+
+        function validate() {
+
+            // Look for email address
+
+            email = (request.payload.email ? request.payload.email : (projectPid && projectPid.email ? projectPid.email : null));
+            isEmailVerified = (projectPid && projectPid.email && projectPid.email === email ? true : false);
+
+            // Check for at least one identifier
+
+            if (request.payload.network ||
+                email) {
+
+                validateEmail();
+            }
+            else {
+
+                request.reply(Hapi.Error.badRequest('Must include either a network id or email address'));
+            }
+        }
+
+        function validateEmail() {
+
+            if (email) {
+
+                Db.count('user', { 'emails.address': email }, function (count, err) {
+
+                    if (err === null) {
+
+                        if (count === 0) {
+
+                            validateNetwork();
+                        }
+                        else {
+
+                            request.reply(Hapi.Error.badRequest('Email address already linked to an existing user'));
+                        }
+                    }
+                    else {
+
+                        request.reply(err);
+                    }
+                });
+            }
+            else {
+
+                validateNetwork();
+            }
+        }
+
+        function validateNetwork() {
+
+            if (request.payload.network) {
+
+                var isValid = true;
+                var error = null;
+
+                if (request.payload.network.length === 2) {
+
+                    var network = request.payload.network[0];
+                    var networkId = request.payload.network[1];
+
+                    if (networkId) {
+
+                        if (network !== 'twitter' &&
+                            network !== 'facebook' &&
+                            network !== 'yahoo') {
+
+                            isValid = false;
+                            error = 'Unknown network';
+                        }
+                    }
+                    else {
+
+                        isValid = false;
+                        error = 'Empty network id';
+                    }
+                }
+                else {
+
+                    isValid = false;
+                    error = 'Bad network array size';
+                }
+
+                if (isValid) {
+
+                    var criteria = {};
+                    criteria[request.payload.network[0]] = request.payload.network[1];
+
+                    Db.count('user', criteria, function (count, err) {
+
+                        if (err === null) {
+
+                            if (count === 0) {
+
+                                validateUsername();
+                            }
+                            else {
+
+                                request.reply(Hapi.Error.badRequest(request.payload.network[0].replace(/^\w/, function ($0) { return $0.toUpperCase(); }) + ' account already linked to an existing user'));
+                            }
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.badRequest(error));
+                }
+            }
+            else {
+
+                validateUsername();
+            }
+        }
+
+        function validateUsername() {
+
+            if (request.payload.username) {
+
+                internals.checkUsername(request.payload.username, function (lookupUser, err) {
+
+                    if (err &&
+                        err.code === Hapi.Error.notFound().code) {
+
+                        createAccount();
+                    }
+                    else {
+
+                        request.reply(typeof err === 'string' ? Hapi.Error.badRequest('Invalid username: ' + err) : err);
+                    }
+                });
+            }
+            else {
+
+                createAccount();
+            }
+        }
+
+        function createAccount() {
+
+            var user = { origin: origin };
+
+            if (request.payload.name) {
+
+                user.name = request.payload.name;
+            }
+
+            if (request.payload.username) {
+
+                user.username = request.payload.username;
+            }
+
+            if (email) {
+
+                user.emails = [{ address: email, isVerified: isEmailVerified }];
+            }
+
+            if (request.payload.network) {
+
+                user[request.payload.network[0]] = request.payload.network[1];
+            }
+
+            Db.insert('user', user, function (items, err) {
+
+                if (err === null) {
+
+                    if (items.length === 1 &&
+                        items[0]._id) {
+
+                        var userId = items[0]._id;
+
+                        if (inviteId) {
+
+                            // Decrease invitation count
+
+                            Db.update('invite', inviteId, { $inc: { count: 1 } }, function (err) { });
+                        }
+
+                        if (projectPid) {
+
+                            // Update project with new participant
+
+                            Project.replacePid(projectPid.project, projectPid.pid, userId, function (err) {
+
+                                if (err === null) {
+
+                                    Stream.update({ object: 'project', project: projectPid.project._id }, request);
+                                    sendWelcome(items[0]);
+                                }
+                                else {
+
+                                    request.reply(err);
+                                }
+                            });
+                        }
+                        else {
+
+                            sendWelcome(items[0]);
+                        }
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.internal('Failed to retrieve new user id', user));
+                    }
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+
+        function sendWelcome(user) {
+
+            // Send welcome email (also serves as verification email)
+
+            Email.sendWelcome(user, function (err) {    // Ignore error
+
+                request.reply({ status: 'ok', id: user._id });
+            });
+        }
+    }
+};
+
+
+// Set Terms of Service version
+
+exports.tos = {
+    
+    scope: 'tos',
+
+    user: 'none',
+
+    handler: function (request) {
+
+        exports.load(request.params.id, function (user, err) {
+
+            if (user) {
+
+                user.tos = user.tos || {};
+                user.tos[request.params.version] = Hapi.Utils.getTimestamp();
+
+                Db.update('user', user._id, { $set: { 'tos': user.tos } }, function (err) {
+
+                    if (err === null) {
+
+                        request.reply({ status: 'ok' });
+                    }
+                    else {
+
+                        request.reply(err);
+                    }
+                });
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
+};
+
+
+// Link other account
+
+exports.link = {
+    
+    schema: {
+
+        id: { type: 'string', required: true }
+    },
+
+    scope: 'login',
+    user: 'none',
+
+    handler: function (request) {
+
+        if (request.params.network === 'facebook' ||
+            request.params.network === 'twitter' ||
+            request.params.network === 'yahoo') {
+
+            exports.load(request.params.id, function (user, err) {
+
+                if (user) {
+
+                    // Check if already has a linked account for this network
+
+                    if (!user[request.params.network]) {
+
+                        // Check if already assigned to someone else
+
+                        var criteria = {};
+                        criteria[request.params.network] = request.params.id;
+
+                        Db.count('user', criteria, function (count, err) {
+
+                            if (err === null) {
+
+                                if (count === 0) {
+
+                                    var changes = { $set: {} };
+                                    changes.$set[request.params.network] = request.payload.id;
+
+                                    Db.update('user', user._id, changes, function (err) {
+
+                                        if (err === null) {
+
+                                            Stream.update({ object: 'profile', user: user._id }, request);
+                                            request.reply({ status: 'ok' });
+                                        }
+                                        else {
+
+                                            request.reply(err);
+                                        }
+                                    });
+                                }
+                                else {
+
+                                    request.reply(Hapi.Error.badRequest('Network id already linked to another user'));
+                                }
+                            }
+                            else {
+
+                                request.reply(err);
+                            }
+                        });
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('Network already linked'));
+                    }
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+        else {
+
+            request.reply(Hapi.Error.badRequest('Unknown network'));
+        }
+    }
+};
+
+
+// Unlink other account
+
+exports.unlink = {
+    
+    scope: 'login',
+    user: 'none',
+
+    handler: function (request) {
+
+        if (request.params.network === 'facebook' ||
+            request.params.network === 'twitter' ||
+            request.params.network === 'yahoo') {
+
+            exports.load(request.params.id, function (user, err) {
+
+                if (user) {
+
+                    // Is set?
+
+                    if (user[request.params.network]) {
+
+                        // Is last (and no email)
+
+                        var linkCount = (user.facebook ? 1 : 0) + (user.twitter ? 1 : 0) + (user.yahoo ? 1 : 0);
+
+                        if ((user.emails && user.emails.length > 0) ||
+                            linkCount > 1) {
+
+                            var changes = { $unset: {} };
+                            changes.$unset[request.params.network] = 1;
+
+                            Db.update('user', user._id, changes, function (err) {
+
+                                if (err === null) {
+
+                                    Stream.update({ object: 'profile', user: user._id }, request);
+                                    request.reply({ status: 'ok' });
+                                }
+                                else {
+
+                                    request.reply(err);
+                                }
+                            });
+                        }
+                        else {
+
+                            request.reply(Hapi.Error.badRequest('Cannot remove last linked account'));
+                        }
+                    }
+                    else {
+
+                        request.reply(Hapi.Error.badRequest('Account not linked'));
+                    }
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
+        else {
+
+            request.reply(Hapi.Error.badRequest('Unknown network'));
+        }
+    }
+};
+
+
+// Set default view
+
+exports.view = {
+    
+    scope: 'view',
+    user: 'none',
+
+    handler: function (request) {
+
+        exports.load(request.params.id, function (user, err) {
+
+            if (user) {
+
+                Db.update('user', user._id, { $set: { 'view': request.params.path } }, function (err) {
+
+                    if (err === null) {
+
+                        request.reply({ status: 'ok' });
+                    }
+                    else {
+
+                        request.reply(err);
+                    }
+                });
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Lookup user based on account and type
 
-exports.lookup = function (request) {
+exports.lookup = {
+    
+    authentication: 'none',
 
-    if (request.params.type === 'username') {
+    handler: function (request) {
 
-        internals.checkUsername(request.params.id, function (lookupUser, err) {
+        if (request.params.type === 'username') {
 
-            if (lookupUser) {
+            internals.checkUsername(request.params.id, function (lookupUser, err) {
 
-                request.reply({ user: lookupUser._id });
+                if (lookupUser) {
+
+                    request.reply({ user: lookupUser._id });
+                }
+                else {
+
+                    request.reply(typeof err === 'string' ? Hapi.Error.badRequest(err) : err);
+                }
+            });
+        }
+        else if (request.params.type === 'email') {
+
+            if (Hapi.Email.checkAddress(request.params.id)) {
+
+                Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
+
+                    if (err === null) {
+
+                        if (item) {
+
+                            request.reply({ user: item._id });
+                        }
+                        else {
+
+                            request.reply(Hapi.Error.notFound());
+                        }
+                    }
+                    else {
+
+                        request.reply(err);
+                    }
+                });
             }
             else {
 
-                request.reply(typeof err === 'string' ? Hapi.Error.badRequest(err) : err);
+                request.reply(Hapi.Error.badRequest('Invalid email address'));
             }
-        });
-    }
-    else if (request.params.type === 'email') {
+        }
+        else if (request.params.type === 'facebook' ||
+                 request.params.type === 'twitter' ||
+                 request.params.type === 'yahoo') {
 
-        if (Hapi.Email.checkAddress(request.params.id)) {
+            var criteria = {};
+            criteria[request.params.type] = request.params.id;
 
-            Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
+            Db.queryUnique('user', criteria, function (item, err) {
 
                 if (err === null) {
 
@@ -1104,131 +1195,46 @@ exports.lookup = function (request) {
         }
         else {
 
-            request.reply(Hapi.Error.badRequest('Invalid email address'));
+            request.reply(Hapi.Error.badRequest('Unknown network type'));
         }
-    }
-    else if (request.params.type === 'facebook' ||
-             request.params.type === 'twitter' ||
-             request.params.type === 'yahoo') {
-
-        var criteria = {};
-        criteria[request.params.type] = request.params.id;
-
-        Db.queryUnique('user', criteria, function (item, err) {
-
-            if (err === null) {
-
-                if (item) {
-
-                    request.reply({ user: item._id });
-                }
-                else {
-
-                    request.reply(Hapi.Error.notFound());
-                }
-            }
-            else {
-
-                request.reply(err);
-            }
-        });
-    }
-    else {
-
-        request.reply(Hapi.Error.badRequest('Unknown network type'));
     }
 };
 
 
 // Send email reminder account based on email or username and take action
 
-exports.reminder = function (request) {
+exports.reminder = {
+    
+    schema: {
 
-    var isEmail = request.payload.account.indexOf('@') !== -1;
-    var account = request.payload.account.toLowerCase();
+        account: { type: 'string', required: true }
+    },
 
-    if (isEmail === false ||
-        Hapi.Email.checkAddress(account)) {
+    scope: 'reminder',
+    user: 'none',
 
-        var criteria = {};
-        criteria[isEmail ? 'emails.address' : 'username'] = account;
+    handler: function (request) {
 
-        Db.queryUnique('user', criteria, function (user, err) {
+        var isEmail = request.payload.account.indexOf('@') !== -1;
+        var account = request.payload.account.toLowerCase();
 
-            if (err === null) {
+        if (isEmail === false ||
+            Hapi.Email.checkAddress(account)) {
 
-                if (user) {
+            var criteria = {};
+            criteria[isEmail ? 'emails.address' : 'username'] = account;
 
-                    Email.sendReminder(user, function (err) {
+            Db.queryUnique('user', criteria, function (user, err) {
 
-                        if (err === null) {
+                if (err === null) {
 
-                            request.reply({ result: 'ok' });
-                        }
-                        else {
+                    if (user) {
 
-                            request.reply(err);
-                        }
-                    });
-                }
-                else {
-
-                    request.reply(Hapi.Error.notFound());
-                }
-            }
-            else {
-
-                request.reply(err);
-            }
-        });
-    }
-    else {
-
-        request.reply(Hapi.Error.badRequest());
-    }
-};
-
-
-// Delete account
-
-exports.del = function (request) {
-
-    // Check if user has any projects
-
-    Project.unsortedList(request.userId, function (projects, owner, notOwner, err) {
-
-        if (err === null) {
-
-            // Check if member of any projects
-
-            if (notOwner.length === 0) {
-
-                // Check if owner of any projects
-
-                if (owner.length === 0) {
-
-                    // No own projects
-
-                    deleteAccount(null);
-                }
-                else if (owner.length === 1) {
-
-                    // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
-
-                    if (owner[0].participants.length === 1) {
-
-                        Task.count(owner[0]._id, function (count, err) {
+                        Email.sendReminder(user, function (err) {
 
                             if (err === null) {
 
-                                if (count === 0) {
-
-                                    deleteAccount(owner[0]._id);
-                                }
-                                else {
-
-                                    request.reply(Hapi.Error.badRequest('Must first delete project'));
-                                }
+                                request.reply({ result: 'ok' });
                             }
                             else {
 
@@ -1238,75 +1244,147 @@ exports.del = function (request) {
                     }
                     else {
 
-                        request.reply(Hapi.Error.badRequest('Must first delete project (has participants)'));
+                        request.reply(Hapi.Error.notFound());
                     }
                 }
                 else {
 
-                    // Multiple own projects
-
-                    request.reply(Hapi.Error.badRequest('Must first delete all projects'));
+                    request.reply(err);
                 }
-            }
-            else {
-
-                // Member of projects
-
-                request.reply(Hapi.Error.badRequest('Must first leave all projects'));
-            }
+            });
         }
         else {
 
-            request.reply(err);
+            request.reply(Hapi.Error.badRequest());
         }
-    });
+    }
+};
 
-    function deleteAccount(projectId) {
 
-        var ignore = function () { };
+// Delete account
 
-        // Delete account first
+exports.del = {
+    
+    scope: 'quit',
+    tos: 'none',
 
-        Db.remove('user', request.userId, function (err) {
+    handler: function (request) {
+
+        // Check if user has any projects
+
+        Project.unsortedList(request.userId, function (projects, owner, notOwner, err) {
 
             if (err === null) {
 
-                // Remove own empty project
+                // Check if member of any projects
 
-                if (projectId) {
+                if (notOwner.length === 0) {
 
-                    Project.delEmpty(projectId, ignore);
+                    // Check if owner of any projects
+
+                    if (owner.length === 0) {
+
+                        // No own projects
+
+                        deleteAccount(null);
+                    }
+                    else if (owner.length === 1) {
+
+                            // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
+
+                        if (owner[0].participants.length === 1) {
+
+                            Task.count(owner[0]._id, function (count, err) {
+
+                                if (err === null) {
+
+                                    if (count === 0) {
+
+                                        deleteAccount(owner[0]._id);
+                                    }
+                                    else {
+
+                                        request.reply(Hapi.Error.badRequest('Must first delete project'));
+                                    }
+                                }
+                                else {
+
+                                    request.reply(err);
+                                }
+                            });
+                        }
+                        else {
+
+                            request.reply(Hapi.Error.badRequest('Must first delete project (has participants)'));
+                        }
+                    }
+                    else {
+
+                        // Multiple own projects
+
+                        request.reply(Hapi.Error.badRequest('Must first delete all projects'));
+                    }
                 }
+                else {
 
-                // Delete the projects sort list
+                    // Member of projects
 
-                Sort.del('project', request.userId, ignore);
-
-                // Remove grants
-
-                Session.delUser(request.userId, ignore);
-
-                // Remove excluded suggestions
-
-                Suggestions.delUser(request.userId, ignore);
-
-                // Remove last
-
-                Last.delUser(request.userId, ignore);
-
-                // Remove client storage
-
-                Storage.delUser(request.userId, ignore);
-
-                // Return result
-
-                request.reply({ result: 'ok' });
+                    request.reply(Hapi.Error.badRequest('Must first leave all projects'));
+                }
             }
             else {
 
                 request.reply(err);
             }
         });
+
+        function deleteAccount(projectId) {
+
+            var ignore = function () { };
+
+            // Delete account first
+
+            Db.remove('user', request.userId, function (err) {
+
+                if (err === null) {
+
+                    // Remove own empty project
+
+                    if (projectId) {
+
+                        Project.delEmpty(projectId, ignore);
+                    }
+
+                    // Delete the projects sort list
+
+                    Sort.del('project', request.userId, ignore);
+
+                    // Remove grants
+
+                    Session.delUser(request.userId, ignore);
+
+                    // Remove excluded suggestions
+
+                    Suggestions.delUser(request.userId, ignore);
+
+                    // Remove last
+
+                    Last.delUser(request.userId, ignore);
+
+                    // Remove client storage
+
+                    Storage.delUser(request.userId, ignore);
+
+                    // Return result
+
+                    request.reply({ result: 'ok' });
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
     }
 };
 

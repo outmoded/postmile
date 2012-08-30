@@ -13,149 +13,161 @@ var User = require('./user');
 var Stream = require('./stream');
 
 
-// Type definition
-
-exports.type = {
-
-    created:        { type: 'number',   set: false },
-    type:           { type: 'enum',                     required: true,     values: { text: 1 } },
-    content:        { type: 'string',                   required: true },
-    user:           { type: 'id',       set: false }
-};
-
-
 // Task details
 
-exports.get = function (request) {
+exports.get = {
+    
+    query: {
 
-    exports.load(request.params.id, request.userId, false, function (details, err, task, project) {
+        since: Hapi.Types.Number().min(0)
+    },
 
-        details = details || { id: request.params.id, thread: [] };
+    handler: function (request) {
 
-        if (err === null) {
+        exports.load(request.params.id, request.userId, false, function (details, err, task, project) {
 
-            // Clear thread from old entries
+            details = details || { id: request.params.id, thread: [] };
 
-            if (request.query.since) {
+            if (err === null) {
 
-                var since = parseInt(request.query.since, 10);
-                if (since &&
-                    since > 0) {
+                // Clear thread from old entries
 
-                    var thread = [];
-                    for (var i = 0, il = details.thread.length; i < il; ++i) {
+                if (request.query.since) {
 
-                        if (details.thread[i].created > since) {
+                    var since = parseInt(request.query.since, 10);
+                    if (since &&
+                        since > 0) {
 
-                            thread.push(details.thread[i]);
+                        var thread = [];
+                        for (var i = 0, il = details.thread.length; i < il; ++i) {
+
+                            if (details.thread[i].created > since) {
+
+                                thread.push(details.thread[i]);
+                            }
                         }
+
+                        details.thread = thread;
                     }
-
-                    details.thread = thread;
                 }
-            }
 
-            // Load user display information
+                // Load user display information
 
-            var userIds = [];
-            for (i = 0, il = details.thread.length; i < il; ++i) {
-
-                userIds.push(details.thread[i].user);
-            }
-
-            User.expandIds(userIds, function (users, usersMap) {
-
-                // Assign to each thread item
-
+                var userIds = [];
                 for (i = 0, il = details.thread.length; i < il; ++i) {
 
-                    details.thread[i].user = usersMap[details.thread[i].user] || { id: details.thread[i].user };
+                    userIds.push(details.thread[i].user);
                 }
 
-                request.reply(details);
-            });
-        }
-        else {
+                User.expandIds(userIds, function (users, usersMap) {
 
-            request.reply(err);
-        }
-    });
+                    // Assign to each thread item
+
+                    for (i = 0, il = details.thread.length; i < il; ++i) {
+
+                        details.thread[i].user = usersMap[details.thread[i].user] || { id: details.thread[i].user };
+                    }
+
+                    request.reply(details);
+                });
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Add task detail
 
-exports.post = function (request) {
+exports.post = {
+    
+    query: {
 
-    var now = Hapi.Utils.getTimestamp();
+        last: Hapi.Types.Boolean()
+    },
 
-    exports.load(request.params.id, request.userId, true, function (details, err, task, project) {
+    schema: {
 
-        if (task) {
+        created: { type: 'number', set: false },
+        type: { type: 'enum', required: true, values: { text: 1 } },
+        content: { type: 'string', required: true },
+        user: { type: 'id', set: false }
+    },
 
-            if (err === null) {
+    handler: function (request) {
 
-                var detail = request.payload;
-                detail.created = now;
-                detail.user = request.userId;
+        var now = Hapi.Utils.getTimestamp();
 
-                if (details) {
+        exports.load(request.params.id, request.userId, true, function (details, err, task, project) {
 
-                    // Existing details
+            if (task) {
 
-                    Db.update('task.details', details._id, { $push: { thread: detail} }, function (err) {
+                if (err === null) {
 
-                        if (err === null) {
+                    var detail = request.payload;
+                    detail.created = now;
+                    detail.user = request.userId;
 
-                            finalize(task, project);
-                        }
-                        else {
+                    if (details) {
 
-                            request.reply(err);
-                        }
-                    });
+                        // Existing details
+
+                        Db.update('task.details', details._id, { $push: { thread: detail } }, function (err) {
+
+                            if (err === null) {
+
+                                finalize(task, project);
+                            }
+                            else {
+
+                                request.reply(err);
+                            }
+                        });
+                    }
+                    else {
+
+                        // First detail
+
+                        details = { _id: task._id, project: project._id, thread: [] };
+                        details.thread.push(detail);
+
+                        Db.insert('task.details', details, function (items, err) {
+
+                            if (err === null) {
+
+                                finalize(task, project);
+                            }
+                            else {
+
+                                request.reply(err);
+                            }
+                        });
+                    }
                 }
                 else {
 
-                    // First detail
-
-                    details = { _id: task._id, project: project._id, thread: [] };
-                    details.thread.push(detail);
-
-                    Db.insert('task.details', details, function (items, err) {
-
-                        if (err === null) {
-
-                            finalize(task, project);
-                        }
-                        else {
-
-                            request.reply(err);
-                        }
-                    });
+                    request.reply(err);
                 }
             }
             else {
 
                 request.reply(err);
             }
+        });
+
+        function finalize(task, project) {
+
+            if (request.query.last === 'true') {
+
+                Last.setLast(request.userId, project, task, function (err) { });    // Ignore response
+            }
+
+            Stream.update({ object: 'details', project: task.project, task: task._id }, request);
+            request.reply({ status: 'ok' });
         }
-        else {
-
-            request.reply(err);
-        }
-    });
-
-    function finalize(task, project) {
-
-        if (request.query.last &&
-            request.query.last === 'true') {
-
-            Last.setLast(request.userId, project, task, function (err) {});    // Ignore response
-        }
-
-        Stream.update({ object: 'details', project: task.project, task: task._id }, request);
-        request.reply({ status: 'ok' });
     }
 };
 
