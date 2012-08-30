@@ -25,10 +25,10 @@ var internals = {};
 
 internals.onPostHandler = function (request, next) {
 
-    if (request._response &&
-        request._response.result) {
+    if (request.response &&
+        request.response.result) {
 
-        var result = request._response.result;
+        var result = request.response.result;
 
         // Sanitize database fields
 
