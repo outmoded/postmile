@@ -100,14 +100,9 @@ script
 
         request.open(method, uri);
         request.setRequestHeader('Authorization', authorization);
-
-        if (content) {
-
-            request.setRequestHeader('Content-Type', 'application/json');
-        }
-
+        request.setRequestHeader('Content-Type', 'application/json');
         request.send(content);
-        document.getElementById('body').innerHTML = 'Waiting...';
+        document.getElementById('response').innerHTML = 'Waiting...';
     }
 
 #test-form

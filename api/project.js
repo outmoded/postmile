@@ -19,349 +19,373 @@ var Stream = require('./stream');
 
 // Declare internals
 
-var internals = {
-
-    maxMessageLength: 250
-};
-
-
-// Project definitions
-
-exports.type = {};
-
-exports.type.post = {
-
-    title:          { type: 'string' },
-    date:           { type: 'date',     empty: true },
-    time:           { type: 'time',     empty: true },
-    place:          { type: 'string',   empty: true },
-    participants:   { type: 'object',                   set: false, array: true }
-};
-
-exports.type.put = Hapi.Utils.clone(exports.type.post);
-exports.type.put.title.required = true;
-
-exports.type.participants = {
-
-    participants:   { type: 'id',       array: true },      // type can also be email
-    names:          { type: 'string',   array: true }
-};
-
-exports.type.uninvite = {
-
-    participants:   { type: 'id',       array: true,    required: true }
-};
+var internals = {};
 
 
 // Get project information
 
-exports.get = function (request, reply) {
+exports.get = {
+    
+    handler: function (request) {
 
-    exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            exports.participantsList(project, function (participants) {
+                exports.participantsList(project, function (participants) {
 
-                project.participants = participants;
+                    project.participants = participants;
 
-                reply(project);
-            });
-        }
-        else {
+                    request.reply(project);
+                });
+            }
+            else {
 
-            reply(err);
-        }
-    });
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Get list of projects for current user
 
-exports.list = function (request, reply) {
+exports.list = {
+    
+    handler: function (request) {
 
-    Sort.list('project', request.userId, 'participants.id', function (projects) {
+        Sort.list('project', request.userId, 'participants.id', function (projects) {
 
-        if (projects) {
+            if (projects) {
 
-            var list = [];
-            for (var i = 0, il = projects.length; i < il; ++i) {
+                var list = [];
+                for (var i = 0, il = projects.length; i < il; ++i) {
 
-                var isPending = false;
-                for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
+                    var isPending = false;
+                    for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
 
-                    if (projects[i].participants[p].id &&
-                        projects[i].participants[p].id === request.userId) {
+                        if (projects[i].participants[p].id &&
+                            projects[i].participants[p].id === request.userId) {
 
-                        isPending = projects[i].participants[p].isPending || false;
-                        break;
-                    }
-                }
-
-                var item = { id: projects[i]._id, title: projects[i].title };
-
-                if (isPending) {
-
-                    item.isPending = true;
-                }
-
-                list.push(item);
-            }
-
-            Last.load(request.userId, function (last, err) {
-
-                if (last &&
-                    last.projects) {
-
-                    for (i = 0, il = list.length; i < il; ++i) {
-
-                        if (last.projects[list[i].id]) {
-
-                            list[i].last = last.projects[list[i].id].last;
+                            isPending = projects[i].participants[p].isPending || false;
+                            break;
                         }
                     }
+
+                    var item = { id: projects[i]._id, title: projects[i].title };
+
+                    if (isPending) {
+
+                        item.isPending = true;
+                    }
+
+                    list.push(item);
                 }
 
-                reply(list);
-            });
-        }
-        else {
+                Last.load(request.userId, function (last, err) {
 
-            reply(Hapi.Error.notFound());
-        }
-    });
+                    if (last &&
+                        last.projects) {
+
+                        for (i = 0, il = list.length; i < il; ++i) {
+
+                            if (last.projects[list[i].id]) {
+
+                                list[i].last = last.projects[list[i].id].last;
+                            }
+                        }
+                    }
+
+                    request.reply(list);
+                });
+            }
+            else {
+
+                request.reply(Hapi.Error.notFound());
+            }
+        });
+    }
 };
 
 
 // Update project properties
 
-exports.post = function (request, reply) {
+exports.post = {
+    
+    query: {
 
-    exports.load(request.params.id, request.userId, true, function (project, member, err) {
+        position: Hapi.Types.Number().min(0)
+    },
 
-        if (project) {
+    schema: {
 
-            if (Object.keys(request.payload).length > 0) {
+        title: { type: 'string' },
+        date: { type: 'date', empty: true },
+        time: { type: 'time', empty: true },
+        place: { type: 'string', empty: true },
+        participants: { type: 'object', set: false, array: true }
+    },
 
-                if (request.query.position === undefined) {
+    handler: function (request) {
 
-                    Db.update('project', project._id, Db.toChanges(request.payload), function (err) {
+        exports.load(request.params.id, request.userId, true, function (project, member, err) {
 
-                        if (err === null) {
+            if (project) {
 
-                            Stream.update({ object: 'project', project: project._id }, request);
+                if (Object.keys(request.payload).length > 0) {
 
-                            if (request.payload.title !== project.title) {
+                    if (request.query.position === undefined) {
 
-                                for (var i = 0, il = project.participants.length; i < il; ++i) {
-
-                                    if (project.participants[i].id) {
-
-                                        Stream.update({ object: 'projects', user: project.participants[i].id }, request);
-                                    }
-                                }
-                            }
-
-                            reply({ status: 'ok' });
-                        }
-                        else {
-
-                            reply(err);
-                        }
-                    });
-                }
-                else {
-
-                    reply(Hapi.Error.badRequest('Cannot include both position parameter and project object in body'));
-                }
-            }
-            else if (request.query.position) {
-
-                Sort.set('project', request.userId, 'participants.id', request.params.id, request.query.position, function (err) {
-
-                    if (err === null) {
-
-                        Stream.update({ object: 'projects', user: request.userId }, request);
-                        reply({ status: 'ok' });
-                    }
-                    else {
-
-                        reply(err);
-                    }
-                });
-            }
-            else {
-
-                reply(Hapi.Error.badRequest('Missing position parameter or project object in body'));
-            }
-        }
-        else {
-
-            reply(err);
-        }
-    });
-};
-
-
-// Create new project
-
-exports.put = function (request, reply) {
-
-    var project = request.payload;
-    project.participants = [{ id: request.userId}];
-
-    Db.insert('project', project, function (items, err) {
-
-        if (err === null) {
-
-            Stream.update({ object: 'projects', user: request.userId }, request);
-            reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
-        }
-        else {
-
-            reply(err);
-        }
-    });
-};
-
-
-// Delete a project
-
-exports.del = function (request, reply) {
-
-    exports.load(request.params.id, request.userId, false, function (project, member, err) {
-
-        if (project) {
-
-            // Check if owner
-
-            if (exports.isOwner(project, request.userId)) {
-
-                // Delete all tasks
-
-                Task.delProject(project._id, function (err) {
-
-                    if (err === null) {
-
-                        // Delete project
-
-                        Db.remove('project', project._id, function (err) {
+                        Db.update('project', project._id, Db.toChanges(request.payload), function (err) {
 
                             if (err === null) {
 
-                                Last.delProject(request.userId, project._id, function (err) { });
-
                                 Stream.update({ object: 'project', project: project._id }, request);
 
-                                for (var i = 0, il = project.participants.length; i < il; ++i) {
+                                if (request.payload.title !== project.title) {
 
-                                    if (project.participants[i].id) {
+                                    for (var i = 0, il = project.participants.length; i < il; ++i) {
 
-                                        Stream.update({ object: 'projects', user: project.participants[i].id }, request);
-                                        Stream.drop(project.participants[i].id, project._id);
+                                        if (project.participants[i].id) {
+
+                                            Stream.update({ object: 'projects', user: project.participants[i].id }, request);
+                                        }
                                     }
                                 }
 
-                                reply({ status: 'ok' });
+                                request.reply({ status: 'ok' });
                             }
                             else {
 
-                                reply(err);
+                                request.reply(err);
                             }
                         });
                     }
                     else {
 
-                        reply(err);
+                        request.reply(Hapi.Error.badRequest('Cannot include both position parameter and project object in body'));
                     }
-                });
+                }
+                else if (request.query.position) {
+
+                    Sort.set('project', request.userId, 'participants.id', request.params.id, request.query.position, function (err) {
+
+                        if (err === null) {
+
+                            Stream.update({ object: 'projects', user: request.userId }, request);
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.badRequest('Missing position parameter or project object in body'));
+                }
             }
             else {
 
-                // Leave project
-
-                internals.leave(project, member, function (err) {
-
-                    if (err === null) {
-
-                        Stream.update({ object: 'project', project: project._id }, request);
-                        Stream.update({ object: 'projects', user: request.userId }, request);
-                        Stream.drop(request.userId, project._id);
-
-                        reply({ status: 'ok' });
-                    }
-                    else {
-
-                        reply(err);
-                    }
-                });
+                request.reply(err);
             }
-        }
-        else {
+        });
+    }
+};
 
-            reply(err);
-        }
-    });
+
+// Create new project
+
+exports.put = {
+    
+    schema: {
+
+        title: { type: 'string', required: true },
+        date: { type: 'date', empty: true },
+        time: { type: 'time', empty: true },
+        place: { type: 'string', empty: true },
+        participants: { type: 'object', set: false, array: true }
+    },
+
+    handler: function (request) {
+
+        var project = request.payload;
+        project.participants = [{ id: request.userId }];
+
+        Db.insert('project', project, function (items, err) {
+
+            if (err === null) {
+
+                Stream.update({ object: 'projects', user: request.userId }, request);
+                request.reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
+};
+
+
+// Delete a project
+
+exports.del = {
+    
+    handler: function (request) {
+
+        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+
+            if (project) {
+
+                // Check if owner
+
+                if (exports.isOwner(project, request.userId)) {
+
+                    // Delete all tasks
+
+                    Task.delProject(project._id, function (err) {
+
+                        if (err === null) {
+
+                            // Delete project
+
+                            Db.remove('project', project._id, function (err) {
+
+                                if (err === null) {
+
+                                    Last.delProject(request.userId, project._id, function (err) { });
+
+                                    Stream.update({ object: 'project', project: project._id }, request);
+
+                                    for (var i = 0, il = project.participants.length; i < il; ++i) {
+
+                                        if (project.participants[i].id) {
+
+                                            Stream.update({ object: 'projects', user: project.participants[i].id }, request);
+                                            Stream.drop(project.participants[i].id, project._id);
+                                        }
+                                    }
+
+                                    request.reply({ status: 'ok' });
+                                }
+                                else {
+
+                                    request.reply(err);
+                                }
+                            });
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    // Leave project
+
+                    internals.leave(project, member, function (err) {
+
+                        if (err === null) {
+
+                            Stream.update({ object: 'project', project: project._id }, request);
+                            Stream.update({ object: 'projects', user: request.userId }, request);
+                            Stream.drop(request.userId, project._id);
+
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
+
+                            request.reply(err);
+                        }
+                    });
+                }
+            }
+            else {
+
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Get list of project tips
 
-exports.tips = function (request, reply) {
+exports.tips = {
+    
+    handler: function (request) {
 
-    // Get project
+        // Get project
 
-    exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            // Collect tips
+                // Collect tips
 
-            Tips.list(project, function (results) {
+                Tips.list(project, function (results) {
 
-                reply(results);
-            });
-        }
-        else {
+                    request.reply(results);
+                });
+            }
+            else {
 
-            reply(err);
-        }
-    });
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Get list of project suggestions
 
-exports.suggestions = function (request, reply) {
+exports.suggestions = {
+    
+    handler: function (request) {
 
-    // Get project
+        // Get project
 
-    exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            // Collect tips
+                // Collect tips
 
-            Suggestions.list(project, request.userId, function (results) {
+                Suggestions.list(project, request.userId, function (results) {
 
-                reply(results);
-            });
-        }
-        else {
+                    request.reply(results);
+                });
+            }
+            else {
 
-            reply(err);
-        }
-    });
+                request.reply(err);
+            }
+        });
+    }
 };
 
 
 // Add new participants to a project
 
-exports.participants = function (request, reply) {
+exports.participants = {
+    
+    query: {
 
-    if (request.query.message) {
+        message: Hapi.Types.String().max(250)
+    },
 
-        if (request.query.message.length <= internals.maxMessageLength) {
+    schema: {
+
+        participants: { type: 'id', array: true },      // type can also be email
+        names: { type: 'string', array: true }
+    },
+
+    handler: function (request) {
+
+        if (request.query.message) {
 
             if (request.query.message.match('://') === null) {
 
@@ -369,454 +393,461 @@ exports.participants = function (request, reply) {
             }
             else {
 
-                reply(Hapi.Error.badRequest('Message cannot contain links'));
+                request.reply(Hapi.Error.badRequest('Message cannot contain links'));
             }
         }
         else {
 
-            reply(Hapi.Error.badRequest('Message length is greater than ' + internals.maxMessageLength));
+            process();
         }
-    }
-    else {
 
-        process();
-    }
+        function process() {
 
-    function process() {
+            if (request.payload.participants ||
+                request.payload.names) {
 
-        if (request.payload.participants ||
-            request.payload.names) {
+                exports.load(request.params.id, request.userId, true, function (project, member, err) {
 
-            exports.load(request.params.id, request.userId, true, function (project, member, err) {
+                    if (project) {
 
-                if (project) {
+                        var change = { $pushAll: { participants: [] } };
 
-                    var change = { $pushAll: { participants: []} };
+                        // Add pids (non-users)
 
-                    // Add pids (non-users)
+                        if (request.payload.names) {
 
-                    if (request.payload.names) {
+                            for (var i = 0, il = request.payload.names.length; i < il; ++i) {
 
-                        for (var i = 0, il = request.payload.names.length; i < il; ++i) {
+                                var participant = { pid: Db.generateId(), display: request.payload.names[i] };
+                                change.$pushAll.participants.push(participant);
+                            }
 
-                            var participant = { pid: Db.generateId(), display: request.payload.names[i] };
-                            change.$pushAll.participants.push(participant);
+                            if (request.payload.participants === undefined) {
+
+                                // No user accounts to invite, save project
+
+                                Db.update('project', project._id, change, function (err) {
+
+                                    if (err === null) {
+
+                                        // Return success
+
+                                        finalize();
+                                    }
+                                    else {
+
+                                        request.reply(err);
+                                    }
+                                });
+                            }
                         }
 
-                        if (request.payload.participants === undefined) {
+                        // Add users or emails
 
-                            // No user accounts to invite, save project
+                        if (request.payload.participants) {
 
-                            Db.update('project', project._id, change, function (err) {
+                            // Get user
 
-                                if (err === null) {
+                            User.load(request.userId, function (user, err) {
 
-                                    // Return success
+                                if (user) {
 
-                                    finalize();
+                                    // Lookup existing users
+
+                                    User.find(request.payload.participants, function (users, emailsNotFound, err) {
+
+                                        if (err === null) {
+
+                                            var prevParticipants = Hapi.Utils.map(project.participants, 'id');
+
+                                            // Check for changes
+
+                                            var contactsChange = { $set: {} };
+                                            var now = Hapi.Utils.getTimestamp();
+
+                                            var changedUsers = [];
+                                            for (var i = 0, il = users.length; i < il; ++i) {
+
+                                                // Add / update contact
+
+                                                if (users[i]._id !== request.userId) {
+
+                                                    contactsChange.$set['contacts.' + users[i]._id] = { type: 'user', last: now };
+                                                }
+
+                                                // Add participant if new
+
+                                                if (prevParticipants[users[i]._id] !== true) {
+
+                                                    change.$pushAll.participants.push({ id: users[i]._id, isPending: true });
+                                                    changedUsers.push(users[i]);
+                                                }
+                                            }
+
+                                            var prevPids = Hapi.Utils.map(project.participants, 'email');
+
+                                            var pids = [];
+                                            for (i = 0, il = emailsNotFound.length; i < il; ++i) {
+
+                                                contactsChange.$set['contacts.' + Db.encodeKey(emailsNotFound[i])] = { type: 'email', last: now };
+
+                                                if (prevPids[emailsNotFound[i]] !== true) {
+
+                                                    var pid = {
+
+                                                        pid: Db.generateId(),
+                                                        display: emailsNotFound[i],
+                                                        isPending: true,
+
+                                                        // Internal fields
+
+                                                        email: emailsNotFound[i],
+                                                        code: Hapi.Utils.getRandomString(6),
+                                                        inviter: user._id
+                                                    };
+
+                                                    change.$pushAll.participants.push(pid);
+                                                    pids.push(pid);
+                                                }
+                                            }
+
+                                            // Update user contacts
+
+                                            if (Object.keys(contactsChange.$set).length > 0) {
+
+                                                Db.update('user', user._id, contactsChange, function (err) {
+
+                                                    // Non-blocking
+
+                                                    if (err === null) {
+
+                                                        Stream.update({ object: 'contacts', user: user._id }, request);
+                                                    }
+                                                });
+                                            }
+
+                                            // Update project participants
+
+                                            if (change.$pushAll.participants.length > 0) {
+
+                                                Db.update('project', project._id, change, function (err) {
+
+                                                    if (err === null) {
+
+                                                        for (var i = 0, il = changedUsers.length; i < il; ++i) {
+
+                                                            Stream.update({ object: 'projects', user: changedUsers[i]._id }, request);
+                                                        }
+
+                                                        // Invite new participants
+
+                                                        Email.projectInvite(changedUsers, pids, project, request.query.message, user);
+
+                                                        // Return success
+
+                                                        finalize();
+                                                    }
+                                                    else {
+
+                                                        request.reply(err);
+                                                    }
+                                                });
+                                            }
+                                            else {
+
+                                                request.reply(Hapi.Error.badRequest('All users are already project participants'));
+                                            }
+                                        }
+                                        else {
+
+                                            request.reply(err);
+                                        }
+                                    });
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(Hapi.Error.internal(err));
                                 }
                             });
                         }
                     }
+                    else {
 
-                    // Add users or emails
-
-                    if (request.payload.participants) {
-
-                        // Get user
-
-                        User.load(request.userId, function (user, err) {
-
-                            if (user) {
-
-                                // Lookup existing users
-
-                                User.find(request.payload.participants, function (users, emailsNotFound, err) {
-
-                                    if (err === null) {
-
-                                        var prevParticipants = Hapi.Utils.map(project.participants, 'id');
-
-                                        // Check for changes
-
-                                        var contactsChange = { $set: {} };
-                                        var now = Hapi.Utils.getTimestamp();
-
-										var changedUsers = [];
-                                        for (var i = 0, il = users.length; i < il; ++i) {
-
-                                            // Add / update contact
-
-                                            if (users[i]._id !== request.userId) {
-
-                                                contactsChange.$set['contacts.' + users[i]._id] = { type: 'user', last: now };
-                                            }
-
-                                            // Add participant if new
-
-                                            if (prevParticipants[users[i]._id] !== true) {
-
-                                                change.$pushAll.participants.push({ id: users[i]._id, isPending: true });
-												changedUsers.push(users[i]);
-                                            }
-                                        }
-
-                                        var prevPids = Hapi.Utils.map(project.participants, 'email');
-
-                                        var pids = [];
-                                        for (i = 0, il = emailsNotFound.length; i < il; ++i) {
-
-                                            contactsChange.$set['contacts.' + Db.encodeKey(emailsNotFound[i])] = { type: 'email', last: now };
-
-                                            if (prevPids[emailsNotFound[i]] !== true) {
-
-                                                var pid = {
-
-                                                    pid: Db.generateId(),
-                                                    display: emailsNotFound[i],
-                                                    isPending: true,
-
-                                                    // Internal fields
-
-                                                    email: emailsNotFound[i],
-                                                    code: Hapi.Utils.getRandomString(6),
-                                                    inviter: user._id
-                                                };
-
-                                                change.$pushAll.participants.push(pid);
-                                                pids.push(pid);
-                                            }
-                                        }
-
-                                        // Update user contacts
-
-                                        if (Object.keys(contactsChange.$set).length > 0) {
-
-                                            Db.update('user', user._id, contactsChange, function (err) {
-
-                                                // Non-blocking
-
-                                                if (err === null) {
-
-                                                    Stream.update({ object: 'contacts', user: user._id }, request);
-                                                }
-                                            });
-                                        }
-
-                                        // Update project participants
-
-                                        if (change.$pushAll.participants.length > 0) {
-
-                                            Db.update('project', project._id, change, function (err) {
-
-                                                if (err === null) {
-
-                                                    for (var i = 0, il = changedUsers.length; i < il; ++i) {
-
-                                                        Stream.update({ object: 'projects', user: changedUsers[i]._id }, request);
-                                                    }
-
-                                                    // Invite new participants
-
-                                                    Email.projectInvite(changedUsers, pids, project, request.query.message, user);
-
-                                                    // Return success
-
-                                                    finalize();
-                                                }
-                                                else {
-
-                                                    reply(err);
-                                                }
-                                            });
-                                        }
-                                        else {
-
-                                            reply(Hapi.Error.badRequest('All users are already project participants'));
-                                        }
-                                    }
-                                    else {
-
-                                        reply(err);
-                                    }
-                                });
-                            }
-                            else {
-
-                                reply(Hapi.Error.internal(err));
-                            }
-                        });
+                        request.reply(err);
                     }
-                }
-                else {
-
-                    reply(err);
-                }
-            });
-        }
-        else {
-
-            reply(Hapi.Error.badRequest('Body must contain a participants or names array'));
-        }
-    }
-
-    function finalize() {
-
-        Stream.update({ object: 'project', project: request.params.id }, request);
-
-        // Reload project (changed, use direct DB to skip load processing)
-
-        Db.get('project', request.params.id, function (project, err) {
-
-            if (project) {
-
-                exports.participantsList(project, function (participants) {
-
-                    var response = { status: 'ok', participants: participants };
-
-                    reply(response);
                 });
             }
             else {
 
-                reply(err);
+                request.reply(Hapi.Error.badRequest('Body must contain a participants or names array'));
             }
-        });
+        }
+
+        function finalize() {
+
+            Stream.update({ object: 'project', project: request.params.id }, request);
+
+            // Reload project (changed, use direct DB to skip load processing)
+
+            Db.get('project', request.params.id, function (project, err) {
+
+                if (project) {
+
+                    exports.participantsList(project, function (participants) {
+
+                        var response = { status: 'ok', participants: participants };
+
+                        request.reply(response);
+                    });
+                }
+                else {
+
+                    request.reply(err);
+                }
+            });
+        }
     }
 };
 
 
 // Remove participant from project
 
-exports.uninvite = function (request, reply) {
+exports.uninvite = {
+    
+    schema: {
 
-    // Load project for write
+        participants: { type: 'id', array: true, required: true }
+    },
 
-    exports.load(request.params.id, request.userId, true, function (project, member, err) {
+    handler: function (request) {
 
-        if (project) {
+        // Load project for write
 
-            // Check if owner
+        exports.load(request.params.id, request.userId, true, function (project, member, err) {
 
-            if (exports.isOwner(project, request.userId)) {
+            if (project) {
 
-                // Check if single delete or batch
+                // Check if owner
 
-                if (request.params.user) {
+                if (exports.isOwner(project, request.userId)) {
 
-                    // Single delete
+                    // Check if single delete or batch
 
-                    if (request.userId !== request.params.user) {
+                    if (request.params.user) {
 
-                        // Lookup user
+                        // Single delete
 
-                        var uninvitedMember = exports.getMember(project, request.params.user);
-                        if (uninvitedMember) {
+                        if (request.userId !== request.params.user) {
 
-                            internals.leave(project, uninvitedMember, function (err) {
+                            // Lookup user
+
+                            var uninvitedMember = exports.getMember(project, request.params.user);
+                            if (uninvitedMember) {
+
+                                internals.leave(project, uninvitedMember, function (err) {
+
+                                    if (err === null) {
+
+                                        // Return success
+
+                                        Stream.update({ object: 'projects', user: request.params.user }, request);
+                                        Stream.drop(request.params.user, project._id);
+
+                                        finalize();
+                                    }
+                                    else {
+
+                                        request.reply(err);
+                                    }
+                                });
+                            }
+                            else {
+
+                                request.reply(Hapi.Error.notFound('Not a project participant'));
+                            }
+                        }
+                        else {
+
+                            request.reply(Hapi.Error.badRequest('Cannot uninvite self'));
+                        }
+                    }
+                    else if (request.payload.participants) {
+
+                            // Batch delete
+
+                        var error = null;
+                        var uninvitedMembers = [];
+
+                        for (var i = 0, il = request.payload.participants.length; i < il; ++i) {
+
+                            var removeId = request.payload.participants[i];
+
+                            if (request.userId !== removeId) {
+
+                                // Lookup user
+
+                                var uninvited = exports.getMember(project, removeId);
+                                if (uninvited) {
+
+                                    uninvitedMembers.push(uninvited);
+                                }
+                                else {
+
+                                    error = Hapi.Error.notFound('Not a project participant: ' + removeId);
+                                    break;
+                                }
+                            }
+                            else {
+
+                                error = Hapi.Error.badRequest('Cannot uninvite self');
+                                break;
+                            }
+                        }
+
+                        if (uninvitedMembers.length === 0) {
+
+                            error = Hapi.Error.badRequest('No members to remove');
+                        }
+
+                        if (error === null) {
+
+                            // Batch leave
+
+                            batch(project, uninvitedMembers, 0, function (err) {
 
                                 if (err === null) {
 
                                     // Return success
 
-                                    Stream.update({ object: 'projects', user: request.params.user }, request);
-                                    Stream.drop(request.params.user, project._id);
-
                                     finalize();
                                 }
                                 else {
 
-                                    reply(err);
+                                    request.reply(err);
                                 }
                             });
                         }
                         else {
 
-                            reply(Hapi.Error.notFound('Not a project participant'));
+                            request.reply(error);
                         }
                     }
                     else {
 
-                        reply(Hapi.Error.badRequest('Cannot uninvite self'));
-                    }
-                }
-                else if (request.payload.participants) {
-
-                    // Batch delete
-
-                    var error = null;
-                    var uninvitedMembers = [];
-
-                    for (var i = 0, il = request.payload.participants.length; i < il; ++i) {
-
-                        var removeId = request.payload.participants[i];
-
-                        if (request.userId !== removeId) {
-
-                            // Lookup user
-
-                            var uninvited = exports.getMember(project, removeId);
-                            if (uninvited) {
-
-                                uninvitedMembers.push(uninvited);
-                            }
-                            else {
-
-                                error = Hapi.Error.notFound('Not a project participant: ' + removeId);
-                                break;
-                            }
-                        }
-                        else {
-
-                            error = Hapi.Error.badRequest('Cannot uninvite self');
-                            break;
-                        }
-                    }
-
-                    if (uninvitedMembers.length === 0) {
-
-                        error = Hapi.Error.badRequest('No members to remove');
-                    }
-
-                    if (error === null) {
-
-                        // Batch leave
-
-                        batch(project, uninvitedMembers, 0, function (err) {
-
-                            if (err === null) {
-
-                                // Return success
-
-                                finalize();
-                            }
-                            else {
-
-                                reply(err);
-                            }
-                        });
-                    }
-                    else {
-
-                        reply(error);
+                        request.reply(Hapi.Error.badRequest('No participant for removal included'));
                     }
                 }
                 else {
 
-                    reply(Hapi.Error.badRequest('No participant for removal included'));
+                    request.reply(Hapi.Error.badRequest('Not an owner'));
                 }
             }
             else {
 
-                reply(Hapi.Error.badRequest('Not an owner'));
+                request.reply(err);
+            }
+        });
+
+        function batch(project, members, pos, callback) {
+
+            if (pos >= members.length) {
+
+                callback(null);
+            }
+            else {
+
+                internals.leave(project, members[pos], function (err) {
+
+                    if (err === null) {
+
+                        // Return success
+
+                        if (members[pos].id) {
+
+                            Stream.update({ object: 'projects', user: members[pos].id }, request);
+                            Stream.drop(members[pos].id, project._id);
+                        }
+
+                        batch(project, members, pos + 1, callback);
+                    }
+                    else {
+
+                        callback(err);
+                    }
+                });
             }
         }
-        else {
 
-            reply(err);
-        }
-    });
+        function finalize() {
 
-    function batch(project, members, pos, callback) {
+            Stream.update({ object: 'project', project: request.params.id }, request);
 
-        if (pos >= members.length) {
+            // Reload project (changed, use direct DB to skip load processing)
 
-            callback(null);
-        }
-        else {
+            Db.get('project', request.params.id, function (project, err) {
 
-            internals.leave(project, members[pos], function (err) {
+                if (project) {
 
-                if (err === null) {
+                    exports.participantsList(project, function (participants) {
 
-                    // Return success
+                        var response = { status: 'ok', participants: participants };
 
-                    if (members[pos].id) {
-
-                        Stream.update({ object: 'projects', user: members[pos].id }, request);
-                        Stream.drop(members[pos].id, project._id);
-                    }
-
-                    batch(project, members, pos + 1, callback);
+                        request.reply(response);
+                    });
                 }
                 else {
 
-                    callback(err);
+                    request.reply(err);
                 }
             });
         }
-    }
-
-    function finalize() {
-
-        Stream.update({ object: 'project', project: request.params.id }, request);
-
-        // Reload project (changed, use direct DB to skip load processing)
-
-        Db.get('project', request.params.id, function (project, err) {
-
-            if (project) {
-
-                exports.participantsList(project, function (participants) {
-
-                    var response = { status: 'ok', participants: participants };
-
-                    reply(response);
-                });
-            }
-            else {
-
-                reply(err);
-            }
-        });
     }
 };
 
 
 // Accept project invitation
 
-exports.join = function (request, reply) {
+exports.join = {
+    
+    handler: function (request) {
 
-    // The only place allowed to request a non-writable copy for modification
-    exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        // The only place allowed to request a non-writable copy for modification
+        exports.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            // Verify user is pending
+                // Verify user is pending
 
-            if (member.isPending) {
+                if (member.isPending) {
 
-                Db.updateCriteria('project', project._id, { 'participants.id': request.userId }, { $unset: { 'participants.$.isPending': 1} }, function (err) {
+                    Db.updateCriteria('project', project._id, { 'participants.id': request.userId }, { $unset: { 'participants.$.isPending': 1 } }, function (err) {
 
-                    if (err === null) {
+                        if (err === null) {
 
-                        // Return success
+                            // Return success
 
-                        Stream.update({ object: 'project', project: project._id }, request);
-                        Stream.update({ object: 'projects', user: request.userId }, request);
+                            Stream.update({ object: 'project', project: project._id }, request);
+                            Stream.update({ object: 'projects', user: request.userId }, request);
 
-                        reply({ status: 'ok' });
-                    }
-                    else {
+                            request.reply({ status: 'ok' });
+                        }
+                        else {
 
-                        reply(err);
-                    }
-                });
+                            request.reply(err);
+                        }
+                    });
+                }
+                else {
+
+                    request.reply(Hapi.Error.badRequest('Already a member of the project'));
+                }
             }
             else {
 
-                reply(Hapi.Error.badRequest('Already a member of the project'));
+                request.reply(err);
             }
-        }
-        else {
-
-            reply(err);
-        }
-    });
+        });
+    }
 };
 
 
