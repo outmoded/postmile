@@ -56,102 +56,105 @@ exports.initialize = function () {
 
 // Remove suggestion from project
 
-exports.exclude = function (request, reply) {
+exports.exclude = {
+    
+    handler: function (request) {
 
-    Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.userId, false, function (project, member, err) {
 
-        if (project) {
+            if (project) {
 
-            var suggestion = internals.suggestions[request.params.drop];
-            if (suggestion) {
+                var suggestion = internals.suggestions[request.params.drop];
+                if (suggestion) {
 
-                Db.get('user.exclude', request.userId, function (excludes, err) {
+                    Db.get('user.exclude', request.userId, function (excludes, err) {
 
-                    if (err === null) {
+                        if (err === null) {
 
-                        if (excludes) {
+                            if (excludes) {
 
-                            // Existing excludes
+                                // Existing excludes
 
-                            var changes = { $set: {} };
-                            var now = Hapi.Utils.getTimestamp();
+                                var changes = { $set: {} };
+                                var now = Hapi.Utils.getTimestamp();
 
-                            if (excludes.projects) {
+                                if (excludes.projects) {
 
-                                if (excludes.projects[project._id]) {
+                                    if (excludes.projects[project._id]) {
 
-                                    if (excludes.projects[project._id].suggestions) {
+                                        if (excludes.projects[project._id].suggestions) {
 
-                                        changes.$set['projects.' + project._id + '.suggestions.' + request.params.drop] = now;
+                                            changes.$set['projects.' + project._id + '.suggestions.' + request.params.drop] = now;
+                                        }
+                                        else {
+
+                                            changes.$set['projects.' + project._id + '.suggestions'] = {};
+                                            changes.$set['projects.' + project._id + '.suggestions'][request.params.drop] = now;
+                                        }
                                     }
                                     else {
 
-                                        changes.$set['projects.' + project._id + '.suggestions'] = {};
-                                        changes.$set['projects.' + project._id + '.suggestions'][request.params.drop] = now;
+                                        changes.$set['projects.' + project._id] = { suggestions: {} };
+                                        changes.$set['projects.' + project._id].suggestions[request.params.drop] = now;
                                     }
                                 }
                                 else {
 
-                                    changes.$set['projects.' + project._id] = { suggestions: {} };
-                                    changes.$set['projects.' + project._id].suggestions[request.params.drop] = now;
+                                    changes.$set.projects = {};
+                                    changes.$set.projects[project._id] = { suggestions: {} };
+                                    changes.$set.projects[project._id].suggestions[request.params.drop] = now;
                                 }
+
+                                Db.update('user.exclude', excludes._id, changes, function (err) {
+
+                                    if (err === null) {
+
+                                        request.reply({ status: 'ok' });
+                                    }
+                                    else {
+
+                                        request.reply(err);
+                                    }
+                                });
                             }
                             else {
 
-                                changes.$set.projects = {};
-                                changes.$set.projects[project._id] = { suggestions: {} };
-                                changes.$set.projects[project._id].suggestions[request.params.drop] = now;
+                                // First exclude
+
+                                excludes = { _id: request.userId, projects: {} };
+                                excludes.projects[project._id] = { suggestions: {} };
+                                excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
+
+                                Db.insert('user.exclude', excludes, function (items, err) {
+
+                                    if (err === null) {
+
+                                        request.reply({ status: 'ok' });
+                                    }
+                                    else {
+
+                                        request.reply(err);
+                                    }
+                                });
                             }
-
-                            Db.update('user.exclude', excludes._id, changes, function (err) {
-
-                                if (err === null) {
-
-                                    reply({ status: 'ok' });
-                                }
-                                else {
-
-                                    reply(err);
-                                }
-                            });
                         }
                         else {
 
-                            // First exclude
-
-                            excludes = { _id: request.userId, projects: {} };
-                            excludes.projects[project._id] = { suggestions: {} };
-                            excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
-
-                            Db.insert('user.exclude', excludes, function (items, err) {
-
-                                if (err === null) {
-
-                                    reply({ status: 'ok' });
-                                }
-                                else {
-
-                                    reply(err);
-                                }
-                            });
+                            request.reply(err);
                         }
-                    }
-                    else {
+                    });
+                }
+                else {
 
-                        reply(err);
-                    }
-                });
+                    request.reply(Hapi.Error.notFound());
+                }
             }
             else {
 
-                reply(Hapi.Error.notFound());
+                request.reply(err);
             }
-        }
-        else {
-
-            reply(err);
-        }
-    });
+        });
+    }
 };
 
 

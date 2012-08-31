@@ -1,0 +1,9 @@
+{
+  "name": "postmile",
+  "description": "Postmile",
+  "version": "0.0.1",
+  "author": "Eran Hammer-Lahav <eran@hueniverse.com>",
+  "private": true,
+  "dependencies": {},
+  "engines": { "node": "0.8.x" }
+}
