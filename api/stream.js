@@ -33,7 +33,7 @@ var internals = {
 
 exports.initialize = function (server) {
 
-    internals.io = SocketIO.listen(server, { log: Hapi.Log.info });
+    internals.io = SocketIO.listen(server, { 'log level': 0 });
     internals.io.sockets.on('connection', internals.connection);
 
     setInterval(internals.processUpdates, 1000);

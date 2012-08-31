@@ -99,7 +99,9 @@ var configuration = {
     ext: {
 
         onPostHandler: internals.onPostHandler
-    }
+    },
+
+    debug: true
 };
 
 var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
