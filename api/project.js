@@ -28,7 +28,7 @@ exports.get = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
@@ -54,7 +54,7 @@ exports.list = {
     
     handler: function (request) {
 
-        Sort.list('project', request.userId, 'participants.id', function (projects) {
+        Sort.list('project', request.session.user, 'participants.id', function (projects) {
 
             if (projects) {
 
@@ -65,7 +65,7 @@ exports.list = {
                     for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
 
                         if (projects[i].participants[p].id &&
-                            projects[i].participants[p].id === request.userId) {
+                            projects[i].participants[p].id === request.session.user) {
 
                             isPending = projects[i].participants[p].isPending || false;
                             break;
@@ -82,7 +82,7 @@ exports.list = {
                     list.push(item);
                 }
 
-                Last.load(request.userId, function (last, err) {
+                Last.load(request.session.user, function (last, err) {
 
                     if (last &&
                         last.projects) {
@@ -128,7 +128,7 @@ exports.post = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, true, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, true, function (project, member, err) {
 
             if (project) {
 
@@ -168,11 +168,11 @@ exports.post = {
                 }
                 else if (request.query.position) {
 
-                    Sort.set('project', request.userId, 'participants.id', request.params.id, request.query.position, function (err) {
+                    Sort.set('project', request.session.user, 'participants.id', request.params.id, request.query.position, function (err) {
 
                         if (err === null) {
 
-                            Stream.update({ object: 'projects', user: request.userId }, request);
+                            Stream.update({ object: 'projects', user: request.session.user }, request);
                             request.reply({ status: 'ok' });
                         }
                         else {
@@ -211,13 +211,13 @@ exports.put = {
     handler: function (request) {
 
         var project = request.payload;
-        project.participants = [{ id: request.userId }];
+        project.participants = [{ id: request.session.user }];
 
         Db.insert('project', project, function (items, err) {
 
             if (err === null) {
 
-                Stream.update({ object: 'projects', user: request.userId }, request);
+                Stream.update({ object: 'projects', user: request.session.user }, request);
                 request.reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
             }
             else {
@@ -235,13 +235,13 @@ exports.del = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
                 // Check if owner
 
-                if (exports.isOwner(project, request.userId)) {
+                if (exports.isOwner(project, request.session.user)) {
 
                     // Delete all tasks
 
@@ -255,7 +255,7 @@ exports.del = {
 
                                 if (err === null) {
 
-                                    Last.delProject(request.userId, project._id, function (err) { });
+                                    Last.delProject(request.session.user, project._id, function (err) { });
 
                                     Stream.update({ object: 'project', project: project._id }, request);
 
@@ -291,8 +291,8 @@ exports.del = {
                         if (err === null) {
 
                             Stream.update({ object: 'project', project: project._id }, request);
-                            Stream.update({ object: 'projects', user: request.userId }, request);
-                            Stream.drop(request.userId, project._id);
+                            Stream.update({ object: 'projects', user: request.session.user }, request);
+                            Stream.drop(request.session.user, project._id);
 
                             request.reply({ status: 'ok' });
                         }
@@ -320,7 +320,7 @@ exports.tips = {
 
         // Get project
 
-        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
@@ -348,13 +348,13 @@ exports.suggestions = {
 
         // Get project
 
-        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
                 // Collect tips
 
-                Suggestions.list(project, request.userId, function (results) {
+                Suggestions.list(project, request.session.user, function (results) {
 
                     request.reply(results);
                 });
@@ -406,7 +406,7 @@ exports.participants = {
             if (request.payload.participants ||
                 request.payload.names) {
 
-                exports.load(request.params.id, request.userId, true, function (project, member, err) {
+                exports.load(request.params.id, request.session.user, true, function (project, member, err) {
 
                     if (project) {
 
@@ -448,7 +448,7 @@ exports.participants = {
 
                             // Get user
 
-                            User.load(request.userId, function (user, err) {
+                            User.load(request.session.user, function (user, err) {
 
                                 if (user) {
 
@@ -470,7 +470,7 @@ exports.participants = {
 
                                                 // Add / update contact
 
-                                                if (users[i]._id !== request.userId) {
+                                                if (users[i]._id !== request.session.user) {
 
                                                     contactsChange.$set['contacts.' + users[i]._id] = { type: 'user', last: now };
                                                 }
@@ -623,13 +623,13 @@ exports.uninvite = {
 
         // Load project for write
 
-        exports.load(request.params.id, request.userId, true, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, true, function (project, member, err) {
 
             if (project) {
 
                 // Check if owner
 
-                if (exports.isOwner(project, request.userId)) {
+                if (exports.isOwner(project, request.session.user)) {
 
                     // Check if single delete or batch
 
@@ -637,7 +637,7 @@ exports.uninvite = {
 
                         // Single delete
 
-                        if (request.userId !== request.params.user) {
+                        if (request.session.user !== request.params.user) {
 
                             // Lookup user
 
@@ -682,7 +682,7 @@ exports.uninvite = {
 
                             var removeId = request.payload.participants[i];
 
-                            if (request.userId !== removeId) {
+                            if (request.session.user !== removeId) {
 
                                 // Lookup user
 
@@ -812,7 +812,7 @@ exports.join = {
     handler: function (request) {
 
         // The only place allowed to request a non-writable copy for modification
-        exports.load(request.params.id, request.userId, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
@@ -820,14 +820,14 @@ exports.join = {
 
                 if (member.isPending) {
 
-                    Db.updateCriteria('project', project._id, { 'participants.id': request.userId }, { $unset: { 'participants.$.isPending': 1 } }, function (err) {
+                    Db.updateCriteria('project', project._id, { 'participants.id': request.session.user }, { $unset: { 'participants.$.isPending': 1 } }, function (err) {
 
                         if (err === null) {
 
                             // Return success
 
                             Stream.update({ object: 'project', project: project._id }, request);
-                            Stream.update({ object: 'projects', user: request.userId }, request);
+                            Stream.update({ object: 'projects', user: request.session.user }, request);
 
                             request.reply({ status: 'ok' });
                         }
@@ -1217,7 +1217,7 @@ exports.replacePid = function (project, pid, userId, callback) {
 
 exports.unsortedList = function (userId, callback) {
 
-    Db.query('project', { 'participants.id': request.userId }, function (projects, err) {
+    Db.query('project', { 'participants.id': request.session.user }, function (projects, err) {
 
         if (err === null) {
 
@@ -1231,7 +1231,7 @@ exports.unsortedList = function (userId, callback) {
                     for (var p = 0, pl = projects[i].participants.length; p < pl; ++p) {
 
                         if (projects[i].participants[p].id &&
-                            projects[i].participants[p].id === request.userId) {
+                            projects[i].participants[p].id === request.session.user) {
 
                             projects[i]._isPending = projects[i].participants[p].isPending || false;
 

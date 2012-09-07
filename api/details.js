@@ -24,7 +24,7 @@ exports.get = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, false, function (details, err, task, project) {
+        exports.load(request.params.id, request.session.user, false, function (details, err, task, project) {
 
             details = details || { id: request.params.id, thread: [] };
 
@@ -101,7 +101,7 @@ exports.post = {
 
         var now = Hapi.Utils.getTimestamp();
 
-        exports.load(request.params.id, request.userId, true, function (details, err, task, project) {
+        exports.load(request.params.id, request.session.user, true, function (details, err, task, project) {
 
             if (task) {
 
@@ -109,7 +109,7 @@ exports.post = {
 
                     var detail = request.payload;
                     detail.created = now;
-                    detail.user = request.userId;
+                    detail.user = request.session.user;
 
                     if (details) {
 
@@ -162,7 +162,7 @@ exports.post = {
 
             if (request.query.last === 'true') {
 
-                Last.setLast(request.userId, project, task, function (err) { });    // Ignore response
+                Last.setLast(request.session.user, project, task, function (err) { });    // Ignore response
             }
 
             Stream.update({ object: 'details', project: task.project, task: task._id }, request);

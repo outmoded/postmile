@@ -20,11 +20,11 @@ exports.get = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, false, function (task, err) {
+        exports.load(request.params.id, request.session.user, false, function (task, err) {
 
             if (task) {
 
-                Details.expandIds([request.params.id], task.project, request.userId, function (details) {
+                Details.expandIds([request.params.id], task.project, request.session.user, function (details) {
 
                     if (details &&
                         details[request.params.id]) {
@@ -53,7 +53,7 @@ exports.list = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
@@ -77,7 +77,7 @@ exports.list = {
 
                                 for (var p = 0, pl = tasks[i].participants.length; p < pl; ++p) {
 
-                                    if (tasks[i].participants[p] === request.userId) {
+                                    if (tasks[i].participants[p] === request.session.user) {
 
                                         task.isMe = true;
                                         break;
@@ -95,7 +95,7 @@ exports.list = {
                             ids.push(tasks[i]._id);
                         }
 
-                        Details.expandIds(ids, request.params.id, request.userId, function (details) {
+                        Details.expandIds(ids, request.params.id, request.session.user, function (details) {
 
                             if (details) {
 
@@ -148,7 +148,7 @@ exports.post = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, true, function (task, err, project) {
+        exports.load(request.params.id, request.session.user, true, function (task, err, project) {
 
             if (task) {
 
@@ -268,7 +268,7 @@ exports.put = {
 
     handler: function (request) {
 
-        Project.load(request.params.id, request.userId, true, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, true, function (project, member, err) {
 
             if (project) {
 
@@ -365,7 +365,7 @@ exports.del = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.userId, true, function (task, err) {
+        exports.load(request.params.id, request.session.user, true, function (task, err) {
 
             if (task) {
 

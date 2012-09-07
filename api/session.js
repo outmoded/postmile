@@ -34,12 +34,15 @@ exports.type.client = {
 
 exports.client = {
     
-    scope: 'login',
-    user: 'none',
+    auth: {
+
+        scope: 'login',
+        user: 'none'
+    },
     
     handler: function (request) {
 
-        exports.loadClient(request.params.id, function (client, err) {
+        exports.loadClient(request.params.id, function (err, client) {
 
             if (err === null) {
 
@@ -70,7 +73,7 @@ exports.loadClient = function (id, callback) {
 
         if (client) {
 
-            callback(client, null);
+            callback(null, client);
         }
         else {
 
@@ -80,7 +83,7 @@ exports.loadClient = function (id, callback) {
             }
             else {
 
-                callback(null, err);
+                callback(err, null);
             }
         }
     });
@@ -95,7 +98,7 @@ exports.loadUser = function (id, callback) {
 
         if (user) {
 
-            callback(user);
+            callback(null, user);
         }
         else {
 
@@ -191,7 +194,7 @@ exports.extensionGrant = function (request, client, callback) {
     if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
 
         // Unsupported grant type namespace
-        callback(null, Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
+        callback(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
     }
     else {
 
@@ -200,7 +203,7 @@ exports.extensionGrant = function (request, client, callback) {
         // Check if client has 'login' scope
 
         if ((client.scope && client.scope.login === true) ||
-            (request.scope && request.scope.login === true)) {
+            (request.session.scope && request.session.scope.login === true)) {
 
             // Switch on grant type
 
@@ -212,12 +215,12 @@ exports.extensionGrant = function (request, client, callback) {
 
                     if (user) {
 
-                        callback(user, null);
+                        callback(null, user);
                     }
                     else {
 
                         // Unknown local account
-                        callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
+                        callback(Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
                     }
                 });
             }
@@ -231,12 +234,12 @@ exports.extensionGrant = function (request, client, callback) {
 
                     if (user) {
 
-                        callback(user, null);
+                        callback(null, user);
                     }
                     else {
 
                         // Unregistered network account
-                        callback(null, Hapi.Error.oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
+                        callback(Hapi.Error.oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
                     }
                 });
             }
@@ -248,25 +251,25 @@ exports.extensionGrant = function (request, client, callback) {
 
                     if (ticket) {
 
-                        callback(user, null, { 'x_action': ticket.action });
+                        callback(null, user, { 'x_action': ticket.action });
                     }
                     else {
 
                         // Invalid email token
-                        callback(null, Hapi.Error.oauth('invalid_grant', err.message));
+                        callback(Hapi.Error.oauth('invalid_grant', err.message));
                     }
                 });
             }
             else {
 
                 // Unsupported grant type
-                callback(null, Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
+                callback(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
             }
         }
         else {
 
             // No client scope for local account access
-            callback(null, Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
+            callback(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
         }
     }
 };

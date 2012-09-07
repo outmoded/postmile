@@ -60,14 +60,14 @@ exports.exclude = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
                 var suggestion = internals.suggestions[request.params.drop];
                 if (suggestion) {
 
-                    Db.get('user.exclude', request.userId, function (excludes, err) {
+                    Db.get('user.exclude', request.session.user, function (excludes, err) {
 
                         if (err === null) {
 
@@ -121,7 +121,7 @@ exports.exclude = {
 
                                 // First exclude
 
-                                excludes = { _id: request.userId, projects: {} };
+                                excludes = { _id: request.session.user, projects: {} };
                                 excludes.projects[project._id] = { suggestions: {} };
                                 excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
 

@@ -60,11 +60,14 @@ internals.forbiddenUsernames = {
 
 exports.get = {
     
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
@@ -101,11 +104,14 @@ exports.post = {
         view: { type: 'string', set: false }
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
@@ -180,13 +186,16 @@ exports.email = {
         action: { type: 'enum', required: true, values: { remove: 1, primary: 2, add: 3, verify: 4 } }
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         var address = request.payload.address.toLowerCase();
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
@@ -411,13 +420,16 @@ exports.contacts = {
         exclude: Hapi.Types.String()
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         if (request.query.exclude) {
 
-            Project.load(request.query.exclude, request.userId, false, function (project, member, err) {
+            Project.load(request.query.exclude, request.session.user, false, function (project, member, err) {
 
                 if (err === null) {
 
@@ -436,7 +448,7 @@ exports.contacts = {
 
         function getList(exclude) {
 
-            exports.load(request.userId, function (user, err) {
+            exports.load(request.session.user, function (user, err) {
 
                 if (user) {
 
@@ -527,11 +539,14 @@ exports.contacts = {
 
 exports.who = {
     
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        request.reply({ user: request.userId });
+        request.reply({ user: request.session.user });
     }
 };
 
@@ -553,8 +568,11 @@ exports.put = {
         email: { type: 'email' }
     },
 
-    scope: 'signup',
-    user: 'none',
+    auth: {
+
+        scope: 'signup',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -898,9 +916,11 @@ exports.put = {
 
 exports.tos = {
     
-    scope: 'tos',
+    auth: {
 
-    user: 'none',
+        scope: 'tos',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -941,8 +961,11 @@ exports.link = {
         id: { type: 'string', required: true }
     },
 
-    scope: 'login',
-    user: 'none',
+    auth: {
+
+        scope: 'login',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -1019,8 +1042,11 @@ exports.link = {
 
 exports.unlink = {
     
-    scope: 'login',
-    user: 'none',
+    auth: {
+
+        scope: 'login',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -1087,8 +1113,11 @@ exports.unlink = {
 
 exports.view = {
     
-    scope: 'view',
-    user: 'none',
+    auth: {
+
+        scope: 'view',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -1121,7 +1150,10 @@ exports.view = {
 
 exports.lookup = {
     
-    authentication: 'none',
+    auth: {
+        
+        mode: 'none'
+    },
 
     handler: function (request) {
 
@@ -1210,8 +1242,10 @@ exports.reminder = {
         account: { type: 'string', required: true }
     },
 
-    scope: 'reminder',
-    user: 'none',
+    auth: {
+        scope: 'reminder',
+        user: 'none'
+    },
 
     handler: function (request) {
 
@@ -1265,14 +1299,17 @@ exports.reminder = {
 
 exports.del = {
     
-    scope: 'quit',
-    tos: 'none',
+    auth: {
+
+        scope: 'quit',
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         // Check if user has any projects
 
-        Project.unsortedList(request.userId, function (projects, owner, notOwner, err) {
+        Project.unsortedList(request.session.user, function (projects, owner, notOwner, err) {
 
             if (err === null) {
 
@@ -1344,7 +1381,7 @@ exports.del = {
 
             // Delete account first
 
-            Db.remove('user', request.userId, function (err) {
+            Db.remove('user', request.session.user, function (err) {
 
                 if (err === null) {
 
@@ -1357,23 +1394,23 @@ exports.del = {
 
                     // Delete the projects sort list
 
-                    Sort.del('project', request.userId, ignore);
+                    Sort.del('project', request.session.user, ignore);
 
                     // Remove grants
 
-                    Session.delUser(request.userId, ignore);
+                    Session.delUser(request.session.user, ignore);
 
                     // Remove excluded suggestions
 
-                    Suggestions.delUser(request.userId, ignore);
+                    Suggestions.delUser(request.session.user, ignore);
 
                     // Remove last
 
-                    Last.delUser(request.userId, ignore);
+                    Last.delUser(request.session.user, ignore);
 
                     // Remove client storage
 
-                    Storage.delUser(request.userId, ignore);
+                    Storage.delUser(request.session.user, ignore);
 
                     // Return result
 
