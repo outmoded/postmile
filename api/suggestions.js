@@ -34,7 +34,6 @@ exports.initialize = function () {
                 suggestion.title) {
 
                 var statement = Rules.normalize(suggestion.rule);
-
                 if (statement) {
 
                     suggestion.statement = statement;
@@ -164,52 +163,52 @@ exports.list = function (project, userId, callback) {
 
     Db.get('user.exclude', userId, function (item, err) {
 
+        if (err) {
+            return callback(err, null);
+        }
+
         var results = [];
+        var excludes = item;
+        for (var i in internals.suggestions) {
 
-        if (err === null) {
+            if (internals.suggestions.hasOwnProperty(i)) {
 
-            var excludes = item;
-            for (var i in internals.suggestions) {
+                var suggestion = internals.suggestions[i];
 
-                if (internals.suggestions.hasOwnProperty(i)) {
+                var isExcluded = false;
+                if (excludes &&
+                    excludes.projects &&
+                    excludes.projects[project._id] &&
+                    excludes.projects[project._id].suggestions &&
+                    excludes.projects[project._id].suggestions[suggestion._id]) {
 
-                    var suggestion = internals.suggestions[i];
+                    isExcluded = true;
+                }
 
-                    var isExcluded = false;
-                    if (excludes &&
-                        excludes.projects &&
-                        excludes.projects[project._id] &&
-                        excludes.projects[project._id].suggestions &&
-                        excludes.projects[project._id].suggestions[suggestion._id]) {
+                if (isExcluded === false) {
 
-                        isExcluded = true;
+                    try {
+
+                        if (eval(suggestion.statement)) {
+
+                            results.push({
+
+                                id: suggestion._id,
+                                title: suggestion.title,
+                                isSponsored: suggestion.isSponsored
+                            });
+                        }
                     }
+                    catch (e) {
 
-                    if (isExcluded === false) {
-
-                        try {
-
-                            if (eval(suggestion.statement)) {
-
-                                results.push({ id: suggestion._id, title: suggestion.title, isSponsored: suggestion.isSponsored });
-                            }
-                        }
-                        catch (e) {
-
-                            // Bad rule
-
-                            Hapi.Log.err('Bad suggestion rule:' + suggestion._id);
-                        }
+                        // Bad rule
+                        Hapi.Log.err('Bad suggestion rule:' + suggestion._id);
                     }
                 }
             }
         }
-        else {
 
-            Hapi.Log.err(err);
-        }
-
-        callback(results);
+        return callback(null, results);
     });
 };
 

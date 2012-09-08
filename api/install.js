@@ -19,7 +19,7 @@ Db.initialize(true, function (err) {
             {
                 name: 'postmile.web',
                 scope: { authorized: true, login: true, reminder: true, signup: true, tos: true },
-                secret: Hapi.Utils.getRandomString(64)
+                secret: Hapi.Session.getRandomString(64)
             },
 
             {

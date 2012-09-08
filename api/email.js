@@ -30,7 +30,7 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     var now = Hapi.Utils.getTimestamp();
     var ticketId = now.toString(36);                                                // assuming users cannot generate more than one ticket per msec
-    var token = Hapi.Utils.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
+    var token = Hapi.Session.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
 
     var ticket = { timestamp: now, email: email };
 
@@ -103,7 +103,7 @@ exports.loadTicket = function (token, callback) {
 
     // Decode ticket
 
-    var record = Hapi.Utils.decrypt(Vault.emailToken.aes256Key, token);
+    var record = Hapi.Session.decrypt(Vault.emailToken.aes256Key, token);
 
     if (record &&
         record instanceof Array &&
@@ -454,21 +454,7 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
-                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, function (err) {
-
-                    if (err === null) {
-
-                        Hapi.Log.info('Email sent to: ' + pid.email + ' for project: ' + project._id);
-                    }
-                    else {
-
-                        Hapi.Log.err('Email error: ' + pid.email + ' for project: ' + project._id);
-                    }
-                });
-            }
-            else {
-
-                Hapi.Log.err('Email error: project (' + project._id + ') pid (' + pid.pid + ') missing email address');
+                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link);
             }
         }
     }
@@ -490,7 +476,7 @@ exports.checkAddress = function (email) {
 };
 
 
-internals.sendEmail = function (to, subject, text, callback) {
+internals.sendEmail = function (to, subject, text) {
 
     var headers = {
 
@@ -505,8 +491,15 @@ internals.sendEmail = function (to, subject, text, callback) {
     var mailer = Email.server.connect(Config.email.server || {});
     mailer.send(message, function (err, message) {
 
-        if (callback) {
-            callback(err ? Err.internal('Failed sending email: ' + JSON.stringify(err)) : null);
+        if (err) {
+
+            Hapi.Log.err('Email error', {
+
+                to: to,
+                subject: subject,
+                text: text,
+                error: err
+            });
         }
     });
 };

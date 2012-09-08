@@ -267,12 +267,9 @@ internals.messageHandler = function (socket) {
                                 internals.idsByUserId[userId][socket.id] = true;
 
                                 socket.json.send({ type: 'initialize', status: 'ok', user: userId });
-                                Hapi.Log.info('Stream ' + socket.id + ' initialized with userId ' + userId);
                             }
                             else {
-
                                 socket.json.send({ type: 'initialize', status: 'error', error: err });
-                                Hapi.Log.err(err);
                             }
                         });
 
@@ -286,8 +283,7 @@ internals.messageHandler = function (socket) {
             }
         }
         else {
-
-            Hapi.Log.err('Message received after disconnect from socket: ' + socket.id + ', message: ' + JSON.stringify(message));
+            // Message received after disconnect from socket
         }
     };
 }
@@ -398,11 +394,6 @@ internals.processUpdates = function () {
                 }
 
                 break;
-        }
-
-        if (updatedIds) {
-
-            Hapi.Log.info('Stream update: ' + update.object + ':' + (update.user || update.project) + ' sent to' + updatedIds);
         }
     }
 

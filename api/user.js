@@ -239,34 +239,25 @@ exports.email = {
 
                                                     // Ignore errors
 
-                                                    if (err) {
-
-                                                        Hapi.Log.err(err, request);
-                                                    }
-
                                                     Stream.update({ object: 'profile', user: user._id }, request);
                                                     request.reply({ status: 'ok' });
                                                 });
                                             }
                                             else {
-
                                                 request.reply(err);
                                             }
                                         });
                                     }
                                     else {
-
                                         request.reply(Hapi.Error.badRequest('Email already assigned to another account'));
                                     }
                                 }
                                 else {
-
                                     request.reply(err);
                                 }
                             });
                         }
                         else {
-
                             request.reply(Hapi.Error.badRequest('Address already present'));
                         }
 
@@ -304,23 +295,19 @@ exports.email = {
                                             request.reply({ status: 'ok' });
                                         }
                                         else {
-
                                             request.reply(err);
                                         }
                                     });
                                 }
                                 else {
-
                                     request.reply(Hapi.Error.badRequest('Email must be verified before made primary'));
                                 }
                             }
                             else {
-
                                 request.reply(Hapi.Error.badRequest('Address already primary'));
                             }
                         }
                         else {
-
                             request.reply(Hapi.Error.notFound('No such email address'));
                         }
 

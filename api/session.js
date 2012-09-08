@@ -152,15 +152,7 @@ exports.checkAuthorization = function (userId, clientId, callback) {
 
                 if (expired.length > 0) {
 
-                    Db.removeMany('grant', expired, function (err) {
-
-                        // Ignore callback
-
-                        if (err) {
-
-                            Hapi.Log.err(err);
-                        }
-                    });
+                    Db.removeMany('grant', expired, function (err) {});         // Ignore callback
                 }
 
                 if (isAuthorized) {

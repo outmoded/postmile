@@ -354,9 +354,9 @@ exports.suggestions = {
 
                 // Collect tips
 
-                Suggestions.list(project, request.session.user, function (results) {
+                Suggestions.list(project, request.session.user, function (err, results) {
 
-                    request.reply(results);
+                    request.reply(err || results);
                 });
             }
             else {
@@ -502,7 +502,7 @@ exports.participants = {
                                                         // Internal fields
 
                                                         email: emailsNotFound[i],
-                                                        code: Hapi.Utils.getRandomString(6),
+                                                        code: Hapi.Session.getRandomString(6),
                                                         inviter: user._id
                                                     };
 
