@@ -89,16 +89,3 @@ exports.email = {
     }
 };
 
-
-// Logging
-
-exports.log = {
-
-    levels: {
-
-        'error': true,
-        'info': true
-    }
-};
-
-

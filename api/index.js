@@ -60,11 +60,7 @@ internals.onPostHandler = function (request, next) {
 // Create and configure server instance
 
 Hapi.Process.initialize({
-
-    name: Config.product.name + ' API Server',
-    process: Config.process.api,
-    email: Config.email,
-    log: Config.log
+    process: Config.process.api
 });
 
 var configuration = {
