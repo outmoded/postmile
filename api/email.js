@@ -6,6 +6,8 @@
 // Load modules
 
 var Hapi = require('hapi');
+var Validator = require('validator');
+var Email = require('emailjs');
 var Db = require('./db');
 var Vault = require('./vault');
 var User = require('./user');
@@ -473,10 +475,44 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
 };
 
 
-internals.sendEmail = function (address, subject, text, callback) {
+// Check if a valid email address
 
-    Hapi.Email.send(address, subject, text, '', Config.email, callback);
+exports.checkAddress = function (email) {
+
+    try {
+        Validator.check(email).len(6, 64).isEmail();
+    }
+    catch (e) {
+        return false;
+    }
+
+    return true;
 };
+
+
+internals.sendEmail = function (to, subject, text, callback) {
+
+    var headers = {
+
+        from: (Config.email.fromName || 'Postmaster') + ' <' + (Config.email.replyTo || 'no-reply@localhost') + '>',
+        to: to,
+        subject: subject,
+        text: text
+    };
+
+    var message = Email.message.create(headers);
+
+    var mailer = Email.server.connect(Config.email.server || {});
+    mailer.send(message, function (err, message) {
+
+        if (callback) {
+            callback(err ? Err.internal('Failed sending email: ' + JSON.stringify(err)) : null);
+        }
+    });
+};
+
+
+
 
 
 

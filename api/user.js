@@ -1173,7 +1173,7 @@ exports.lookup = {
         }
         else if (request.params.type === 'email') {
 
-            if (Hapi.Email.checkAddress(request.params.id)) {
+            if (Email.checkAddress(request.params.id)) {
 
                 Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
 
@@ -1253,7 +1253,7 @@ exports.reminder = {
         var account = request.payload.account.toLowerCase();
 
         if (isEmail === false ||
-            Hapi.Email.checkAddress(account)) {
+            Email.checkAddress(account)) {
 
             var criteria = {};
             criteria[isEmail ? 'emails.address' : 'username'] = account;
@@ -1633,7 +1633,7 @@ exports.find = function (ids, callback) {
 
             // Email
 
-            if (Hapi.Email.checkAddress(ids[i])) {
+            if (Email.checkAddress(ids[i])) {
 
                 emails.push(ids[i].toLowerCase());
             }
