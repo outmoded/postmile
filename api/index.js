@@ -124,7 +124,7 @@ Db.initialize(function (err) {
 
         // Database connection failed
 
-        Hapi.Log.err(err);
+        Hapi.Log.event('err', err);
         process.exit(1);
     }
 });

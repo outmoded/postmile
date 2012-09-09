@@ -493,7 +493,7 @@ internals.sendEmail = function (to, subject, text) {
 
         if (err) {
 
-            Hapi.Log.err('Email error', {
+            Hapi.Log.event('err', 'Email error', {
 
                 to: to,
                 subject: subject,

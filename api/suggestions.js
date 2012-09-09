@@ -41,12 +41,12 @@ exports.initialize = function () {
                 }
                 else {
 
-                    Hapi.Log.err('Failed to load suggestions: ' + suggestion._id);
+                    Hapi.Log.event('err', 'Failed to load suggestions: ' + suggestion._id);
                 }
             }
             else {
 
-                Hapi.Log.err('Bad suggestion: missing rule or title');
+                Hapi.Log.event('err', 'Bad suggestion: missing rule or title');
             }
         }
     });
@@ -202,7 +202,7 @@ exports.list = function (project, userId, callback) {
                     catch (e) {
 
                         // Bad rule
-                        Hapi.Log.err('Bad suggestion rule:' + suggestion._id);
+                        Hapi.Log.event('err', 'Bad suggestion rule:' + suggestion._id);
                     }
                 }
             }
