@@ -67,11 +67,10 @@ var configuration = {
 
     name: 'http',
 
-    // Terms of Service
+    // Extension points
 
-    tos: {
-
-        min: '20110623'
+    ext: {
+        onPostHandler: internals.onPostHandler
     },
 
     // Authentication
@@ -82,26 +81,21 @@ var configuration = {
         loadUserFunc: Session.loadUser,
         extensionFunc: Session.extensionGrant,
         checkAuthorizationFunc: Session.checkAuthorization,
-
         aes256Keys: {
 
             oauthRefresh: Vault.oauthRefresh.aes256Key,
             oauthToken: Vault.oauthToken.aes256Key
+        },
+        tos: {
+            min: '20110623'
         }
-    },
-
-    // Extension points
-
-    ext: {
-
-        onPostHandler: internals.onPostHandler
     },
 
     debug: true
 };
 
-var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
-
+var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration);
+server.addRoutes(Routes.endpoints);
 
 // Initialize database connection
 
