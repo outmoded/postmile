@@ -51,11 +51,6 @@ exports.process = {
         //     key: 'cert/postmile.net.key',
         //     cert: 'cert/postmile.net.crt'
         // }
-    },
-
-    api: {
-
-        // runAs: 'www-data',
     }
 };
 

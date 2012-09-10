@@ -57,11 +57,12 @@ internals.onPostHandler = function (request, next) {
 };
 
 
-// Create and configure server instance
+// Catch uncaught exceptions
 
-Hapi.Process.initialize({
-    process: Config.process.api
+process.on('uncaughtException', function (err) {
+    Hapi.Utils.abort('Uncaught exception: ' + err.stack);
 });
+
 
 var configuration = {
 
@@ -94,7 +95,7 @@ var configuration = {
     debug: true
 };
 
-var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration);
+var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
 server.addRoutes(Routes.endpoints);
 
 // Initialize database connection
@@ -112,7 +113,6 @@ Db.initialize(function (err) {
 
         server.start();
         Stream.initialize(server.listener);
-        Hapi.Process.finalize();
     }
     else {
 
