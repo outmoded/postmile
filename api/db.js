@@ -133,19 +133,19 @@ exports.all = function (collectionName, callback) {
                     }
                     else {
 
-                        callback(null, Hapi.Error.database(err, collectionName, 'all'));
+                        callback(null, internals.error(err, collectionName, 'all'));
                     }
                 });
             }
             else {
 
-                callback(null, Hapi.Error.database(err, collectionName, 'all'));
+                callback(null, internals.error(err, collectionName, 'all'));
             }
         });
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'all'));
+        callback(null, internals.error('Collection not found', collectionName, 'all'));
     }
 };
 
@@ -169,7 +169,7 @@ exports.get = function (collectionName, id, callback) {
                 }
                 else {
 
-                    callback(null, Hapi.Error.database(err, collectionName, 'get', id));
+                    callback(null, internals.error(err, collectionName, 'get', id));
                 }
             });
         }
@@ -180,7 +180,7 @@ exports.get = function (collectionName, id, callback) {
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'get', id));
+        callback(null, internals.error('Collection not found', collectionName, 'get', id));
     }
 };
 
@@ -252,13 +252,13 @@ exports.getMany = function (collectionName, ids, callback) {
                         }
                         else {
 
-                            callback(null, Hapi.Error.database(err, collectionName, 'getMany', ids), ids);
+                            callback(null, internals.error(err, collectionName, 'getMany', ids), ids);
                         }
                     });
                 }
                 else {
 
-                    callback(null, Hapi.Error.database(err, collectionName, 'getMany', ids), ids);
+                    callback(null, internals.error(err, collectionName, 'getMany', ids), ids);
                 }
             });
         }
@@ -269,7 +269,7 @@ exports.getMany = function (collectionName, ids, callback) {
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'getMany', ids), ids);
+        callback(null, internals.error('Collection not found', collectionName, 'getMany', ids), ids);
     }
 };
 
@@ -295,19 +295,19 @@ exports.query = function (collectionName, criteria, callback) {
                     }
                     else {
 
-                        callback(null, Hapi.Error.database(err, collectionName, 'query', criteria));
+                        callback(null, internals.error(err, collectionName, 'query', criteria));
                     }
                 });
             }
             else {
 
-                callback(null, Hapi.Error.database(err, collectionName, 'query', criteria));
+                callback(null, internals.error(err, collectionName, 'query', criteria));
             }
         });
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'query', criteria));
+        callback(null, internals.error('Collection not found', collectionName, 'query', criteria));
     }
 };
 
@@ -340,7 +340,7 @@ exports.queryUnique = function (collectionName, criteria, callback) {
                                 }
                                 else {
 
-                                    callback(null, Hapi.Error.database('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
+                                    callback(null, internals.error('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
                                 }
                             }
                             else {
@@ -351,24 +351,24 @@ exports.queryUnique = function (collectionName, criteria, callback) {
                         }
                         else {
 
-                            callback(null, Hapi.Error.database('Null result array', collectionName, 'queryUnique', criteria));
+                            callback(null, internals.error('Null result array', collectionName, 'queryUnique', criteria));
                         }
                     }
                     else {
 
-                        callback(null, Hapi.Error.database(err, collectionName, 'queryUnique', criteria));
+                        callback(null, internals.error(err, collectionName, 'queryUnique', criteria));
                     }
                 });
             }
             else {
 
-                callback(null, Hapi.Error.database(err, collectionName, 'queryUnique', criteria));
+                callback(null, internals.error(err, collectionName, 'queryUnique', criteria));
             }
         });
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'queryUnique', criteria));
+        callback(null, internals.error('Collection not found', collectionName, 'queryUnique', criteria));
     }
 };
 
@@ -389,13 +389,13 @@ exports.count = function (collectionName, criteria, callback) {
             }
             else {
 
-                callback(null, Hapi.Error.database(err, collectionName, 'count', criteria));
+                callback(null, internals.error(err, collectionName, 'count', criteria));
             }
         });
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'count', criteria));
+        callback(null, internals.error('Collection not found', collectionName, 'count', criteria));
     }
 };
 
@@ -435,18 +435,18 @@ exports.insert = function (collectionName, items, callback) {
                 }
                 else {
 
-                    callback(null, Hapi.Error.database('No database insert output', collectionName, 'insert', items));
+                    callback(null, internals.error('No database insert output', collectionName, 'insert', items));
                 }
             }
             else {
 
-                callback(null, Hapi.Error.database(err, collectionName, 'insert', items));
+                callback(null, internals.error(err, collectionName, 'insert', items));
             }
         });
     }
     else {
 
-        callback(null, Hapi.Error.database('Collection not found', collectionName, 'insert', items));
+        callback(null, internals.error('Collection not found', collectionName, 'insert', items));
     }
 };
 
@@ -477,18 +477,18 @@ exports.replace = function (collectionName, item, callback) {
                 }
                 else {
 
-                    callback(Hapi.Error.database('No document found to replace', collectionName, 'replace', item));
+                    callback(internals.error('No document found to replace', collectionName, 'replace', item));
                 }
             }
             else {
 
-                callback(Hapi.Error.database(err, collectionName, 'replace', item));
+                callback(internals.error(err, collectionName, 'replace', item));
             }
         });
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'replace', item));
+        callback(internals.error('Collection not found', collectionName, 'replace', item));
     }
 };
 
@@ -519,23 +519,23 @@ exports.update = function (collectionName, id, changes, callback) {
                     }
                     else {
 
-                        callback(Hapi.Error.database('No document found to update', collectionName, 'update', [id, changes]));
+                        callback(internals.error('No document found to update', collectionName, 'update', [id, changes]));
                     }
                 }
                 else {
 
-                    callback(Hapi.Error.database(err, collectionName, 'update', [id, changes]));
+                    callback(internals.error(err, collectionName, 'update', [id, changes]));
                 }
             });
         }
         else {
 
-            callback(Hapi.Error.database('Invalid id', collectionName, 'update', [id, changes]));
+            callback(internals.error('Invalid id', collectionName, 'update', [id, changes]));
         }
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'update', [id, changes]));
+        callback(internals.error('Collection not found', collectionName, 'update', [id, changes]));
     }
 };
 
@@ -590,7 +590,7 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
                         }
                         else {
 
-                            callback(Hapi.Error.database('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+                            callback(internals.error('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
                         }
                     }
                     else {
@@ -600,18 +600,18 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
                 }
                 else {
 
-                    callback(Hapi.Error.database(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+                    callback(internals.error(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
                 }
             });
         }
         else {
 
-            callback(Hapi.Error.database('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+            callback(internals.error('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
         }
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
+        callback(internals.error('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
     }
 };
 
@@ -632,13 +632,13 @@ exports.remove = function (collectionName, id, callback) {
             }
             else {
 
-                callback(Hapi.Error.database(err, collectionName, 'remove', id));
+                callback(internals.error(err, collectionName, 'remove', id));
             }
         });
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', id));
+        callback(internals.error('Collection not found', collectionName, 'remove', id));
     }
 };
 
@@ -659,13 +659,13 @@ exports.removeCriteria = function (collectionName, criteria, callback) {
             }
             else {
 
-                callback(Hapi.Error.database(err, collectionName, 'remove', id));
+                callback(internals.error(err, collectionName, 'remove', id));
             }
         });
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', id));
+        callback(internals.error('Collection not found', collectionName, 'remove', id));
     }
 };
 
@@ -698,18 +698,18 @@ exports.removeMany = function (collectionName, ids, callback) {
                 }
                 else {
 
-                    callback(Hapi.Error.database(err, collectionName, 'remove', ids));
+                    callback(internals.error(err, collectionName, 'remove', ids));
                 }
             });
         }
         else {
 
-            callback(Hapi.Error.database('Invalid ids', collectionName, 'remove', ids));
+            callback(internals.error('Invalid ids', collectionName, 'remove', ids));
         }
     }
     else {
 
-        callback(Hapi.Error.database('Collection not found', collectionName, 'remove', ids));
+        callback(internals.error('Collection not found', collectionName, 'remove', ids));
     }
 };
 
@@ -832,3 +832,12 @@ internals.getDbId = function (id) {
         return null;
     }
 };
+
+
+// Construct error artifact
+
+internals.error = function (error, collection, action, input) {
+
+    return Hapi.Error.internal('Database error', { error: error, collection: collection, action: action, input: input });
+};
+
