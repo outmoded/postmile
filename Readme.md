@@ -71,7 +71,7 @@ $ node api/index &
 $ node web/index &
 ```
 
-Now point your browser at the web server address and start using Postmile.
+Now point your browser at the web server address and start using Postmile. Register with invite code 'public'.
 
 # Credits
 

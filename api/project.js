@@ -120,9 +120,9 @@ exports.post = {
     schema: {
 
         title: Hapi.Types.String(),
-        date: Hapi.Types.String(),              // date empty
-        time: Hapi.Types.String(),              // time empty
-        place: Hapi.Types.String()              // empty
+        date: Hapi.Types.String().emptyOk(),              //!! date
+        time: Hapi.Types.String().emptyOk(),              //!! time
+        place: Hapi.Types.String().emptyOk()
     },
 
     handler: function (request) {
@@ -201,9 +201,9 @@ exports.put = {
     schema: {
 
         title: Hapi.Types.String().required(),
-        date: Hapi.Types.String(),              // date empty
-        time: Hapi.Types.String(),              // time empty
-        place: Hapi.Types.String()              // empty
+        date: Hapi.Types.String().emptyOk(),              //!! date
+        time: Hapi.Types.String().emptyOk(),              //!! time
+        place: Hapi.Types.String().emptyOk()
     },
 
     handler: function (request) {
@@ -378,7 +378,7 @@ exports.participants = {
 
     schema: {
 
-        participants: Hapi.Types.Array().includes(Hapi.Types.String()),     // ids or emails
+        participants: Hapi.Types.Array().includes(Hapi.Types.String()),     //!! ids or emails
         names: Hapi.Types.Array().includes(Hapi.Types.String())
     },
 

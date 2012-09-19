@@ -5,7 +5,7 @@
   "author": "Eran Hammer <eran@hueniverse.com>",
   "private": true,
   "dependencies": {
-    "hapi": "0.6.x",
+    "hapi": "0.7.x",
     "mongodb": "0.9.x",
     "oauth": "0.9.x",
     "socket.io": "0.8.x",

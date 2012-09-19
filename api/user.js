@@ -90,7 +90,7 @@ exports.post = {
     schema: {
 
         name: Hapi.Types.String(),
-        username: Hapi.Types.String()       // empty
+        username: Hapi.Types.String().emptyOk()
     },
 
     auth: {

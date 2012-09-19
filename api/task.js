@@ -141,7 +141,7 @@ exports.post = {
 
         title: Hapi.Types.String(),
         status: Hapi.Types.String().valid('open', 'pending', 'close'),
-        participants: Hapi.Types.Array().includes(Hapi.Types.String())      // empty
+        participants: Hapi.Types.Array().includes(Hapi.Types.String()).emptyOk()
     },
 
     handler: function (request) {
