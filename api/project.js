@@ -119,11 +119,10 @@ exports.post = {
 
     schema: {
 
-        title: { type: 'string' },
-        date: { type: 'date', empty: true },
-        time: { type: 'time', empty: true },
-        place: { type: 'string', empty: true },
-        participants: { type: 'object', set: false, array: true }
+        title: Hapi.Types.String(),
+        date: Hapi.Types.String(),              // date empty
+        time: Hapi.Types.String(),              // time empty
+        place: Hapi.Types.String()              // empty
     },
 
     handler: function (request) {
@@ -201,11 +200,10 @@ exports.put = {
     
     schema: {
 
-        title: { type: 'string', required: true },
-        date: { type: 'date', empty: true },
-        time: { type: 'time', empty: true },
-        place: { type: 'string', empty: true },
-        participants: { type: 'object', set: false, array: true }
+        title: Hapi.Types.String().required(),
+        date: Hapi.Types.String(),              // date empty
+        time: Hapi.Types.String(),              // time empty
+        place: Hapi.Types.String()              // empty
     },
 
     handler: function (request) {
@@ -380,8 +378,8 @@ exports.participants = {
 
     schema: {
 
-        participants: { type: 'id', array: true },      // type can also be email
-        names: { type: 'string', array: true }
+        participants: Hapi.Types.Array().includes(Hapi.Types.String()),     // ids or emails
+        names: Hapi.Types.Array().includes(Hapi.Types.String())
     },
 
     handler: function (request) {
@@ -459,12 +457,12 @@ exports.participants = {
 
                                         if (err === null) {
 
-                                            var prevParticipants = Hapi.Utils.map(project.participants, 'id');
+                                            var prevParticipants = Hapi.Utils.mapToObject(project.participants, 'id');
 
                                             // Check for changes
 
                                             var contactsChange = { $set: {} };
-                                            var now = Hapi.Utils.getTimestamp();
+                                            var now = Date.now();
 
                                             var changedUsers = [];
                                             for (var i = 0, il = users.length; i < il; ++i) {
@@ -485,7 +483,7 @@ exports.participants = {
                                                 }
                                             }
 
-                                            var prevPids = Hapi.Utils.map(project.participants, 'email');
+                                            var prevPids = Hapi.Utils.mapToObject(project.participants, 'email');
 
                                             var pids = [];
                                             for (i = 0, il = emailsNotFound.length; i < il; ++i) {
@@ -617,7 +615,7 @@ exports.uninvite = {
     
     schema: {
 
-        participants: { type: 'id', array: true, required: true }
+        participants: Hapi.Types.Array().required().includes(Hapi.Types.String())
     },
 
     handler: function (request) {

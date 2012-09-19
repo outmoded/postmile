@@ -78,7 +78,7 @@ exports.post = {
 
     schema: {
 
-        value: { type: 'string', required: true }
+        value: Hapi.Types.String().required()
     },
 
     handler: function (request) {

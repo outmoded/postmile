@@ -75,7 +75,7 @@ exports.exclude = {
                                 // Existing excludes
 
                                 var changes = { $set: {} };
-                                var now = Hapi.Utils.getTimestamp();
+                                var now = Date.now();
 
                                 if (excludes.projects) {
 
@@ -122,7 +122,7 @@ exports.exclude = {
 
                                 excludes = { _id: request.session.user, projects: {} };
                                 excludes.projects[project._id] = { suggestions: {} };
-                                excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
+                                excludes.projects[project._id].suggestions[request.params.drop] = Date.now();
 
                                 Db.insert('user.exclude', excludes, function (items, err) {
 

@@ -210,7 +210,7 @@ exports.load = function (code, callback) {
 
                 // Check expiration
 
-                if ((invite.expires || Infinity) > Hapi.Utils.getTimestamp()) {
+                if ((invite.expires || Infinity) > Date.now()) {
 
                     // Check count
 

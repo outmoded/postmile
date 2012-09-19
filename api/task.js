@@ -34,7 +34,7 @@ exports.get = {
                         task.last = details[request.params.id].last;
                     }
 
-                    Hapi.Utils.hide(task, exports.post.schema);
+                    Hapi.Utils.removeKeys(task, ['origin']);
                     request.reply(task);
                 });
             }
@@ -139,11 +139,9 @@ exports.post = {
     
     schema: {
 
-        project: { type: 'id', set: false },
-        title: { type: 'string' },
-        status: { type: 'enum', values: { open: 1, pending: 2, close: 3 } },
-        participants: { type: 'id', array: true, empty: true },
-        origin: { type: 'object', set: false, hide: true }
+        title: Hapi.Types.String(),
+        status: Hapi.Types.String().valid('open', 'pending', 'close'),
+        participants: Hapi.Types.Array().includes(Hapi.Types.String())      // empty
     },
 
     handler: function (request) {
@@ -259,11 +257,8 @@ exports.put = {
 
     schema: {
 
-        project: { type: 'id', set: false },
-        title: { type: 'string' },
-        status: { type: 'enum', values: { open: 1, pending: 2, close: 3 } },
-        participants: { type: 'id', array: true, empty: true, set: false },
-        origin: { type: 'object', set: false, hide: true }
+        title: Hapi.Types.String(),
+        status: Hapi.Types.String().valid('open', 'pending', 'close')
     },
 
     handler: function (request) {

@@ -28,7 +28,7 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     // Create new ticket
 
-    var now = Hapi.Utils.getTimestamp();
+    var now = Date.now();
     var ticketId = now.toString(36);                                                // assuming users cannot generate more than one ticket per msec
     var token = Hapi.Session.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
 
@@ -124,7 +124,7 @@ exports.loadTicket = function (token, callback) {
                     user.tickets[ticketId]) {
 
                     var ticket = user.tickets[ticketId];
-                    var now = Hapi.Utils.getTimestamp();
+                    var now = Date.now();
 
                     // Check expiration
 

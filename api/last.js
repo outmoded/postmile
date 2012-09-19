@@ -213,7 +213,7 @@ exports.delProject = function (userId, projectId, callback) {
 
 exports.setLast = function (userId, project, task, callback) {
 
-    var now = Hapi.Utils.getTimestamp();
+    var now = Date.now();
 
     exports.load(userId, function (last, err) {
 

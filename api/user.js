@@ -71,7 +71,7 @@ exports.get = {
 
             if (user) {
 
-                Hapi.Utils.hide(user, exports.post.schema);
+                Hapi.Utils.removeKeys(user, ['contacts', 'origin', 'tos', 'tickets']);
                 request.reply(user);
             }
             else {
@@ -89,19 +89,8 @@ exports.post = {
 
     schema: {
 
-        name: { type: 'string' },
-        emails: { type: 'object', set: false, array: true },
-        contacts: { type: 'object', set: false, hide: true },
-
-        username: { type: 'string', empty: true },
-        twitter: { type: 'string', set: false },
-        facebook: { type: 'string', set: false },
-        yahoo: { type: 'string', set: false },
-
-        origin: { type: 'object', set: false, hide: true },
-        tos: { type: 'object', set: false, hide: true },
-        tickets: { type: 'object', set: false, hide: true },
-        view: { type: 'string', set: false }
+        name: Hapi.Types.String(),
+        username: Hapi.Types.String()       // empty
     },
 
     auth: {
@@ -182,8 +171,8 @@ exports.email = {
     
     schema: {
 
-        address: { type: 'string', required: true },
-        action: { type: 'enum', required: true, values: { remove: 1, primary: 2, add: 3, verify: 4 } }
+        address: Hapi.Types.String().required(),
+        action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
     },
 
     auth: {
@@ -549,16 +538,16 @@ exports.put = {
 
     schema: {
 
-        username: { type: 'string' },
-        name: { type: 'string' },
-        network: { type: 'string', array: true },
-        email: { type: 'email' }
+        username: Hapi.Types.String(),
+        name: Hapi.Types.String(),
+        network: Hapi.Types.Array().includes(Hapi.Types.String()),
+        email: Hapi.Types.String().email()
     },
 
     auth: {
 
         scope: 'signup',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {
@@ -906,7 +895,7 @@ exports.tos = {
     auth: {
 
         scope: 'tos',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {
@@ -916,7 +905,7 @@ exports.tos = {
             if (user) {
 
                 user.tos = user.tos || {};
-                user.tos[request.params.version] = Hapi.Utils.getTimestamp();
+                user.tos[request.params.version] = Date.now();
 
                 Db.update('user', user._id, { $set: { 'tos': user.tos } }, function (err) {
 
@@ -945,13 +934,13 @@ exports.link = {
     
     schema: {
 
-        id: { type: 'string', required: true }
+        id: Hapi.Types.String().required()
     },
 
     auth: {
 
         scope: 'login',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {
@@ -1032,7 +1021,7 @@ exports.unlink = {
     auth: {
 
         scope: 'login',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {
@@ -1103,7 +1092,7 @@ exports.view = {
     auth: {
 
         scope: 'view',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {
@@ -1226,12 +1215,12 @@ exports.reminder = {
     
     schema: {
 
-        account: { type: 'string', required: true }
+        account: Hapi.Types.String().required()
     },
 
     auth: {
         scope: 'reminder',
-        user: 'none'
+        entity: 'client'
     },
 
     handler: function (request) {

@@ -407,7 +407,7 @@ exports.insert = function (collectionName, items, callback) {
     var collection = internals.collections[collectionName];
     if (collection) {
 
-        var now = Hapi.Utils.getTimestamp();
+        var now = Date.now();
 
         if (items instanceof Array) {
 
@@ -458,7 +458,7 @@ exports.replace = function (collectionName, item, callback) {
     var collection = internals.collections[collectionName];
     if (collection) {
 
-        var now = Hapi.Utils.getTimestamp();
+        var now = Date.now();
         if (item.created === undefined) {
 
             item.created = now;
@@ -503,7 +503,7 @@ exports.update = function (collectionName, id, changes, callback) {
         changes = changes || {};
         changes.$set = changes.$set || {};
 
-        var now = Hapi.Utils.getTimestamp();
+        var now = Date.now();
         changes.$set.modified = now;
 
         var dbId = internals.getDbId(id);
@@ -550,7 +550,7 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
         changes = changes || {};
         changes.$set = changes.$set || {};
 
-        var now = Hapi.Utils.getTimestamp();
+        var now = Date.now();
         changes.$set.modified = now;
 
         var isValid = true;

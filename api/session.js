@@ -18,18 +18,6 @@ var Vault = require('./vault');
 var internals = {};
 
 
-// Session definitions
-
-exports.type = {};
-
-exports.type.client = {
-
-    name:           { type: 'string' },
-    secret:         { type: 'string', hide: true },
-    scope:          { type: 'object', hide: true }
-};
-
-
 // Get client information endpoint
 
 exports.client = {
@@ -37,7 +25,7 @@ exports.client = {
     auth: {
 
         scope: 'login',
-        user: 'none'
+        entity: 'client'
     },
     
     handler: function (request) {
@@ -48,7 +36,7 @@ exports.client = {
 
                 if (client) {
 
-                    Hapi.Utils.hide(client, exports.type.client);
+                    Hapi.Utils.removeKeys(client, ['secret', 'scope']);
                     request.reply(client);
                 }
                 else {
@@ -135,7 +123,7 @@ exports.checkAuthorization = function (userId, clientId, callback) {
                 });
 
                 var isAuthorized = false;
-                var now = Hapi.Utils.getTimestamp();
+                var now = Date.now();
 
                 var expired = [];
                 for (var i = 0, il = items.length; i < il; ++i) {

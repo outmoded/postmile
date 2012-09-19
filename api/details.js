@@ -91,15 +91,13 @@ exports.post = {
 
     schema: {
 
-        created: { type: 'number', set: false },
-        type: { type: 'enum', required: true, values: { text: 1 } },
-        content: { type: 'string', required: true },
-        user: { type: 'id', set: false }
+        type: Hapi.Types.String().required().valid('text'),
+        content: Hapi.Types.String().required()
     },
 
     handler: function (request) {
 
-        var now = Hapi.Utils.getTimestamp();
+        var now = Date.now();
 
         exports.load(request.params.id, request.session.user, true, function (details, err, task, project) {
 

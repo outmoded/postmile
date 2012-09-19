@@ -92,7 +92,8 @@ var configuration = {
         }
     },
 
-    debug: true
+    debug: true,
+    monitor: true
 };
 
 var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
