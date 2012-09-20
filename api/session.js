@@ -183,7 +183,7 @@ exports.extensionGrant = function (request, client, callback) {
         // Check if client has 'login' scope
 
         if ((client.scope && client.scope.login === true) ||
-            (request.session.scope && request.session.scope.login === true)) {
+            (request.session && request.session.scope && request.session.scope.login === true)) {
 
             // Switch on grant type
 

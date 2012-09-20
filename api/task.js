@@ -141,12 +141,11 @@ exports.post = {
 
         title: Hapi.Types.String(),
         status: Hapi.Types.String().valid('open', 'pending', 'close'),
-        participants: Hapi.Types.Array().includes(Hapi.Types.String()).emptyOk()
+        participants: Hapi.Types.Array().includes(Hapi.Types.String()) //!! .emptyOk()
     },
 
     handler: function (request) {
 
-        console.log('Payload: ' + request.payload);
         exports.load(request.params.id, request.session.user, true, function (task, err, project) {
 
             if (task) {
