@@ -146,6 +146,7 @@ exports.post = {
 
     handler: function (request) {
 
+        console.log('Payload: ' + request.payload);
         exports.load(request.params.id, request.session.user, true, function (task, err, project) {
 
             if (task) {
