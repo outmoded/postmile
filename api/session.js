@@ -149,17 +149,17 @@ exports.checkAuthorization = function (userId, clientId, callback) {
                 }
                 else {
 
-                    callback(Hapi.Error.oauth('invalid_grant', 'Client authorization expired'));
+                    callback(Hapi.Error._oauth('invalid_grant', 'Client authorization expired'));
                 }
             }
             else {
 
-                callback(Hapi.Error.oauth('invalid_grant', 'Client is not authorized'));
+                callback(Hapi.Error._oauth('invalid_grant', 'Client is not authorized'));
             }
         }
         else {
 
-            callback(Hapi.Error.oauth('server_error', 'Failed retrieving authorization'));
+            callback(Hapi.Error._oauth('server_error', 'Failed retrieving authorization'));
         }
     });
 };
@@ -174,7 +174,7 @@ exports.extensionGrant = function (request, client, callback) {
     if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
 
         // Unsupported grant type namespace
-        callback(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
+        callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
     }
     else {
 
@@ -200,7 +200,7 @@ exports.extensionGrant = function (request, client, callback) {
                     else {
 
                         // Unknown local account
-                        callback(Hapi.Error.oauth('invalid_grant', 'Unknown local account'));
+                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown local account'));
                     }
                 });
             }
@@ -219,7 +219,7 @@ exports.extensionGrant = function (request, client, callback) {
                     else {
 
                         // Unregistered network account
-                        callback(Hapi.Error.oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
+                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
                     }
                 });
             }
@@ -236,20 +236,20 @@ exports.extensionGrant = function (request, client, callback) {
                     else {
 
                         // Invalid email token
-                        callback(Hapi.Error.oauth('invalid_grant', err.message));
+                        callback(Hapi.Error._oauth('invalid_grant', err.message));
                     }
                 });
             }
             else {
 
                 // Unsupported grant type
-                callback(Hapi.Error.oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
+                callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
             }
         }
         else {
 
             // No client scope for local account access
-            callback(Hapi.Error.oauth('unauthorized_client', 'Client missing \'login\' scope'));
+            callback(Hapi.Error._oauth('unauthorized_client', 'Client missing \'login\' scope'));
         }
     }
 };
