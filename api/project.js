@@ -15,6 +15,7 @@ var Task = require('./task');
 var Email = require('./email');
 var Last = require('./last');
 var Stream = require('./stream');
+var Utils = require('./utils');
 
 
 // Declare internals
@@ -120,8 +121,8 @@ exports.post = {
     schema: {
 
         title: Hapi.Types.String(),
-        date: Hapi.Types.String().emptyOk(),              //!! date
-        time: Hapi.Types.String().emptyOk(),              //!! time
+        date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
+        time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
         place: Hapi.Types.String().emptyOk()
     },
 
@@ -201,8 +202,8 @@ exports.put = {
     schema: {
 
         title: Hapi.Types.String().required(),
-        date: Hapi.Types.String().emptyOk(),              //!! date
-        time: Hapi.Types.String().emptyOk(),              //!! time
+        date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
+        time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
         place: Hapi.Types.String().emptyOk()
     },
 

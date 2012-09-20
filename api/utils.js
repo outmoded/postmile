@@ -13,3 +13,7 @@ exports.removeKeys = function (object, keys) {
     }
 };
 
+
+exports.dateRegex = /^([12]\d\d\d)-([01]\d)-([0123]\d)$/;
+exports.timeRegex = /^([012]\d):([012345]\d):([012345]\d)$/;
+
