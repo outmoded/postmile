@@ -16,7 +16,10 @@ var Stream = require('./stream');
 
 exports.get = {
     
-    authentication: 'none',
+    auth: {
+
+        mode: 'none'
+    },
 
     handler: function (request) {
 
@@ -156,7 +159,7 @@ exports.claim = {
 
                     if (projectPid) {
 
-                        Project.replacePid(project, projectPid.pid, request.userId, function (err) {
+                        Project.replacePid(project, projectPid.pid, request.session.user, function (err) {
 
                             if (err === null) {
 
@@ -207,7 +210,7 @@ exports.load = function (code, callback) {
 
                 // Check expiration
 
-                if ((invite.expires || Infinity) > Hapi.Utils.getTimestamp()) {
+                if ((invite.expires || Infinity) > Date.now()) {
 
                     // Check count
 

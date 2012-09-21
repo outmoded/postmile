@@ -10,7 +10,7 @@ Db.initialize(true, function (err) {
 
     if (err === null) {
 
-        Hapi.Log.info('Database initialized');
+        Hapi.Log.event('info', 'Database initialized');
 
         // Create required clients
 
@@ -19,7 +19,7 @@ Db.initialize(true, function (err) {
             {
                 name: 'postmile.web',
                 scope: { authorized: true, login: true, reminder: true, signup: true, tos: true },
-                secret: Hapi.Utils.getRandomString(64)
+                secret: Hapi.Session.getRandomString(64)
             },
 
             {
@@ -38,20 +38,20 @@ Db.initialize(true, function (err) {
 
                     if (err === null) {
 
-                        Hapi.Log.info('Initial dataset created successfully');
-                        Hapi.Log.info('>>>>> postmile.web client secret: ' + clients[0].secret);
+                        Hapi.Log.event('info', 'Initial dataset created successfully');
+                        Hapi.Log.event('info', '>>>>> postmile.web client secret: ' + clients[0].secret);
                         process.exit(0);
                     }
                     else {
 
-                        Hapi.Log.err(err);
+                        Hapi.Log.event('err', err);
                         process.exit(1);
                     }
                 });
             }
             else {
 
-                Hapi.Log.err(err);
+                Hapi.Log.event('err', err);
                 process.exit(1);
             }
         });
@@ -60,7 +60,7 @@ Db.initialize(true, function (err) {
 
         // Database connection failed
 
-        Hapi.Log.err(err);
+        Hapi.Log.event('err', err);
         process.exit(1);
     }
 });

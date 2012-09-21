@@ -6,6 +6,8 @@
 // Load modules
 
 var Hapi = require('hapi');
+var Validator = require('validator');
+var Email = require('emailjs');
 var Db = require('./db');
 var Vault = require('./vault');
 var User = require('./user');
@@ -26,9 +28,9 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     // Create new ticket
 
-    var now = Hapi.Utils.getTimestamp();
+    var now = Date.now();
     var ticketId = now.toString(36);                                                // assuming users cannot generate more than one ticket per msec
-    var token = Hapi.Utils.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
+    var token = Hapi.Session.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
 
     var ticket = { timestamp: now, email: email };
 
@@ -101,7 +103,7 @@ exports.loadTicket = function (token, callback) {
 
     // Decode ticket
 
-    var record = Hapi.Utils.decrypt(Vault.emailToken.aes256Key, token);
+    var record = Hapi.Session.decrypt(Vault.emailToken.aes256Key, token);
 
     if (record &&
         record instanceof Array &&
@@ -122,7 +124,7 @@ exports.loadTicket = function (token, callback) {
                     user.tickets[ticketId]) {
 
                     var ticket = user.tickets[ticketId];
-                    var now = Hapi.Utils.getTimestamp();
+                    var now = Date.now();
 
                     // Check expiration
 
@@ -452,31 +454,58 @@ exports.projectInvite = function (users, pids, project, message, inviter) {
                 link = 'Use this link to join: \n\n' +
                        '    ' + Config.host.uri('web') + '/i/' + invite;
 
-                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link, function (err) {
-
-                    if (err === null) {
-
-                        Hapi.Log.info('Email sent to: ' + pid.email + ' for project: ' + project._id);
-                    }
-                    else {
-
-                        Hapi.Log.err('Email error: ' + pid.email + ' for project: ' + project._id);
-                    }
-                });
-            }
-            else {
-
-                Hapi.Log.err('Email error: project (' + project._id + ') pid (' + pid.pid + ') missing email address');
+                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link);
             }
         }
     }
 };
 
 
-internals.sendEmail = function (address, subject, text, callback) {
+// Check if a valid email address
 
-    Hapi.Email.send(address, subject, text, '', Config.email, callback);
+exports.checkAddress = function (email) {
+
+    try {
+        Validator.check(email).len(6, 64).isEmail();
+    }
+    catch (e) {
+        return false;
+    }
+
+    return true;
 };
+
+
+internals.sendEmail = function (to, subject, text) {
+
+    var headers = {
+
+        from: (Config.email.fromName || 'Postmaster') + ' <' + (Config.email.replyTo || 'no-reply@localhost') + '>',
+        to: to,
+        subject: subject,
+        text: text
+    };
+
+    var message = Email.message.create(headers);
+
+    var mailer = Email.server.connect(Config.email.server || {});
+    mailer.send(message, function (err, message) {
+
+        if (err) {
+
+            Hapi.Log.event('err', 'Email error', {
+
+                to: to,
+                subject: subject,
+                text: text,
+                error: err
+            });
+        }
+    });
+};
+
+
+
 
 
 

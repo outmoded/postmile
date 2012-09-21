@@ -57,25 +57,21 @@ internals.onPostHandler = function (request, next) {
 };
 
 
-// Create and configure server instance
+// Catch uncaught exceptions
 
-Hapi.Process.initialize({
-
-    name: Config.product.name + ' API Server',
-    process: Config.process.api,
-    email: Config.email,
-    log: Config.log
+process.on('uncaughtException', function (err) {
+    Hapi.Utils.abort('Uncaught exception: ' + err.stack);
 });
+
 
 var configuration = {
 
     name: 'http',
 
-    // Terms of Service
+    // Extension points
 
-    tos: {
-
-        min: '20110623'
+    ext: {
+        onPostHandler: internals.onPostHandler
     },
 
     // Authentication
@@ -86,26 +82,22 @@ var configuration = {
         loadUserFunc: Session.loadUser,
         extensionFunc: Session.extensionGrant,
         checkAuthorizationFunc: Session.checkAuthorization,
-
         aes256Keys: {
 
             oauthRefresh: Vault.oauthRefresh.aes256Key,
             oauthToken: Vault.oauthToken.aes256Key
+        },
+        tos: {
+            min: '20110623'
         }
     },
 
-    // Extension points
-
-    ext: {
-
-        onPostHandler: internals.onPostHandler
-    },
-
-    debug: true
+    debug: true,
+    monitor: true
 };
 
-var server = new Hapi.Server.Server(Config.host.api.domain, Config.host.api.port, configuration, Routes.endpoints);
-
+var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
+server.addRoutes(Routes.endpoints);
 
 // Initialize database connection
 
@@ -122,13 +114,12 @@ Db.initialize(function (err) {
 
         server.start();
         Stream.initialize(server.listener);
-        Hapi.Process.finalize();
     }
     else {
 
         // Database connection failed
 
-        Hapi.Log.err(err);
+        Hapi.Log.event('err', err);
         process.exit(1);
     }
 });
