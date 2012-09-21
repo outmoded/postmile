@@ -20,20 +20,20 @@ exports.get = {
     
     handler: function (request) {
 
-        exports.load(request.userId, function (storage, err) {
+        exports.load(request.session.user, function (storage, err) {
 
             if (storage &&
                 storage.clients &&
-                storage.clients[request.clientId]) {
+                storage.clients[request.session.client]) {
 
                 if (request.params.id) {
 
                     if (internals.checkKey(request.params.id)) {
 
-                        if (storage.clients[request.clientId][request.params.id]) {
+                        if (storage.clients[request.session.client][request.params.id]) {
 
                             var result = {};
-                            result[request.params.id] = storage.clients[request.clientId][request.params.id];
+                            result[request.params.id] = storage.clients[request.session.client][request.params.id];
 
                             request.reply(result);
                         }
@@ -49,7 +49,7 @@ exports.get = {
                 }
                 else {
 
-                    request.reply(storage.clients[request.clientId]);
+                    request.reply(storage.clients[request.session.client]);
                 }
             }
             else if (err === null) {
@@ -78,14 +78,14 @@ exports.post = {
 
     schema: {
 
-        value: { type: 'string', required: true }
+        value: Hapi.Types.String().required()
     },
 
     handler: function (request) {
 
         if (internals.checkKey(request.params.id)) {
 
-            exports.load(request.userId, function (storage, err) {
+            exports.load(request.session.user, function (storage, err) {
 
                 if (err === null) {
 
@@ -96,21 +96,21 @@ exports.post = {
                         var changes = { $set: {} };
                         if (storage.clients) {
 
-                            if (storage.clients[request.clientId]) {
+                            if (storage.clients[request.session.client]) {
 
-                                changes.$set['clients.' + request.clientId + '.' + request.params.id] = request.payload.value;
+                                changes.$set['clients.' + request.session.client + '.' + request.params.id] = request.payload.value;
                             }
                             else {
 
-                                changes.$set['clients.' + request.clientId] = {};
-                                changes.$set['clients.' + request.clientId][request.params.id] = request.payload.value;
+                                changes.$set['clients.' + request.session.client] = {};
+                                changes.$set['clients.' + request.session.client][request.params.id] = request.payload.value;
                             }
                         }
                         else {
 
                             changes.$set.clients = {};
-                            changes.$set.clients[request.clientId] = {};
-                            changes.$set.clients[request.clientId][request.params.id] = request.payload.value;
+                            changes.$set.clients[request.session.client] = {};
+                            changes.$set.clients[request.session.client][request.params.id] = request.payload.value;
                         }
 
                         Db.update('user.storage', storage._id, changes, function (err) {
@@ -129,9 +129,9 @@ exports.post = {
 
                         // First client data
 
-                        storage = { _id: request.userId, clients: {} };
-                        storage.clients[request.clientId] = {};
-                        storage.clients[request.clientId][request.params.id] = request.payload.value;
+                        storage = { _id: request.session.user, clients: {} };
+                        storage.clients[request.session.client] = {};
+                        storage.clients[request.session.client][request.params.id] = request.payload.value;
 
                         Db.insert('user.storage', storage, function (items, err) {
 
@@ -168,17 +168,17 @@ exports.del = {
 
         if (internals.checkKey(request.params.id)) {
 
-            exports.load(request.userId, function (storage, err) {
+            exports.load(request.session.user, function (storage, err) {
 
                 if (storage) {
 
                     if (storage &&
                     storage.clients &&
-                    storage.clients[request.clientId] &&
-                    storage.clients[request.clientId][request.params.id]) {
+                    storage.clients[request.session.client] &&
+                    storage.clients[request.session.client][request.params.id]) {
 
                         var changes = { $unset: {} };
-                        changes.$unset['clients.' + request.clientId + '.' + request.params.id] = 1;
+                        changes.$unset['clients.' + request.session.client + '.' + request.params.id] = 1;
 
                         Db.update('user.storage', storage._id, changes, function (err) {
 

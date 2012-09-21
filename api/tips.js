@@ -40,12 +40,12 @@ exports.initialize = function () {
                 }
                 else {
 
-                    Hapi.Log.err('Failed to load tips: ' + tip._id);
+                    Hapi.Log.event('err', 'Failed to load tips: ' + tip._id);
                 }
             }
             else {
 
-                Hapi.Log.err('Bad tip: missing rule or text');
+                Hapi.Log.event('err', 'Bad tip: missing rule or text');
             }
         }
     });
@@ -75,7 +75,7 @@ exports.list = function (project, callback) {
 
                 // Bad context rule
 
-                Hapi.Log.err('Bad tip rule:' + tip._id);
+                Hapi.Log.event('err', 'Bad tip rule:' + tip._id);
             }
         }
     }

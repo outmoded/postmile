@@ -34,7 +34,6 @@ exports.initialize = function () {
                 suggestion.title) {
 
                 var statement = Rules.normalize(suggestion.rule);
-
                 if (statement) {
 
                     suggestion.statement = statement;
@@ -42,12 +41,12 @@ exports.initialize = function () {
                 }
                 else {
 
-                    Hapi.Log.err('Failed to load suggestions: ' + suggestion._id);
+                    Hapi.Log.event('err', 'Failed to load suggestions: ' + suggestion._id);
                 }
             }
             else {
 
-                Hapi.Log.err('Bad suggestion: missing rule or title');
+                Hapi.Log.event('err', 'Bad suggestion: missing rule or title');
             }
         }
     });
@@ -60,14 +59,14 @@ exports.exclude = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
                 var suggestion = internals.suggestions[request.params.drop];
                 if (suggestion) {
 
-                    Db.get('user.exclude', request.userId, function (excludes, err) {
+                    Db.get('user.exclude', request.session.user, function (excludes, err) {
 
                         if (err === null) {
 
@@ -76,7 +75,7 @@ exports.exclude = {
                                 // Existing excludes
 
                                 var changes = { $set: {} };
-                                var now = Hapi.Utils.getTimestamp();
+                                var now = Date.now();
 
                                 if (excludes.projects) {
 
@@ -121,9 +120,9 @@ exports.exclude = {
 
                                 // First exclude
 
-                                excludes = { _id: request.userId, projects: {} };
+                                excludes = { _id: request.session.user, projects: {} };
                                 excludes.projects[project._id] = { suggestions: {} };
-                                excludes.projects[project._id].suggestions[request.params.drop] = Hapi.Utils.getTimestamp();
+                                excludes.projects[project._id].suggestions[request.params.drop] = Date.now();
 
                                 Db.insert('user.exclude', excludes, function (items, err) {
 
@@ -164,52 +163,52 @@ exports.list = function (project, userId, callback) {
 
     Db.get('user.exclude', userId, function (item, err) {
 
+        if (err) {
+            return callback(err, null);
+        }
+
         var results = [];
+        var excludes = item;
+        for (var i in internals.suggestions) {
 
-        if (err === null) {
+            if (internals.suggestions.hasOwnProperty(i)) {
 
-            var excludes = item;
-            for (var i in internals.suggestions) {
+                var suggestion = internals.suggestions[i];
 
-                if (internals.suggestions.hasOwnProperty(i)) {
+                var isExcluded = false;
+                if (excludes &&
+                    excludes.projects &&
+                    excludes.projects[project._id] &&
+                    excludes.projects[project._id].suggestions &&
+                    excludes.projects[project._id].suggestions[suggestion._id]) {
 
-                    var suggestion = internals.suggestions[i];
+                    isExcluded = true;
+                }
 
-                    var isExcluded = false;
-                    if (excludes &&
-                        excludes.projects &&
-                        excludes.projects[project._id] &&
-                        excludes.projects[project._id].suggestions &&
-                        excludes.projects[project._id].suggestions[suggestion._id]) {
+                if (isExcluded === false) {
 
-                        isExcluded = true;
+                    try {
+
+                        if (eval(suggestion.statement)) {
+
+                            results.push({
+
+                                id: suggestion._id,
+                                title: suggestion.title,
+                                isSponsored: suggestion.isSponsored
+                            });
+                        }
                     }
+                    catch (e) {
 
-                    if (isExcluded === false) {
-
-                        try {
-
-                            if (eval(suggestion.statement)) {
-
-                                results.push({ id: suggestion._id, title: suggestion.title, isSponsored: suggestion.isSponsored });
-                            }
-                        }
-                        catch (e) {
-
-                            // Bad rule
-
-                            Hapi.Log.err('Bad suggestion rule:' + suggestion._id);
-                        }
+                        // Bad rule
+                        Hapi.Log.event('err', 'Bad suggestion rule:' + suggestion._id);
                     }
                 }
             }
         }
-        else {
 
-            Hapi.Log.err(err);
-        }
-
-        callback(results);
+        return callback(null, results);
     });
 };
 

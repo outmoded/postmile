@@ -22,7 +22,7 @@ exports.getProject = {
     
     handler: function (request) {
 
-        exports.load(request.userId, function (last, err) {
+        exports.load(request.session.user, function (last, err) {
 
             if (last &&
                 last.projects &&
@@ -35,7 +35,7 @@ exports.getProject = {
             }
             else if (err === null) {
 
-                request.reply({ id: request.userId, projects: {} });
+                request.reply({ id: request.session.user, projects: {} });
             }
             else {
 
@@ -52,11 +52,11 @@ exports.postProject = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.userId, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
 
             if (project) {
 
-                exports.setLast(request.userId, project, null, function (err) {
+                exports.setLast(request.session.user, project, null, function (err) {
 
                     if (err === null) {
 
@@ -83,11 +83,11 @@ exports.getTask = {
     
     handler: function (request) {
 
-        Task.load(request.params.id, request.userId, false, function (task, err, project) {
+        Task.load(request.params.id, request.session.user, false, function (task, err, project) {
 
             if (task) {
 
-                exports.load(request.userId, function (last, err) {
+                exports.load(request.session.user, function (last, err) {
 
                     if (last &&
                         last.projects &&
@@ -103,7 +103,7 @@ exports.getTask = {
                     }
                     else if (err === null) {
 
-                        request.reply({ id: request.userId, projects: {} });
+                        request.reply({ id: request.session.user, projects: {} });
                     }
                     else {
 
@@ -126,11 +126,11 @@ exports.postTask = {
     
     handler: function (request) {
 
-        Task.load(request.params.id, request.userId, false, function (task, err, project) {
+        Task.load(request.params.id, request.session.user, false, function (task, err, project) {
 
             if (task) {
 
-                exports.setLast(request.userId, project, task, function (err) {
+                exports.setLast(request.session.user, project, task, function (err) {
 
                     if (err === null) {
 
@@ -213,7 +213,7 @@ exports.delProject = function (userId, projectId, callback) {
 
 exports.setLast = function (userId, project, task, callback) {
 
-    var now = Hapi.Utils.getTimestamp();
+    var now = Date.now();
 
     exports.load(userId, function (last, err) {
 

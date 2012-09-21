@@ -22,7 +22,7 @@ exports.post = {
 
     schema: {
 
-        get: { type: 'string', array: true, required: true }
+        get: Hapi.Types.Array().required().includes(Hapi.Types.String())
     },
     
     handler: function (request) {

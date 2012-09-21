@@ -60,15 +60,18 @@ internals.forbiddenUsernames = {
 
 exports.get = {
     
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
-                Hapi.Utils.hide(user, exports.post.schema);
+                Hapi.Utils.removeKeys(user, ['contacts', 'origin', 'tos', 'tickets']);
                 request.reply(user);
             }
             else {
@@ -86,26 +89,18 @@ exports.post = {
 
     schema: {
 
-        name: { type: 'string' },
-        emails: { type: 'object', set: false, array: true },
-        contacts: { type: 'object', set: false, hide: true },
-
-        username: { type: 'string', empty: true },
-        twitter: { type: 'string', set: false },
-        facebook: { type: 'string', set: false },
-        yahoo: { type: 'string', set: false },
-
-        origin: { type: 'object', set: false, hide: true },
-        tos: { type: 'object', set: false, hide: true },
-        tickets: { type: 'object', set: false, hide: true },
-        view: { type: 'string', set: false }
+        name: Hapi.Types.String(),
+        username: Hapi.Types.String().emptyOk()
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
@@ -176,17 +171,20 @@ exports.email = {
     
     schema: {
 
-        address: { type: 'string', required: true },
-        action: { type: 'enum', required: true, values: { remove: 1, primary: 2, add: 3, verify: 4 } }
+        address: Hapi.Types.String().required(),
+        action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         var address = request.payload.address.toLowerCase();
 
-        exports.load(request.userId, function (user, err) {
+        exports.load(request.session.user, function (user, err) {
 
             if (user) {
 
@@ -230,34 +228,25 @@ exports.email = {
 
                                                     // Ignore errors
 
-                                                    if (err) {
-
-                                                        Hapi.Log.err(err, request);
-                                                    }
-
                                                     Stream.update({ object: 'profile', user: user._id }, request);
                                                     request.reply({ status: 'ok' });
                                                 });
                                             }
                                             else {
-
                                                 request.reply(err);
                                             }
                                         });
                                     }
                                     else {
-
                                         request.reply(Hapi.Error.badRequest('Email already assigned to another account'));
                                     }
                                 }
                                 else {
-
                                     request.reply(err);
                                 }
                             });
                         }
                         else {
-
                             request.reply(Hapi.Error.badRequest('Address already present'));
                         }
 
@@ -295,23 +284,19 @@ exports.email = {
                                             request.reply({ status: 'ok' });
                                         }
                                         else {
-
                                             request.reply(err);
                                         }
                                     });
                                 }
                                 else {
-
                                     request.reply(Hapi.Error.badRequest('Email must be verified before made primary'));
                                 }
                             }
                             else {
-
                                 request.reply(Hapi.Error.badRequest('Address already primary'));
                             }
                         }
                         else {
-
                             request.reply(Hapi.Error.notFound('No such email address'));
                         }
 
@@ -411,13 +396,16 @@ exports.contacts = {
         exclude: Hapi.Types.String()
     },
 
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         if (request.query.exclude) {
 
-            Project.load(request.query.exclude, request.userId, false, function (project, member, err) {
+            Project.load(request.query.exclude, request.session.user, false, function (project, member, err) {
 
                 if (err === null) {
 
@@ -436,7 +424,7 @@ exports.contacts = {
 
         function getList(exclude) {
 
-            exports.load(request.userId, function (user, err) {
+            exports.load(request.session.user, function (user, err) {
 
                 if (user) {
 
@@ -527,11 +515,14 @@ exports.contacts = {
 
 exports.who = {
     
-    tos: 'none',
+    auth: {
+
+        tos: 'none'
+    },
 
     handler: function (request) {
 
-        request.reply({ user: request.userId });
+        request.reply({ user: request.session.user });
     }
 };
 
@@ -547,14 +538,17 @@ exports.put = {
 
     schema: {
 
-        username: { type: 'string' },
-        name: { type: 'string' },
-        network: { type: 'string', array: true },
-        email: { type: 'email' }
+        username: Hapi.Types.String(),
+        name: Hapi.Types.String(),
+        network: Hapi.Types.Array().includes(Hapi.Types.String()),
+        email: Hapi.Types.String().email()
     },
 
-    scope: 'signup',
-    user: 'none',
+    auth: {
+
+        scope: 'signup',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -898,9 +892,11 @@ exports.put = {
 
 exports.tos = {
     
-    scope: 'tos',
+    auth: {
 
-    user: 'none',
+        scope: 'tos',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -909,7 +905,7 @@ exports.tos = {
             if (user) {
 
                 user.tos = user.tos || {};
-                user.tos[request.params.version] = Hapi.Utils.getTimestamp();
+                user.tos[request.params.version] = Date.now();
 
                 Db.update('user', user._id, { $set: { 'tos': user.tos } }, function (err) {
 
@@ -938,11 +934,14 @@ exports.link = {
     
     schema: {
 
-        id: { type: 'string', required: true }
+        id: Hapi.Types.String().required()
     },
 
-    scope: 'login',
-    user: 'none',
+    auth: {
+
+        scope: 'login',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -1019,8 +1018,11 @@ exports.link = {
 
 exports.unlink = {
     
-    scope: 'login',
-    user: 'none',
+    auth: {
+
+        scope: 'login',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -1087,8 +1089,11 @@ exports.unlink = {
 
 exports.view = {
     
-    scope: 'view',
-    user: 'none',
+    auth: {
+
+        scope: 'view',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -1121,7 +1126,10 @@ exports.view = {
 
 exports.lookup = {
     
-    authentication: 'none',
+    auth: {
+        
+        mode: 'none'
+    },
 
     handler: function (request) {
 
@@ -1141,7 +1149,7 @@ exports.lookup = {
         }
         else if (request.params.type === 'email') {
 
-            if (Hapi.Email.checkAddress(request.params.id)) {
+            if (Email.checkAddress(request.params.id)) {
 
                 Db.queryUnique('user', { 'emails.address': request.params.id }, function (item, err) {
 
@@ -1207,11 +1215,13 @@ exports.reminder = {
     
     schema: {
 
-        account: { type: 'string', required: true }
+        account: Hapi.Types.String().required()
     },
 
-    scope: 'reminder',
-    user: 'none',
+    auth: {
+        scope: 'reminder',
+        entity: 'client'
+    },
 
     handler: function (request) {
 
@@ -1219,7 +1229,7 @@ exports.reminder = {
         var account = request.payload.account.toLowerCase();
 
         if (isEmail === false ||
-            Hapi.Email.checkAddress(account)) {
+            Email.checkAddress(account)) {
 
             var criteria = {};
             criteria[isEmail ? 'emails.address' : 'username'] = account;
@@ -1265,14 +1275,17 @@ exports.reminder = {
 
 exports.del = {
     
-    scope: 'quit',
-    tos: 'none',
+    auth: {
+
+        scope: 'quit',
+        tos: 'none'
+    },
 
     handler: function (request) {
 
         // Check if user has any projects
 
-        Project.unsortedList(request.userId, function (projects, owner, notOwner, err) {
+        Project.unsortedList(request.session.user, function (projects, owner, notOwner, err) {
 
             if (err === null) {
 
@@ -1344,7 +1357,7 @@ exports.del = {
 
             // Delete account first
 
-            Db.remove('user', request.userId, function (err) {
+            Db.remove('user', request.session.user, function (err) {
 
                 if (err === null) {
 
@@ -1357,23 +1370,23 @@ exports.del = {
 
                     // Delete the projects sort list
 
-                    Sort.del('project', request.userId, ignore);
+                    Sort.del('project', request.session.user, ignore);
 
                     // Remove grants
 
-                    Session.delUser(request.userId, ignore);
+                    Session.delUser(request.session.user, ignore);
 
                     // Remove excluded suggestions
 
-                    Suggestions.delUser(request.userId, ignore);
+                    Suggestions.delUser(request.session.user, ignore);
 
                     // Remove last
 
-                    Last.delUser(request.userId, ignore);
+                    Last.delUser(request.session.user, ignore);
 
                     // Remove client storage
 
-                    Storage.delUser(request.userId, ignore);
+                    Storage.delUser(request.session.user, ignore);
 
                     // Return result
 
@@ -1596,7 +1609,7 @@ exports.find = function (ids, callback) {
 
             // Email
 
-            if (Hapi.Email.checkAddress(ids[i])) {
+            if (Email.checkAddress(ids[i])) {
 
                 emails.push(ids[i].toLowerCase());
             }

@@ -56,8 +56,7 @@ exports.normalize = function (rule) {
     }
     else {
 
-        Hapi.Log.err('Bad suggestion rule: ' + rule);
-        return '';
+        return null;
     }
 };
 
