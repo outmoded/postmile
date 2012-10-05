@@ -217,8 +217,7 @@ exports.put = {
             if (err === null) {
 
                 Stream.update({ object: 'projects', user: request.session.user }, request);
-                request.created('project/' + items[0]._id);
-                request.reply({ status: 'ok', id: items[0]._id });
+                request.reply({ status: 'ok', id: items[0]._id }, { created: 'project/' + items[0]._id });
             }
             else {
 

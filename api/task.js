@@ -216,7 +216,7 @@ exports.post = {
                 else if (request.query.position !== null &&
                          request.query.position !== undefined) {        // Must test explicitly as value can be 0
 
-                        // Set task position in list
+                    // Set task position in list
 
                     Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
 
@@ -322,7 +322,7 @@ exports.put = {
 
                     Stream.update({ object: 'tasks', project: task.project }, request);
                     var result = { status: 'ok', id: items[0]._id };
-                    request.created('task/' + items[0]._id);
+                    var options = { created: 'task/' + items[0]._id };
 
                     if (request.query.position !== null &&
                         request.query.position !== undefined) {        // Must test explicitly as value can be 0
@@ -336,12 +336,12 @@ exports.put = {
                                 result.position = request.query.position;
                             }
 
-                            request.reply(result);
+                            request.reply(result, options);
                         });
                     }
                     else {
 
-                        request.reply(result);
+                        request.reply(result, options);
                     }
                 }
                 else {
