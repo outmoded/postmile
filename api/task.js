@@ -322,7 +322,8 @@ exports.put = {
 
                     Stream.update({ object: 'tasks', project: task.project }, request);
                     var result = { status: 'ok', id: items[0]._id };
-                    var options = { created: 'task/' + items[0]._id };
+
+                    request.reply.created('task/' + items[0]._id);
 
                     if (request.query.position !== null &&
                         request.query.position !== undefined) {        // Must test explicitly as value can be 0
@@ -336,12 +337,12 @@ exports.put = {
                                 result.position = request.query.position;
                             }
 
-                            request.reply(result, options);
+                            request.reply(result);
                         });
                     }
                     else {
 
-                        request.reply(result, options);
+                        request.reply(result);
                     }
                 }
                 else {

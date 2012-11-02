@@ -6,7 +6,7 @@
 // Load modules
 
 var Http = require('http');
-var MAC = require('mac');
+var Oz = require('oz');
 var Client = require('./client');
 var Utils = require('./utils');
 var Config = require('./config');
@@ -51,13 +51,14 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
     if (session) {
 
-        authorization = MAC.getAuthorizationHeader(method, path, Config.host.api.domain, Config.host.api.port, session);
+        var request = {
+            method: method,
+            resource: path,
+            host: Config.host.api.domain,
+            port: Config.host.api.port
+        };
 
-        if (authorization === '') {
-
-            callback(null, 'Failed to create authorization header: ' + session, 0);
-            isValid = false;
-        }
+        authorization = Oz.Request.generateHeader(request, session);
     }
 
     if (isValid) {

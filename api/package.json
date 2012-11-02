@@ -9,7 +9,6 @@
     "mongodb": "0.9.x",
     "oauth": "0.9.x",
     "socket.io": "0.8.x",
-    "mac": "0.1.x",
     "opts": "1.x.x",
     "validator": "0.x.x",
     "emailjs": "0.x.x"
