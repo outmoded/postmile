@@ -13,7 +13,8 @@
     "semver": "1.x.x",
     "user-agent": "1.x.x",
     "validator": "0.x.x",
-    "opts": "1.x.x"
+    "opts": "1.x.x",
+    "request": "2.11.x"
   },
-  "engines": { "node": "0.6.x" }
+  "engines": { "node": "0.8.x" }
 }

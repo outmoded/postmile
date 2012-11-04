@@ -18,13 +18,13 @@ Db.initialize(true, function (err) {
 
             {
                 name: 'postmile.web',
-                scope: { authorized: true, login: true, reminder: true, signup: true, tos: true },
+                scope: ['authorized', 'login', 'reminder', 'signup', 'tos'],
                 secret: Hapi.Session.getRandomString(64)
             },
 
             {
                 name: 'postmile.view',
-                scope: {}
+                scope: []
             }
         ];
 

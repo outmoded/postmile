@@ -24,42 +24,31 @@ var internals = {};
 
 exports.load = function (req, res, callback) {
 
-    if (req.cookies.session) {
-
-        var session = Utils.decrypt(Vault.session.aes256Key, req.cookies.session);
-        if (session) {
-
-            // Check if expired or invalid
-
-            if (session.expiration &&
-                session.expiration > Utils.getTimestamp()) {
-
-                internals.loadProfile(res, session, callback);
-            }
-            else {
-
-                exports.refresh(req, res, session, function (session, err) {
-
-                    if (err === null) {
-
-                        internals.loadProfile(res, session, callback);
-                    }
-                    else {
-
-                        callback(null, null);
-                    }
-                });
-            }
-        }
-        else {
-
-            callback(null, null);
-        }
+    if (!req.cookies.session) {
+        return callback(null, null);
     }
-    else {
 
-        callback(null, null);
+    var session = Utils.decrypt(Vault.session.aes256Key, req.cookies.session);
+    if (!session) {
+        return callback(null, null);
     }
+
+    // Check if expired or invalid
+
+    if (session.exp &&
+        session.exp > Utils.getTimestamp()) {
+
+        return internals.loadProfile(res, session, callback);
+    }
+
+    exports.refresh(req, res, session, function (session, err) {
+
+        if (err) {
+            return callback(null, null);
+        }
+
+        return internals.loadProfile(res, session, callback);
+    });
 };
 
 
@@ -67,16 +56,12 @@ internals.loadProfile = function (res, session, callback) {
 
     Api.call('GET', '/profile', null, session, function (result, err, code) {
 
-        if (result) {
-
-            var profile = result;
-            callback(session, profile);
-        }
-        else {
-
+        if (!result) {
             exports.clear(res);
-            callback(null, null);
+            return callback(null, null);
         }
+        
+        return callback(session, result);
     });
 };
 
@@ -87,7 +72,6 @@ exports.refresh = function (req, res, session, callback) {
         session.refresh) {
 
         var tokenRequest = {
-
             grant_type: 'refresh_token',
             refresh_token: session.refresh,
             client_id: 'postmile.view',
@@ -97,15 +81,12 @@ exports.refresh = function (req, res, session, callback) {
         Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
 
             if (token) {
-
                 exports.set(res, token, function (isValid, restrictions) {
 
                     if (isValid) {
-
                         callback(null);
                     }
                     else {
-
                         callback(Err.internal('Invalid response parameters from API server'));
                     }
                 });
@@ -115,17 +96,14 @@ exports.refresh = function (req, res, session, callback) {
                      err.error === 'invalid_grant') {
 
                 exports.clear(res);
-
-                callback(Err.badRequest(errorMessage));
+                callback(Err.badRequest(err.message));
             }
             else {
-
                 callback(Err.internal('Unexpected API response', err));
             }
         });
     }
     else {
-
         callback(Err.internal('Session missing refresh data', session));
     }
 };
@@ -142,50 +120,34 @@ exports.logout = function (res, next) {
 
 exports.set = function (res, token, callback) {
 
-    if (token.access_token &&
-        token.mac_key &&
-        token.mac_algorithm &&
-        token.refresh_token &&
-        token.expires_in) {
-
-        var nextYear = new Date();
-        nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-        var session = {
-
-            id: token.access_token,
-            key: token.mac_key,
-            algorithm: token.mac_algorithm,
-            expiration: Utils.getTimestamp() + (token.expires_in * 1000),
-            refresh: token.refresh_token,
-            tos: token.x_tos,
-            restriction: token.x_tos < Tos.minimumTOS ? 'tos' : null
-        };
-
-        res.api.cookie = {
-
-            values: ['session=' + Utils.encrypt(Vault.session.aes256Key, session)],
-            attributes: ['Expires=' + nextYear.toUTCString(), 'Path=/']
-        };
-
-        if (Config.host.web.scheme === 'https') {
-
-            res.api.cookie.attributes.push('Secure');
-        }
-
-        callback(true, session.restriction);
+    if (!token) {
+        return callback(false, null);
     }
-    else {
 
-        callback(false, null);
+    var session = token;
+    session.tos = session.x_tos;
+    delete session.x_tos;
+    session.restriction = (token.x_tos < Tos.minimumTOS ? 'tos' : null);
+
+    var nextYear = new Date();
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+    res.api.cookie = {
+        values: ['session=' + Utils.encrypt(Vault.session.aes256Key, session)],
+        attributes: ['Expires=' + nextYear.toUTCString(), 'Path=/']
+    };
+
+    if (Config.host.web.scheme === 'https') {
+        res.api.cookie.attributes.push('Secure');
     }
+
+    return callback(true, session.restriction);
 };
 
 
 exports.clear = function (res) {
 
     res.api.cookie = {
-
         values: ['session='],
         attributes: ['Expires=Thu, 01 Jan 1970 00:00:00 GMT', 'Path=/']
     };
@@ -374,9 +336,7 @@ exports.oauth = function (req, res, next) {
 exports.issue = function (req, res, next) {
 
     if (req.api.session) {
-
         var tokenRequest = {
-
             grant_type: 'refresh_token',
             refresh_token: req.api.session.refresh,
             client_id: 'postmile.view',
@@ -386,28 +346,18 @@ exports.issue = function (req, res, next) {
         Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
 
             if (token) {
-
                 if (token.x_tos >= Tos.minimumTOS) {
-
-                    res.api.result = {
-
-                        id: token.access_token,
-                        key: token.mac_key,
-                        algorithm: token.mac_algorithm
-                    };
-
+                    res.api.result = token;
                     res.api.isAPI = true;
                     next();
                 }
                 else {
-
                     res.api.error = Err.badRequest('Restricted session');
                     res.api.isAPI = true;
                     next();
                 }
             }
             else {
-
                 res.api.error = Err.internal('Failed refresh', err);
                 res.api.isAPI = true;
                 next();
@@ -415,7 +365,6 @@ exports.issue = function (req, res, next) {
         });
     }
     else {
-
         res.api.error = Err.badRequest();
         res.api.isAPI = true;
         next();

@@ -5,7 +5,7 @@
 
 // Load modules
 
-var Http = require('http');
+var Request = require('request');
 var Oz = require('oz');
 var Client = require('./client');
 var Utils = require('./utils');
@@ -21,7 +21,6 @@ exports.clientCall = function (method, path, body, callback) {
         exports.call(method, path, body, clientToken, function (data, err, code) {
 
             if (code !== 401) {
-
                 callback(data, err, code);
             }
             else {
@@ -46,11 +45,9 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
     var session = (arg2 ? arg1 : null);
     body = (body !== null ? JSON.stringify(body) : null);
 
-    var authorization = null;
-    var isValid = true;
+    var headers = {};
 
     if (session) {
-
         var request = {
             method: method,
             resource: path,
@@ -58,75 +55,29 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
             port: Config.host.api.port
         };
 
-        authorization = Oz.Request.generateHeader(request, session);
+        headers['Authorization'] = Oz.Request.generateHeader(request, session);
     }
 
-    if (isValid) {
+    Request({ uri: 'http://' + Config.host.api.domain + ':' +  Config.host.api.port + path, method: method, headers: headers, body: body }, function (err, response, body) {
 
-        var hreq = Http.request({ host: Config.host.api.domain, port: Config.host.api.port, path: path, method: method }, function (hres) {
-
-            if (hres) {
-
-                var response = '';
-
-                hres.setEncoding('utf8');
-                hres.on('data', function (chunk) {
-
-                    response += chunk;
-                });
-
-                hres.on('end', function () {
-
-                    var data = null;
-                    var error = null;
-
-                    try {
-
-                        data = JSON.parse(response);
-                    }
-                    catch (err) {
-
-                        error = 'Invalid response body from API server: ' + response + '(' + err + ')';
-                    }
-
-                    if (error) {
-
-                        callback(null, error, 0);
-                    }
-                    else if (hres.statusCode === 200) {
-
-                        callback(data, null, 200);
-                    }
-                    else {
-
-                        callback(null, data, hres.statusCode);
-                    }
-                });
-            }
-            else {
-
-                callback(null, 'Failed sending API server request', 0);
-            }
-        });
-
-        hreq.on('error', function (err) {
-
-            callback(null, 'HTTP socket error: ' + JSON.stringify(err), 0);
-        });
-
-        if (authorization) {
-
-            hreq.setHeader('Authorization', authorization);
+        if (err) {
+            return callback(null, 'Failed sending API server request: ' + err, 0);
         }
 
-        if (body !== null) {
-
-            hreq.setHeader('Content-Type', 'application/json');
-            hreq.write(body);
+        var data = null;
+        try {
+            data = JSON.parse(body);
+        }
+        catch (e) {
+            return callback(null, 'Invalid response body from API server: ' + response + '(' + e + ')', 0);
         }
 
-        hreq.end();
-    }
+        if (response.statusCode !== 200) {
+            return callback(null, data, response.statusCode);
+        }
+        
+        return callback(data, null, 200);
+    });
 };
 
 

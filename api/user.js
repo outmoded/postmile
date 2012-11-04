@@ -547,7 +547,7 @@ exports.put = {
     auth: {
 
         scope: 'signup',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -895,7 +895,7 @@ exports.tos = {
     auth: {
 
         scope: 'tos',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -940,7 +940,7 @@ exports.link = {
     auth: {
 
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -1021,7 +1021,7 @@ exports.unlink = {
     auth: {
 
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -1092,7 +1092,7 @@ exports.view = {
     auth: {
 
         scope: 'view',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -1220,7 +1220,7 @@ exports.reminder = {
 
     auth: {
         scope: 'reminder',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {

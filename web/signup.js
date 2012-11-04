@@ -16,9 +16,7 @@ var Session = require('./session');
 exports.register = function (req, res, next) {
 
     if (req.method === 'GET') {
-
         if (req.api.jar.signup) {
-
             res.api.jar.signup = req.api.jar.signup;
 
             // Check if invitation required
@@ -26,21 +24,16 @@ exports.register = function (req, res, next) {
             Api.call('GET', '/invite/public', '', function (data, err, code) {
 
                 if (code === 200) {
-
                     res.api.jar.signup.invite = 'public';
                 }
                 else {
-
                     res.api.jar.signup.invite = (res.api.jar.signup.invite == 'public' ? '' : res.api.jar.signup.invite);
                 }
 
                 var locals = {
-
                     logo: false,
                     network: req.api.jar.signup.network,
-
                     env: {
-
                         invite: (res.api.jar.signup.invite || ''),
                         name: (res.api.jar.signup.name || ''),
                         email: (res.api.jar.signup.email || ''),
@@ -54,7 +47,6 @@ exports.register = function (req, res, next) {
             });
         }
         else {
-
             res.api.redirect = '/';
             next();
         }
@@ -71,17 +63,14 @@ exports.register = function (req, res, next) {
             var registration = { network: [signup.network, signup.id] };
 
             if (req.body.username) {
-
                 registration.username = req.body.username;
             }
 
             if (req.body.email) {
-
                 registration.email = req.body.email;
             }
 
             if (req.body.name) {
-
                 registration.name = req.body.name;
             }
 

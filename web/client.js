@@ -13,7 +13,6 @@ var Vault = require('./vault');
 // Declare internals
 
 var internals = {
-
     clientToken: null
 };
 
@@ -23,34 +22,20 @@ var internals = {
 exports.getToken = function (callback) {
 
     if (internals.clientToken) {
-
-        callback(internals.clientToken);
+        return callback(internals.clientToken);
     }
-    else {
 
-        var tokenRequest = {
-            grant_type: 'client_credentials',
-            client_id: Vault.postmileAPI.clientId,
-            client_secret: Vault.postmileAPI.clientSecret
-        };
+    var tokenRequest = {
+        grant_type: 'client_credentials',
+        client_id: Vault.postmileAPI.clientId,
+        client_secret: Vault.postmileAPI.clientSecret
+    };
 
-        Api.call('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+    Api.call('POST', '/oauth/token', tokenRequest, function (token, err, code) {
 
-            if (token) {
-
-                // { access_token: '', token_type: '', mac_key: '', mac_algorithm: '' }
-
-                if (token.access_token &&
-                    token.mac_key &&
-                    token.mac_algorithm) {
-
-                    internals.clientToken = { id: token.access_token, key: token.mac_key, algorithm: token.mac_algorithm };
-                }
-            }
-
-            callback(internals.clientToken);
-        });
-    }
+        internals.clientToken = token;
+        return callback(internals.clientToken);
+    });
 };
 
 

@@ -21,33 +21,24 @@ var internals = {};
 // Get client information endpoint
 
 exports.client = {
-    
     auth: {
-
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
-    
     handler: function (request) {
 
         exports.loadClient(request.params.id, function (err, client) {
 
-            if (err === null) {
-
-                if (client) {
-
-                    Hapi.Utils.removeKeys(client, ['secret', 'scope']);
-                    request.reply(client);
-                }
-                else {
-
-                    request.reply(Hapi.Error.notFound());
-                }
+            if (err) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
+            if (!client) {
+                return request.reply(Hapi.Error.notFound());
             }
+
+            Hapi.Utils.removeKeys(client, ['secret', 'scope']);
+            return request.reply(client);
         });
     }
 };
@@ -59,21 +50,17 @@ exports.loadClient = function (id, callback) {
 
     Db.queryUnique('client', { name: id }, function (client, err) {
 
-        if (client) {
-
-            callback(null, client);
+        if (err || !client) {
+            return callback(err);
         }
-        else {
 
-            if (err === null) {
+        var result = {
+            id: client.name,
+            secret: client.secret,
+            scope: client.scope
+        };
 
-                callback(null, null);
-            }
-            else {
-
-                callback(err, null);
-            }
-        }
+        return callback(null, result);
     });
 };
 
@@ -84,14 +71,16 @@ exports.loadUser = function (id, callback) {
 
     User.load(id, function (user, err) {
 
-        if (user) {
-
-            callback(null, user);
+        if (err || !user) {
+            return callback(err);
         }
-        else {
 
-            callback(err);
-        }
+        var result = {
+            id: user._id,
+            tos: user.tos
+        };
+
+        return callback(null, user);
     });
 };
 
@@ -102,65 +91,51 @@ exports.checkAuthorization = function (userId, clientId, callback) {
 
     Db.query('grant', { user: userId, client: clientId }, function (items, err) {
 
-        if (err === null) {
+        if (err) {
+            return callback(Hapi.Session.error('server_error', 'Failed retrieving authorization'));
+        }
 
-            if (items &&
-                items.length > 0) {
+        if (!items ||
+            items.length <= 0) {
 
-                items.sort(function (a, b) {
+            return callback(Hapi.Session.error('invalid_grant', 'Client is not authorized'));
+        }
 
-                    if (a.expiration < b.expiration) {
+        items.sort(function (a, b) {
 
-                        return -1;
-                    }
+            if (a.expiration < b.expiration) {
+                return -1;
+            }
 
-                    if (a.expiration > b.expiration) {
+            if (a.expiration > b.expiration) {
+                return 1;
+            }
 
-                        return 1;
-                    }
+            return 0;
+        });
 
-                    return 0;
-                });
+        var isAuthorized = false;
+        var now = Date.now();
 
-                var isAuthorized = false;
-                var now = Date.now();
-
-                var expired = [];
-                for (var i = 0, il = items.length; i < il; ++i) {
-
-                    if ((items[i].expiration || 0) <= now) {
-
-                        expired.push(items[i]._id);
-                    }
-                    else {
-
-                        isAuthorized = true;
-                    }
-                }
-
-                if (expired.length > 0) {
-
-                    Db.removeMany('grant', expired, function (err) {});         // Ignore callback
-                }
-
-                if (isAuthorized) {
-
-                    callback(null);
-                }
-                else {
-
-                    callback(Hapi.Error._oauth('invalid_grant', 'Client authorization expired'));
-                }
+        var expired = [];
+        for (var i = 0, il = items.length; i < il; ++i) {
+            if ((items[i].expiration || 0) <= now) {
+                expired.push(items[i]._id);
             }
             else {
-
-                callback(Hapi.Error._oauth('invalid_grant', 'Client is not authorized'));
+                isAuthorized = true;
             }
         }
-        else {
 
-            callback(Hapi.Error._oauth('server_error', 'Failed retrieving authorization'));
+        if (expired.length > 0) {
+            Db.removeMany('grant', expired, function (err) { });         // Ignore callback
         }
+
+        if (!isAuthorized) {
+            return callback(Hapi.Session.error('invalid_grant', 'Client authorization expired'));
+        }
+
+        return callback(null);
     });
 };
 
@@ -172,85 +147,69 @@ exports.extensionGrant = function (request, client, callback) {
     // Verify grant type prefix
 
     if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
-
         // Unsupported grant type namespace
-        callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
+        return callback(Hapi.Session.error('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
+    }
+
+    // Check if client has 'login' scope
+
+    if ((!client.scope || client.scope.indexOf('login' === -1)) &&
+        (!request.session || !request.session.scope || request.session.scope.indexOf('login') === -1)) {
+
+        // No client scope for local account access
+        return callback(Hapi.Session.error('unauthorized_client', 'Client missing \'login\' scope'));
+    }
+
+    // Switch on grant type
+
+    var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
+    if (grantType === 'id') {
+
+        // Get user
+
+        User.load(request.payload.x_user_id, function (user, err) {
+
+            if (!user) {
+                // Unknown local account
+                return callback(Hapi.Session.error('invalid_grant', 'Unknown local account'));
+            }
+
+            return callback(null, user);
+        });
+    }
+    else if (grantType === 'twitter' ||
+             grantType === 'facebook' ||
+             grantType === 'yahoo') {
+
+        // Check network identifier
+
+        User.validate(request.payload.x_user_id, grantType, function (user, err) {
+
+            if (!user) {
+                // Unregistered network account
+                return callback(Hapi.Session.error('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
+            }
+
+            return callback(null, user);
+        });
+    }
+    else if (grantType === 'email') {
+
+        // Check email identifier
+
+        Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
+
+            if (!ticket) {
+                // Invalid email token
+                return callback(Hapi.Session.error('invalid_grant', err.message));
+            }
+
+            return callback(null, user, { 'x_action': ticket.action });
+        });
     }
     else {
-
-        var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
-
-        // Check if client has 'login' scope
-
-        if ((client.scope && client.scope.login === true) ||
-            (request.session && request.session.scope && request.session.scope.login === true)) {
-
-            // Switch on grant type
-
-            if (grantType === 'id') {
-
-                // Get user
-
-                User.load(request.payload.x_user_id, function (user, err) {
-
-                    if (user) {
-
-                        callback(null, user);
-                    }
-                    else {
-
-                        // Unknown local account
-                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown local account'));
-                    }
-                });
-            }
-            else if (grantType === 'twitter' ||
-                     grantType === 'facebook' ||
-                     grantType === 'yahoo') {
-
-                    // Check network identifier
-
-                User.validate(request.payload.x_user_id, grantType, function (user, err) {
-
-                    if (user) {
-
-                        callback(null, user);
-                    }
-                    else {
-
-                        // Unregistered network account
-                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
-                    }
-                });
-            }
-            else if (grantType === 'email') {
-
-                    // Check email identifier
-
-                Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
-
-                    if (ticket) {
-
-                        callback(null, user, { 'x_action': ticket.action });
-                    }
-                    else {
-
-                        // Invalid email token
-                        callback(Hapi.Error._oauth('invalid_grant', err.message));
-                    }
-                });
-            }
-            else {
-
-                // Unsupported grant type
-                callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
-            }
-        }
-        else {
-
-            // No client scope for local account access
-            callback(Hapi.Error._oauth('unauthorized_client', 'Client missing \'login\' scope'));
-        }
+        // Unsupported grant type
+        return callback(Hapi.Session.error('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
     }
 };
 
@@ -270,7 +229,6 @@ exports.validate = function (message, token, mac, callback) {
 
             var hashMethod = null;
             switch (session.algorithm) {
-
                 case 'hmac-sha-1': hashMethod = 'sha1'; break;
                 case 'hmac-sha-256': hashMethod = 'sha256'; break;
             }
@@ -283,23 +241,19 @@ exports.validate = function (message, token, mac, callback) {
                 var digest = hmac.digest('base64');
 
                 if (digest === mac) {
-
                     callback(session.user, null);
                 }
                 else {
-
                     // Invalid signature
                     callback(null, Hapi.Error.unauthorized('Invalid mac'));
                 }
             }
             else {
-
                 // Invalid algorithm
                 callback(null, Hapi.Error.internal('Unknown algorithm'));
             }
         }
         else {
-
             // Invalid token
             callback(null, Hapi.Error.notFound('Invalid token'));
         }
