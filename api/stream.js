@@ -249,19 +249,15 @@ internals.messageHandler = function (socket) {
 
     return function (message) {
 
-        if (internals.socketsById[socket.id]) {
-
+        var connection = internals.socketsById[socket.id];
+        if (connection) {
             if (message) {
-
                 switch (message.type) {
-
                     case 'initialize':
-
                         Session.validate(socket.id, message.id, message.mac, function (userId, err) {
 
                             if (userId) {
-
-                                internals.socketsById[socket.id].userId = userId;
+                                connection.userId = userId;
 
                                 internals.idsByUserId[userId] = internals.idsByUserId[userId] || {};
                                 internals.idsByUserId[userId][socket.id] = true;
@@ -272,11 +268,9 @@ internals.messageHandler = function (socket) {
                                 socket.json.send({ type: 'initialize', status: 'error', error: err });
                             }
                         });
-
                         break;
 
                     default:
-
                         socket.json.send({ type: 'error', error: 'Unknown message type: ' + message.type });
                         break;
                 }

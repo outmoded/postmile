@@ -28,10 +28,12 @@ $ node install
 
 110827/005720.948, info, Database initialized
 110827/005720.952, info, Initial dataset created successfully
-110827/005720.952, info, >>>>> postmile.web client secret: __some__secret__
+110827/005720.952, info, >>>>> WEB client id: <id>
+110827/005720.952, info, >>>>> WEB client secret: <secret>
+110827/005720.952, info, >>>>> VIEW client id: <id>
 ```
 
-Copy the postmile.web client secret and save it for later.
+Copy the WEB client id and secret, and VIEW client id, and save them for later.
 
 ```bash
 $ cd ../web
@@ -41,7 +43,8 @@ $ cp vault.js.example vault.js
 
 Edit postmile/web/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
 
-Set the value of the postmileAPI 'clientSecret' variable to the client secret saved earlier.
+Set the values of the postmileAPI 'clientId' and 'clientSecret' variables to the WEB client id and secret saved earlier.
+Set the value of the 'viewClientId' variable to the VIEW client id saved earlier.
 
 Enter at least one third-party API credentials (Twitter, Facebook, or Yahoo!) as received from each provider when you registered the application.
 If asked, the callback URI is your web server configuration entered above with the path '/auth/twitter', '/auth/facebook', or '/auth/yahoo'.

@@ -27,7 +27,7 @@ exports.client = {
     },
     handler: function (request) {
 
-        exports.loadClient(request.params.id, function (err, client) {
+        Db.queryUnique('client', { name: request.params.id }, function (client, err) {
 
             if (err) {
                 return request.reply(err);
@@ -46,16 +46,16 @@ exports.client = {
 
 // Get client
 
-exports.loadClient = function (id, callback) {
+exports.getOzClient = function (id, callback) {
 
-    Db.queryUnique('client', { name: id }, function (client, err) {
+    Db.get('client', id, function (client, err) {
 
         if (err || !client) {
             return callback(err);
         }
 
         var result = {
-            id: client.name,
+            id: client._id,
             secret: client.secret,
             scope: client.scope
         };
@@ -75,12 +75,7 @@ exports.loadUser = function (id, callback) {
             return callback(err);
         }
 
-        var result = {
-            id: user._id,
-            tos: user.tos
-        };
-
-        return callback(null, user);
+        return callback(null, internals.ozify(user));
     });
 };
 
@@ -174,7 +169,7 @@ exports.extensionGrant = function (request, client, callback) {
                 return callback(Hapi.Session.error('invalid_grant', 'Unknown local account'));
             }
 
-            return callback(null, user);
+            return callback(null, internals.ozify(user));
         });
     }
     else if (grantType === 'twitter' ||
@@ -190,7 +185,7 @@ exports.extensionGrant = function (request, client, callback) {
                 return callback(Hapi.Session.error('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
             }
 
-            return callback(null, user);
+            return callback(null, internals.ozify(user));
         });
     }
     else if (grantType === 'email') {
@@ -204,7 +199,7 @@ exports.extensionGrant = function (request, client, callback) {
                 return callback(Hapi.Session.error('invalid_grant', err.message));
             }
 
-            return callback(null, user, { 'x_action': ticket.action });
+            return callback(null, internals.ozify(user), { 'x_action': ticket.action });
         });
     }
     else {
@@ -218,45 +213,21 @@ exports.extensionGrant = function (request, client, callback) {
 
 exports.validate = function (message, token, mac, callback) {
 
-    Hapi.Session.loadToken(Vault.oauthToken.aes256Key, token, function (session) {
+    Hapi.Session.parseTicket(token, function (err, session) {
 
-        if (session &&
-            session.algorithm &&
-            session.key &&
-            session.user) {
-
-            // Lookup hash function
-
-            var hashMethod = null;
-            switch (session.algorithm) {
-                case 'hmac-sha-1': hashMethod = 'sha1'; break;
-                case 'hmac-sha-256': hashMethod = 'sha256'; break;
-            }
-
-            if (hashMethod) {
-
-                // Sign message
-
-                var hmac = Crypto.createHmac(hashMethod, session.key).update(message);
-                var digest = hmac.digest('base64');
-
-                if (digest === mac) {
-                    callback(session.user, null);
-                }
-                else {
-                    // Invalid signature
-                    callback(null, Hapi.Error.unauthorized('Invalid mac'));
-                }
-            }
-            else {
-                // Invalid algorithm
-                callback(null, Hapi.Error.internal('Unknown algorithm'));
-            }
+        if (err || !session) {
+            return callback(null, Hapi.Error.notFound('Invalid token'));
         }
-        else {
-            // Invalid token
-            callback(null, Hapi.Error.notFound('Invalid token'));
+
+        // Mac message
+
+        var hmac = Crypto.createHmac(session.algorithm, session.key).update(message);
+        var digest = hmac.digest('base64');
+        if (digest !== mac) {
+            return callback(null, Hapi.Error.unauthorized('Invalid mac'));
         }
+        
+        return callback(session.user, null);
     });
 };
 
@@ -268,5 +239,17 @@ exports.delUser = function (userId, callback) {
     callback(null);
 };
 
+
+// Convert user object to Oz structure
+
+internals.ozify = function (user) {
+
+    var ozUser = {
+        id: user._id,
+        tos: user.tos
+    };
+
+    return ozUser;
+};
 
 

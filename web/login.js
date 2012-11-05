@@ -564,7 +564,7 @@ exports.emailToken = function (req, res, next) {
 
 exports.loginCall = function (tokenRequest, res, next, destination, account) {
 
-    tokenRequest.client_id = 'postmile.view';
+    tokenRequest.client_id = Vault.postmileAPI.viewClientId;
     tokenRequest.client_secret = '';
 
     Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {

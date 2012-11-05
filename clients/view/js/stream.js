@@ -78,7 +78,7 @@ YUI.add('postmile-stream', function (Y) {
 
         if (message.type === 'connect') {
 
-            socket.json.send({ type: 'initialize', id: session.id, mac: MAC.macMessage(message.session, session) });
+            socket.json.send({ type: 'initialize', id: session.id, mac: Oz.macMessage(message.session, session) });
             socketMessage.session = message.session;
 
         }

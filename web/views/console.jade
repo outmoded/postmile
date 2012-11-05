@@ -40,7 +40,7 @@ script
                         if (message.type == 'connect') {
 
                             document.getElementById('session').innerHTML = htmlEscape(message.session);
-                            socket.json.send({ type: 'initialize', id: credentials.id, mac: MAC.macMessage(message.session, credentials) });
+                            socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
                         }
                         else if (message.type == 'initialize') {
 
@@ -94,7 +94,7 @@ script
 
         // Calculate Signature
 
-        var authorization = MAC.getAuthorizationHeader(method, uri, credentials, (content || method == 'POST' || method == 'PUT' ? content : null), null);
+        var authorization = Oz.getAuthorizationHeader(method, uri, credentials, (content || method == 'POST' || method == 'PUT' ? content : null), null);
 
         // Send request
 

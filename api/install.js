@@ -39,7 +39,9 @@ Db.initialize(true, function (err) {
                     if (err === null) {
 
                         Hapi.Log.event('info', 'Initial dataset created successfully');
-                        Hapi.Log.event('info', '>>>>> postmile.web client secret: ' + clients[0].secret);
+                        Hapi.Log.event('info', '>>>>> WEB client id: ' + clients[0]._id);
+                        Hapi.Log.event('info', '>>>>> WEB client secret: ' + clients[0].secret);
+                        Hapi.Log.event('info', '>>>>> VIEW client id: ' + clients[1]._id);
                         process.exit(0);
                     }
                     else {

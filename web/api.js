@@ -57,8 +57,15 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
 
         headers['Authorization'] = Oz.Request.generateHeader(request, session);
     }
+    
+    var options = {
+        uri: 'http://' + Config.host.api.domain + ':' +  Config.host.api.port + path,
+        method: method,
+        headers: headers,
+        body: body
+    };
 
-    Request({ uri: 'http://' + Config.host.api.domain + ':' +  Config.host.api.port + path, method: method, headers: headers, body: body }, function (err, response, body) {
+    Request(options, function (err, response, body) {
 
         if (err) {
             return callback(null, 'Failed sending API server request: ' + err, 0);

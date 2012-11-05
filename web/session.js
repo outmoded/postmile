@@ -74,7 +74,7 @@ exports.refresh = function (req, res, session, callback) {
         var tokenRequest = {
             grant_type: 'refresh_token',
             refresh_token: session.refresh,
-            client_id: 'postmile.view',
+            client_id: Vault.postmileAPI.viewClientId,
             client_secret: ''
         };
 
@@ -293,7 +293,6 @@ exports.oauth = function (req, res, next) {
             req.api.jar.oauth.client) {
 
             var tokenRequest = {
-
                 client_id: req.api.jar.oauth.client.name,
                 client_secret: '',
                 grant_type: 'http://ns.postmile.net/id',
@@ -303,20 +302,17 @@ exports.oauth = function (req, res, next) {
             Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
 
                 if (token) {
-
                     if (req.api.jar.oauth.state) {
-
                         token.state = req.api.jar.oauth.state;
                     }
 
-                    delete token.refresh_token;
+                    delete token.refresh;
                     delete token.x_tos;
 
                     res.api.redirect = req.api.jar.oauth.redirection + '#' + QueryString.stringify(token);
                     next();
                 }
                 else {
-
                     res.api.error = Err.internal('Unexpected API response', err);
                     next();
                 }
@@ -339,7 +335,7 @@ exports.issue = function (req, res, next) {
         var tokenRequest = {
             grant_type: 'refresh_token',
             refresh_token: req.api.session.refresh,
-            client_id: 'postmile.view',
+            client_id: Vault.postmileAPI.viewClientId,
             client_secret: ''
         };
 

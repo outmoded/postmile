@@ -66,7 +66,7 @@ function doJsonReq(method, uri, content, responseFunc, myarg) {
     }
 
     // Calculate Signature
-    var authHeader = MAC.getAuthorizationHeader(method, uri, /**/session, (content !== '' || method === 'POST' || method === 'PUT' ? content : null), null); // DELETE?
+    var authHeader = Oz.getAuthorizationHeader(method, uri, /**/session, (content !== '' || method === 'POST' || method === 'PUT' ? content : null), null); // DELETE?
 
     // Create the io callback/configuration
     var configuration = {

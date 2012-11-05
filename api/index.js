@@ -26,7 +26,8 @@ var internals = {};
 internals.onPostHandler = function (request, next) {
 
     if (request.response &&
-        request.response.result) {
+        request.response.result &&
+        !(request.response.result instanceof Error)) {
 
         var result = request.response.result;
 
@@ -78,7 +79,7 @@ var configuration = {
 
     authentication: {
 
-        loadClientFunc: Session.loadClient,
+        loadClientFunc: Session.getOzClient,
         loadUserFunc: Session.loadUser,
         extensionFunc: Session.extensionGrant,
         checkAuthorizationFunc: Session.checkAuthorization,
