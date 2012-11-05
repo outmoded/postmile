@@ -332,10 +332,28 @@ internals.ozify = function (user) {
 
     var ozUser = {
         id: user._id,
-        tos: user.tos
+        tos: internals.getLatestTOS(user)
     };
 
     return ozUser;
 };
 
+
+// Find latest accepted TOS
+
+internals.getLatestTOS = function (user) {
+
+    if (user &&
+        user.tos &&
+        typeof user.tos === 'object') {
+
+        var versions = Object.keys(user.tos);
+        if (versions.length > 0) {
+            versions.sort();
+            return versions[versions.length - 1];
+        }
+    }
+
+    return 0;
+};
 
