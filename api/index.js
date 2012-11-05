@@ -80,9 +80,9 @@ var configuration = {
     authentication: {
 
         loadClientFunc: Session.getOzClient,
-        loadUserFunc: Session.loadUser,
         extensionFunc: Session.extensionGrant,
         checkAuthorizationFunc: Session.checkAuthorization,
+        checkRsvpFunc: Session.checkRsvp,
         aes256Keys: {
 
             oauthRefresh: Vault.oauthRefresh.aes256Key,

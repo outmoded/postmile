@@ -69,11 +69,11 @@ internals.loadProfile = function (res, session, callback) {
 exports.refresh = function (req, res, session, callback) {
 
     if (session &&
-        session.refresh) {
+        session.rsvp) {
 
         var tokenRequest = {
-            grant_type: 'refresh_token',
-            refresh_token: session.refresh,
+            grant_type: 'rsvp',
+            rsvp: session.rsvp,
             client_id: Vault.postmileAPI.viewClientId,
             client_secret: ''
         };
@@ -104,7 +104,7 @@ exports.refresh = function (req, res, session, callback) {
         });
     }
     else {
-        callback(Err.internal('Session missing refresh data', session));
+        callback(Err.internal('Session missing rsvp data', session));
     }
 };
 
@@ -306,7 +306,7 @@ exports.oauth = function (req, res, next) {
                         token.state = req.api.jar.oauth.state;
                     }
 
-                    delete token.refresh;
+                    delete token.rsvp;
                     delete token.x_tos;
 
                     res.api.redirect = req.api.jar.oauth.redirection + '#' + QueryString.stringify(token);
@@ -333,8 +333,8 @@ exports.issue = function (req, res, next) {
 
     if (req.api.session) {
         var tokenRequest = {
-            grant_type: 'refresh_token',
-            refresh_token: req.api.session.refresh,
+            grant_type: 'rsvp',
+            rsvp: req.api.session.rsvp,
             client_id: Vault.postmileAPI.viewClientId,
             client_secret: ''
         };

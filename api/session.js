@@ -65,26 +65,22 @@ exports.getOzClient = function (id, callback) {
 };
 
 
-// Get user authentication information
-
-exports.loadUser = function (id, callback) {
-
-    User.load(id, function (user, err) {
-
-        if (err || !user) {
-            return callback(err);
-        }
-
-        return callback(null, internals.ozify(user));
-    });
-};
-
-
 // Check client authorization grant
 
-exports.checkAuthorization = function (userId, clientId, callback) {
+exports.checkAuthorization = function (session, client, user, callback) {
 
-    Db.query('grant', { user: userId, client: clientId }, function (items, err) {
+    // Pre-authorized client
+
+    if (client.scope && client.scope.indexOf('authorized') !== -1 ||
+        session.scope && session.scope.indexOf('authorized') !== -1) {
+
+        var rsvp = exports.encrypt(Vault.oauthRefresh.aes256Key, { user: user.id, app: client.id })
+        return callback(null, rsvp);
+    }
+
+    // User authorization
+
+    Db.query('grant', { user: user.id, client: client.id }, function (items, err) {
 
         if (err) {
             return callback(Hapi.Session.error('server_error', 'Failed retrieving authorization'));
@@ -109,7 +105,7 @@ exports.checkAuthorization = function (userId, clientId, callback) {
             return 0;
         });
 
-        var isAuthorized = false;
+        var authorization = null;
         var now = Date.now();
 
         var expired = [];
@@ -118,7 +114,7 @@ exports.checkAuthorization = function (userId, clientId, callback) {
                 expired.push(items[i]._id);
             }
             else {
-                isAuthorized = true;
+                authorization = items[i]._id;
             }
         }
 
@@ -126,11 +122,39 @@ exports.checkAuthorization = function (userId, clientId, callback) {
             Db.removeMany('grant', expired, function (err) { });         // Ignore callback
         }
 
-        if (!isAuthorized) {
+        if (!authorization) {
             return callback(Hapi.Session.error('invalid_grant', 'Client authorization expired'));
         }
 
-        return callback(null);
+        var rsvp = exports.encrypt(Vault.oauthRefresh.aes256Key, { user: user.id, app: client.id })
+        return callback(null, rsvp);
+    });
+};
+
+
+// Validate RSVP
+
+exports.checkRsvp = function (app, rsvp, callback) {
+
+    var auth = exports.decrypt(Vault.oauthRefresh.aes256Key, rsvp);
+    if (!auth ||
+        !auth.user ||
+        !auth.app) {
+
+        return callback(Hapi.Session.error('invalid_grant', 'Invalid rsvp token'));
+    }
+
+    if (auth.app !== app.id) {
+        return callback(Hapi.Session.error('invalid_grant', 'Mismatching rsvp token application id'));
+    }
+
+    User.load(auth.user, function (user, err) {
+
+        if (err || !user) {
+            return callback(Hapi.Session.error('invalid_grant', 'Cannot find user'));
+        }
+
+        return callback(null, internals.ozify(user));
     });
 };
 
@@ -237,6 +261,68 @@ exports.validate = function (message, token, mac, callback) {
 exports.delUser = function (userId, callback) {
 
     callback(null);
+};
+
+
+// AES256 Symmetric encryption
+
+exports.encrypt = function (key, value) {
+
+    var envelope = JSON.stringify({ v: value, a: exports.getRandomString(2) });
+
+    var cipher = Crypto.createCipher('aes256', key);
+    var enc = cipher.update(envelope, 'utf8', 'binary');
+    enc += cipher.final('binary');
+
+    var result = (new Buffer(enc, 'binary')).toString('base64').replace(/\+/g, '-').replace(/\//g, ':').replace(/\=/g, '');
+    return result;
+};
+
+
+exports.decrypt = function (key, value) {
+
+    var input = (new Buffer(value.replace(/-/g, '+').replace(/:/g, '/'), 'base64')).toString('binary');
+
+    var decipher = Crypto.createDecipher('aes256', key);
+    var dec = decipher.update(input, 'binary', 'utf8');
+    dec += decipher.final('utf8');
+
+    var envelope = null;
+
+    try {
+        envelope = JSON.parse(dec);
+    }
+    catch (e) {
+        Log.event('err', 'Invalid encrypted envelope: ' + dec + ' / Exception: ' + JSON.stringify(e));
+    }
+
+    return envelope ? envelope.v : null;
+};
+
+
+// Random string
+
+exports.getRandomString = function (size) {
+
+    var randomSource = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var len = randomSource.length;
+    size = size || 10;
+
+    if (typeof size === 'number' &&
+        !isNaN(size) && size >= 0 &&
+        (parseFloat(size) === parseInt(size))) {
+
+        var result = [];
+
+        for (var i = 0; i < size; ++i) {
+            result[i] = randomSource[Math.floor(Math.random() * len)];
+        }
+
+        return result.join('');
+    }
+    else {
+        return null;
+    }
 };
 
 
