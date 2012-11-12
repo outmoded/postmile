@@ -12,7 +12,7 @@ var Db = require('./db');
 var Vault = require('./vault');
 var User = require('./user');
 var Config = require('./config');
-var Session = require('./session');
+var Utils = require('./utils');
 
 
 // Declare internals
@@ -31,7 +31,7 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     var now = Date.now();
     var ticketId = now.toString(36);                                                // assuming users cannot generate more than one ticket per msec
-    var token = Session.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
+    var token = Utils.encrypt(Vault.emailToken.aes256Key, [user._id, ticketId]);
 
     var ticket = { timestamp: now, email: email };
 
@@ -104,7 +104,7 @@ exports.loadTicket = function (token, callback) {
 
     // Decode ticket
 
-    var record = Session.decrypt(Vault.emailToken.aes256Key, token);
+    var record = Utils.decrypt(Vault.emailToken.aes256Key, token);
 
     if (record &&
         record instanceof Array &&

@@ -36,12 +36,12 @@ exports.load = function (req, res, callback) {
     // Check if expired or invalid
 
     if (session.exp &&
-        session.exp > Utils.getTimestamp()) {
+        session.exp > Date.now()) {
 
         return internals.loadProfile(res, session, callback);
     }
 
-    exports.refresh(req, res, session, function (session, err) {
+    exports.refresh(req, res, session, function (err, session) {
 
         if (err) {
             return callback(null, null);
@@ -54,14 +54,14 @@ exports.load = function (req, res, callback) {
 
 internals.loadProfile = function (res, session, callback) {
 
-    Api.call('GET', '/profile', null, session, function (result, err, code) {
+    Api.call('GET', '/profile', null, session, function (err, code, payload) {
 
-        if (!result) {
+        if (err || code !== 200 || !payload) {
             exports.clear(res);
             return callback(null, null);
         }
         
-        return callback(session, result);
+        return callback(session, payload);
     });
 };
 
@@ -72,7 +72,7 @@ exports.refresh = function (req, res, session, callback) {
         return callback(Err.internal('Session missing rsvp data', session));
     }
 
-    Api.clientCall('POST', '/oz/reissue', payload, function (err, code, ticket) {
+    Api.call('POST', '/oz/reissue', null, session, function (err, code, ticket) {
 
         if (err) {
             return callback(Err.internal('Unexpected API response', err));
@@ -89,7 +89,7 @@ exports.refresh = function (req, res, session, callback) {
                 return callback(Err.internal('Invalid response parameters from API server'));
             }
 
-            return callback(null);
+            return callback(null, ticket);
         });
     });
 };

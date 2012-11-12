@@ -25,7 +25,7 @@ exports.register = function (req, res, next) {
 
         // Check if invitation required
 
-        Api.call('GET', '/invite/public', '', function (data, err, code) {
+        Api.call('GET', '/invite/public', '', function (err, code, payload) {
 
             if (code === 200) {
                 res.api.jar.signup.invite = 'public';
@@ -109,21 +109,21 @@ exports.i = function (req, res, next) {
 
     // Fetch invitation details
 
-    Api.call('GET', '/invite/' + req.params.id, '', function (data, err, code) {
+    Api.call('GET', '/invite/' + req.params.id, '', function (err, code, payload) {
 
-        if (err === null &&
-            data &&
-            data.title &&
-            data.inviter) {
+        if (!err &&
+            code === 200 &&
+            payload &&
+            payload.title &&
+            payload.inviter) {
 
             // Save information
 
-            res.api.jar.invite = { code: req.params.id, about: data };
+            res.api.jar.invite = { code: req.params.id, about: payload };
             res.api.redirect = '/signup/invite';
             next();
         }
         else {
-
             res.api.view = { template: 'invite-invalid' };
             next();
         }
@@ -174,24 +174,23 @@ exports.claim = function (req, res, next) {
     if (req.api.jar.invite &&
         req.api.jar.invite.code) {
 
-        Api.call('POST', '/invite/' + req.api.jar.invite.code + '/claim', '', req.api.session, function (data, err, code) {
+        Api.call('POST', '/invite/' + req.api.jar.invite.code + '/claim', '', req.api.session, function (err, code, payload) {
 
-            if (err === null &&
-                data &&
-                data.project) {
+            if (!err &&
+                code === 200 &&
+                payload &&
+                payload.project) {
 
-                res.api.redirect = req.api.profile.view + '#project=' + data.project;
+                res.api.redirect = req.api.profile.view + '#project=' + payload.project;
                 next();
             }
             else {
-
                 res.api.view = { template: 'invite-invalid' };
                 next();
             }
         });
     }
     else {
-
         res.api.view = { template: 'invite-invalid' };
         next();
     }

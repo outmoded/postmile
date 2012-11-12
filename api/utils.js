@@ -3,6 +3,10 @@
 * See LICENSE file included with this code project for license terms.
 */
 
+// Load modules
+
+var Crypto = require('crypto');
+
 
 // Remove hidden keys
 
@@ -43,4 +47,39 @@ exports.getRandomString = function (size) {
     }
 };
 
+
+// AES256 Symmetric encryption
+
+exports.encrypt = function (key, value) {
+
+    var envelope = JSON.stringify({ v: value, a: exports.getRandomString(2) });
+
+    var cipher = Crypto.createCipher('aes256', key);
+    var enc = cipher.update(envelope, 'utf8', 'binary');
+    enc += cipher.final('binary');
+
+    var result = (new Buffer(enc, 'binary')).toString('base64').replace(/\+/g, '-').replace(/\//g, ':').replace(/\=/g, '');
+    return result;
+};
+
+
+exports.decrypt = function (key, value) {
+
+    var input = (new Buffer(value.replace(/-/g, '+').replace(/:/g, '/'), 'base64')).toString('binary');
+
+    var decipher = Crypto.createDecipher('aes256', key);
+    var dec = decipher.update(input, 'binary', 'utf8');
+    dec += decipher.final('utf8');
+
+    var envelope = null;
+
+    try {
+        envelope = JSON.parse(dec);
+    }
+    catch (e) {
+        Log.event('err', 'Invalid encrypted envelope: ' + dec + ' / Exception: ' + JSON.stringify(e));
+    }
+
+    return envelope ? envelope.v : null;
+};
 

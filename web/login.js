@@ -45,8 +45,8 @@ exports.login = function (req, res, next) {
     if (req.api.profile) {
 
         if (req.api.session.restriction === 'tos' ||
-            !req.api.session.tos ||
-            req.api.session.tos < Tos.minimumTOS) {
+            !req.api.session.ext.tos ||
+            req.api.session.ext.tos < Tos.minimumTOS) {
 
             res.api.redirect = '/tos' + (req.query.next && req.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(req.query.next) : '');
             next();

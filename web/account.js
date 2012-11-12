@@ -85,11 +85,10 @@ exports.profile = function (req, res, next) {
 
     if (Object.keys(body).length > 0) {
 
-        Api.call('POST', '/profile', body, req.api.session, function (result, err, code) {
+        Api.call('POST', '/profile', body, req.api.session, function (err, code, payload) {
 
-            if (err) {
-
-                res.api.jar.message = 'Failed saving changes. ' + (err.code === 400 ? err.message : 'Service unavailable');
+            if (err || code !== 200) {
+                res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
             }
 
             res.api.redirect = '/account/profile';
@@ -115,14 +114,12 @@ exports.emails = function (req, res, next) {
         case 'primary':
         case 'verify':
 
-            Api.call('POST', '/profile/email', req.body, req.api.session, function (result, err, code) {
+            Api.call('POST', '/profile/email', req.body, req.api.session, function (err, code, payload) {
 
-                if (err) {
-
-                    res.api.jar.message = 'Failed saving changes. ' + (err.code === 400 ? err.message : 'Service unavailable');
+                if (err || code !== 200) {
+                    res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
                 }
                 else if (req.body.action === 'verify') {
-
                     res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
                 }
 
