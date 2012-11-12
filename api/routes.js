@@ -23,7 +23,8 @@ var User = require('./user');
 
 exports.endpoints = [
 
-    { method: 'GET', path: '/oauth/client/{id}', config: Session.client },
+    { method: 'GET', path: '/oz/app/{id}', config: Session.app },
+    { method: 'POST', path: '/oz/login', config: Session.login },
 
     { method: 'GET', path: '/profile', config: User.get },
     { method: 'POST', path: '/profile', config: User.post },

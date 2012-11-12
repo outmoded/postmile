@@ -77,20 +77,13 @@ var configuration = {
 
     // Authentication
 
-    authentication: {
+    auth: {
+        scheme: 'oz',
+        encryptionPassword: Vault.oauthToken.aes256Key,
 
-        loadClientFunc: Session.getOzClient,
-        extensionFunc: Session.extensionGrant,
-        checkAuthorizationFunc: Session.checkAuthorization,
-        checkRsvpFunc: Session.checkRsvp,
-        aes256Keys: {
-
-            oauthRefresh: Vault.oauthRefresh.aes256Key,
-            oauthToken: Vault.oauthToken.aes256Key
-        },
-        tos: {
-            min: '20110623'
-        }
+        loadAppFunc: Session.loadApp,
+        loadGrantFunc: Session.loadGrant,
+        tos: 20110623
     },
 
     debug: true,

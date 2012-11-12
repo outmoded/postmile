@@ -5,44 +5,56 @@
 
 // Load modules
 
-var Api = require('./api');
-var Err = require('./error');
+var Request = require('request');
 var Vault = require('./vault');
+var Config = require('./config');
 
 
 // Declare internals
 
 var internals = {
-    clientToken: null
+    ticket: null
 };
 
 
 // Obtain client session token
 
-exports.getToken = function (callback) {
+exports.getTicket = function (callback) {
 
-    if (internals.clientToken) {
-        return callback(internals.clientToken);
+    if (internals.ticket) {
+        return callback(internals.ticket);
     }
 
-    var tokenRequest = {
-        grant_type: 'client_credentials',
-        client_id: Vault.postmileAPI.clientId,
-        client_secret: Vault.postmileAPI.clientSecret
+    var options = {
+        uri: 'http://' + Config.host.api.domain + ':' + Config.host.api.port + '/oz/app',
+        method: 'POST',
+        headers: {
+            Authorization: 'Basic ' + (new Buffer(Vault.postmileAPI.clientId + ':' + Vault.postmileAPI.clientSecret, 'ascii')).toString('base64')
+        },
+        json: true
     };
 
-    Api.call('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+    Request(options, function (err, response, body) {
 
-        internals.clientToken = token;
-        return callback(internals.clientToken);
+        if (err ||
+            response.statusCode !== 200 ||
+            !body) {
+
+            return callback();
+        }
+
+        internals.ticket = body;
+        return callback(internals.ticket);
     });
 };
 
 
 // Refresh client session token
 
-exports.refreshToken = function (callback) {
+exports.refreshTicket = function (callback) {
 
-    internals.clientToken = null;
-    exports.getToken(callback);
+    internals.ticket = null;
+    exports.getTicket(callback);
 };
+
+

@@ -16,22 +16,20 @@ var Config = require('./config');
 
 exports.clientCall = function (method, path, body, callback) {
 
-    Client.getToken(function (clientToken) {
+    Client.getTicket(function (ticket) {
 
-        exports.call(method, path, body, clientToken, function (data, err, code) {
+        exports.call(method, path, body, ticket, function (err, code, payload) {
 
             if (code !== 401) {
-                callback(data, err, code);
+                return callback(err, code, payload);
             }
-            else {
 
-                // Try getting a new client session token
+            // Try getting a new client session token
 
-                Client.refreshToken(function (clientToken) {
+            Client.refreshTicket(function (ticket) {
 
-                    exports.call(method, path, body, clientToken, callback);
-                });
-            }
+                exports.call(method, path, body, ticket, callback);
+            });
         });
     });
 };
@@ -68,22 +66,18 @@ exports.call = function (method, path, body, arg1, arg2) {   // session, callbac
     Request(options, function (err, response, body) {
 
         if (err) {
-            return callback(null, 'Failed sending API server request: ' + err, 0);
+            return callback(new Error('Failed sending API server request: ' + err.message));
         }
 
-        var data = null;
+        var payload = null;
         try {
-            data = JSON.parse(body);
+            payload = JSON.parse(body);
         }
         catch (e) {
-            return callback(null, 'Invalid response body from API server: ' + response + '(' + e + ')', 0);
+            return callback(new Error('Invalid response body from API server: ' + response + '(' + e + ')'));
         }
 
-        if (response.statusCode !== 200) {
-            return callback(null, data, response.statusCode);
-        }
-        
-        return callback(data, null, 200);
+        return callback(null, response.statusCode, payload);
     });
 };
 

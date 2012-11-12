@@ -502,7 +502,7 @@ exports.participants = {
                                                         // Internal fields
 
                                                         email: emailsNotFound[i],
-                                                        code: Hapi.Session.getRandomString(6),
+                                                        code: Utils.getRandomString(6),
                                                         inviter: user._id
                                                     };
 

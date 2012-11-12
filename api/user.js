@@ -59,23 +59,18 @@ internals.forbiddenUsernames = {
 // Current user information
 
 exports.get = {
-    
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         exports.load(request.session.user, function (user, err) {
 
             if (user) {
-
                 Hapi.Utils.removeKeys(user, ['contacts', 'origin', 'tos', 'tickets']);
                 request.reply(user);
             }
             else {
-
                 request.reply(err);
             }
         });
@@ -86,18 +81,13 @@ exports.get = {
 // Change profile properties
 
 exports.post = {
-
     schema: {
-
         name: Hapi.Types.String(),
         username: Hapi.Types.String().emptyOk()
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         exports.load(request.session.user, function (user, err) {
@@ -168,18 +158,13 @@ exports.post = {
 // Change profile email settings
 
 exports.email = {
-    
     schema: {
-
         address: Hapi.Types.String().required(),
         action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         var address = request.payload.address.toLowerCase();
@@ -390,17 +375,12 @@ exports.email = {
 // Current user contacts list
 
 exports.contacts = {
-
     query: {
-
         exclude: Hapi.Types.String()
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         if (request.query.exclude) {
@@ -514,12 +494,9 @@ exports.contacts = {
 // Who am I?
 
 exports.who = {
-    
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         request.reply({ user: request.session.user });
@@ -1125,12 +1102,9 @@ exports.view = {
 // Lookup user based on account and type
 
 exports.lookup = {
-    
     auth: {
-        
         mode: 'none'
     },
-
     handler: function (request) {
 
         if (request.params.type === 'username') {
@@ -1274,13 +1248,10 @@ exports.reminder = {
 // Delete account
 
 exports.del = {
-    
     auth: {
-
         scope: 'quit',
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         // Check if user has any projects

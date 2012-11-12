@@ -68,44 +68,30 @@ internals.loadProfile = function (res, session, callback) {
 
 exports.refresh = function (req, res, session, callback) {
 
-    if (session &&
-        session.rsvp) {
+    if (!session) {
+        return callback(Err.internal('Session missing rsvp data', session));
+    }
 
-        var tokenRequest = {
-            grant_type: 'rsvp',
-            rsvp: session.rsvp,
-            client_id: Vault.postmileAPI.viewClientId,
-            client_secret: ''
-        };
+    Api.clientCall('POST', '/oz/reissue', payload, function (err, code, ticket) {
 
-        Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+        if (err) {
+            return callback(Err.internal('Unexpected API response', err));
+        }
 
-            if (token) {
-                exports.set(res, token, function (isValid, restrictions) {
+        if (code !== 200) {
+            exports.clear(res);
+            return callback(Err.badRequest(err.message));
+        }
 
-                    if (isValid) {
-                        callback(null);
-                    }
-                    else {
-                        callback(Err.internal('Invalid response parameters from API server'));
-                    }
-                });
+        exports.set(res, ticket, function (isValid, restrictions) {
+
+            if (!isValid) {
+                return callback(Err.internal('Invalid response parameters from API server'));
             }
-            else if (err &&
-                     err.error &&
-                     err.error === 'invalid_grant') {
 
-                exports.clear(res);
-                callback(Err.badRequest(err.message));
-            }
-            else {
-                callback(Err.internal('Unexpected API response', err));
-            }
+            return callback(null);
         });
-    }
-    else {
-        callback(Err.internal('Session missing rsvp data', session));
-    }
+    });
 };
 
 
@@ -125,9 +111,7 @@ exports.set = function (res, token, callback) {
     }
 
     var session = token;
-    session.tos = session.x_tos;
-    delete session.x_tos;
-    session.restriction = (token.x_tos < Tos.minimumTOS ? 'tos' : null);
+    session.restriction = (session.ext.tos < Tos.minimumTOS ? 'tos' : null);
 
     var nextYear = new Date();
     nextYear.setFullYear(nextYear.getFullYear() + 1);
@@ -164,7 +148,7 @@ exports.oauth = function (req, res, next) {
 
         if (req.query.client_id) {
 
-            Api.clientCall('GET', '/oauth/client/' + req.query.client_id, null, function (client, err, code) {
+            Api.clientCall('GET', '/oz/app/' + req.query.client_id, null, function (client, err, code) {
 
                 if (client &&
                     client.name) {
@@ -295,19 +279,16 @@ exports.oauth = function (req, res, next) {
             var tokenRequest = {
                 client_id: req.api.jar.oauth.client.name,
                 client_secret: '',
-                grant_type: 'http://ns.postmile.net/id',
-                x_user_id: req.api.profile.id
+                type: 'id',
+                id: req.api.profile.id
             };
 
-            Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+            Api.clientCall('POST', '/oz/ticket', tokenRequest, function (token, err, code) {
 
                 if (token) {
                     if (req.api.jar.oauth.state) {
                         token.state = req.api.jar.oauth.state;
                     }
-
-                    delete token.rsvp;
-                    delete token.x_tos;
 
                     res.api.redirect = req.api.jar.oauth.redirection + '#' + QueryString.stringify(token);
                     next();
@@ -334,15 +315,15 @@ exports.issue = function (req, res, next) {
     if (req.api.session) {
         var tokenRequest = {
             grant_type: 'rsvp',
-            rsvp: req.api.session.rsvp,
+            grant: req.api.session.rsvp,
             client_id: Vault.postmileAPI.viewClientId,
             client_secret: ''
         };
 
-        Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+        Api.clientCall('POST', '/oz/ticket', tokenRequest, function (token, err, code) {
 
             if (token) {
-                if (token.x_tos >= Tos.minimumTOS) {
+                if (token.ext.tos >= Tos.minimumTOS) {
                     res.api.result = token;
                     res.api.isAPI = true;
                     next();

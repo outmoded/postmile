@@ -27,7 +27,6 @@ exports.get = function (req, res, next) {
         next();
     }
     else {
-
         res.api.redirect = (req.query.next && req.query.next.charAt(0) === '/' ? req.query.next : req.api.profile.view);
         next();
     }
@@ -38,7 +37,7 @@ exports.get = function (req, res, next) {
 
 exports.post = function (req, res, next) {
 
-    Api.clientCall('POST', '/user/' + req.api.profile.id + '/tos/' + exports.currentTOS, '', function (result, err, code) {
+    Api.clientCall('POST', '/user/' + req.api.profile.id + '/tos/' + exports.currentTOS, '', function (err, code, payload) {
 
         // Refresh token
 

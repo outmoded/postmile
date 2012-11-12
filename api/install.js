@@ -2,7 +2,7 @@
 
 var Hapi = require('hapi');
 var Db = require('./db');
-var Session = require('./session');
+var Utils = require('./utils');
 
 
 // Initialize database connection
@@ -20,7 +20,7 @@ Db.initialize(true, function (err) {
             {
                 name: 'postmile.web',
                 scope: ['authorized', 'login', 'reminder', 'signup', 'tos'],
-                secret: Session.getRandomString(64)
+                secret: Utils.getRandomString(64)
             },
 
             {

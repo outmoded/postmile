@@ -6,6 +6,7 @@
 // Load modules
 
 var Hapi = require('hapi');
+var Oz = require('oz');
 var Crypto = require('crypto');
 var Db = require('./db');
 var User = require('./user');
@@ -18,9 +19,9 @@ var Vault = require('./vault');
 var internals = {};
 
 
-// Get client information endpoint
+// Get application information endpoint
 
-exports.client = {
+exports.app = {
     auth: {
         scope: 'login',
         entity: 'app'
@@ -44,192 +45,215 @@ exports.client = {
 };
 
 
-// Get client
+exports.login = {
+    schema: {
+        type: Hapi.types.String().valid('id', 'twitter', 'facebook', 'yahoo', 'email').required(),
+        id: Hapi.types.String().required(),
+        issueTo: Hapi.types.String()
+    },
+    auth: {
+        scope: 'login',
+        entity: 'app'
+    },
+    handler: function (request) {
 
-exports.getOzClient = function (id, callback) {
+        var type = request.payload.type;
+        var id = request.payload.id;
+
+        var loadUser = function () {
+
+            if (type === 'id') {
+
+                User.load(id, function (user, err) {
+
+                    if (err) {
+                        return request.reply(Hapi.Error.unauthorized(err.message));
+                    }
+
+                    loadGrant(user);
+                });
+            }
+            else if (type === 'email') {
+
+                Email.loadTicket(id, function (emailTicket, user, err) {
+
+                    if (err) {
+                        return request.reply(Hapi.Error.unauthorized(err.message));
+                    }
+
+                    loadGrant(user, { 'action': emailTicket.action });
+                });
+            }
+            else {
+                
+                // twitter, facebook, yahoo
+
+                User.validate(id, type, function (user, err) {
+
+                    if (err) {
+                        return request.reply(Hapi.Error.unauthorized(err.message));
+                    }
+
+                    loadGrant(user);
+                });
+            }
+        };
+
+        var loadGrant = function (user, ext) {
+
+            // Lookup existing grant
+
+            var now = Date.now();
+
+            var appId = request.payload.issueTo || request.session.app;
+            Db.query('grant', { user: user.id, app: appId }, function (items, err) {
+
+                if (err) {
+                    return request.reply(err);
+                }
+
+                if (items &&
+                    items.length > 0) {
+
+                    items.sort(function (a, b) {
+
+                        if (a.exp < b.exp) {
+                            return -1;
+                        }
+
+                        if (a.exp > b.exp) {
+                            return 1;
+                        }
+
+                        return 0;
+                    });
+
+                    var grant = null;
+
+                    var expired = [];
+                    for (var i = 0, il = items.length; i < il; ++i) {
+                        if ((items[i].exp || 0) <= now) {
+                            expired.push(items[i]._id);
+                        }
+                        else {
+                            grant = items[i];
+                        }
+                    }
+
+                    if (expired.length > 0) {
+                        Db.removeMany('grant', expired, function (err) { });         // Ignore callback
+                    }
+
+                    if (grant) {
+                        return issue(appId, grant._id, ext);
+                    }
+                }
+
+                // No active grant
+
+                var newGrant = {
+                    user: user._id,
+                    app: appId,
+                    exp: now + 30 * 24 * 60 * 60 * 1000,                        // 30 days //////////////////
+                    scope: []                                                   // Find app scope ////////////
+                };
+
+                Db.insert('grant', newGrant, function (items, err) {
+
+                    if (err) {
+                        return request.reply(err);
+                    }
+
+                    if (items.length !== 1 ||
+                        !items[0]._id) {
+
+                        return request.reply(Hapi.Error.internal('Failed to add new grant'));
+                    }
+
+                    return issue(appId, items[0]._id, ext);
+                });
+            });
+        };
+
+        var issue = function (appId, grantId, ext) {
+
+            Oz.rsvp.issue({ id: appId }, { id: grantId }, Vault.oauthToken.aes256Key, function (err, rsvp) {
+
+                if (err) {
+                    return request.reply(Hapi.Error.internal('Failed generating rsvp: ' + err));
+                }
+
+                var response = {
+                    rsvp: rsvp
+                };
+
+                if (ext) {
+                    response.ext = ext;
+                }
+
+                return request.reply(response);
+            });
+        };
+
+        loadUser();
+    }
+};
+
+
+exports.loadApp = function (id, callback) {
+
+    if (!id) {
+        return callback();
+    }
 
     Db.get('client', id, function (client, err) {
 
         if (err || !client) {
-            return callback(err);
+            return callback();
         }
 
-        var result = {
+        var app = {
             id: client._id,
             secret: client.secret,
             scope: client.scope
         };
 
-        return callback(null, result);
+        return callback(app);
     });
 };
 
 
-// Check client authorization grant
+exports.loadGrant = function (grantId, callback) {
 
-exports.checkAuthorization = function (session, client, user, callback) {
+    Db.get('grant', grantId, function (item, err) {
 
-    // Pre-authorized client
+        // Verify grant is still valid
 
-    if (client.scope && client.scope.indexOf('authorized') !== -1 ||
-        session.scope && session.scope.indexOf('authorized') !== -1) {
-
-        var rsvp = exports.encrypt(Vault.oauthRefresh.aes256Key, { user: user.id, app: client.id })
-        return callback(null, rsvp);
-    }
-
-    // User authorization
-
-    Db.query('grant', { user: user.id, client: client.id }, function (items, err) {
-
-        if (err) {
-            return callback(Hapi.Session.error('server_error', 'Failed retrieving authorization'));
+        if (err || !item) {
+            return callback();
         }
 
-        if (!items ||
-            items.length <= 0) {
+        User.load(item.user, function (user, err) {
 
-            return callback(Hapi.Session.error('invalid_grant', 'Client is not authorized'));
-        }
-
-        items.sort(function (a, b) {
-
-            if (a.expiration < b.expiration) {
-                return -1;
+            if (err || !user) {
+                callback();
             }
 
-            if (a.expiration > b.expiration) {
-                return 1;
-            }
+            var result = {
+                id: item._id,
+                app: item.app,
+                user: item.user,
+                exp: item.exp,
+                scope: item.scope
+            };
 
-            return 0;
+            var ext = {
+                tos: internals.getLatestTOS(user)
+            };
+
+            return callback(result, ext);
         });
-
-        var authorization = null;
-        var now = Date.now();
-
-        var expired = [];
-        for (var i = 0, il = items.length; i < il; ++i) {
-            if ((items[i].expiration || 0) <= now) {
-                expired.push(items[i]._id);
-            }
-            else {
-                authorization = items[i]._id;
-            }
-        }
-
-        if (expired.length > 0) {
-            Db.removeMany('grant', expired, function (err) { });         // Ignore callback
-        }
-
-        if (!authorization) {
-            return callback(Hapi.Session.error('invalid_grant', 'Client authorization expired'));
-        }
-
-        var rsvp = exports.encrypt(Vault.oauthRefresh.aes256Key, { user: user.id, app: client.id })
-        return callback(null, rsvp);
     });
-};
-
-
-// Validate RSVP
-
-exports.checkRsvp = function (app, rsvp, callback) {
-
-    var auth = exports.decrypt(Vault.oauthRefresh.aes256Key, rsvp);
-    if (!auth ||
-        !auth.user ||
-        !auth.app) {
-
-        return callback(Hapi.Session.error('invalid_grant', 'Invalid rsvp token'));
-    }
-
-    if (auth.app !== app.id) {
-        return callback(Hapi.Session.error('invalid_grant', 'Mismatching rsvp token application id'));
-    }
-
-    User.load(auth.user, function (user, err) {
-
-        if (err || !user) {
-            return callback(Hapi.Session.error('invalid_grant', 'Cannot find user'));
-        }
-
-        return callback(null, internals.ozify(user));
-    });
-};
-
-
-// Extension OAuth grant types
-
-exports.extensionGrant = function (request, client, callback) {
-
-    // Verify grant type prefix
-
-    if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
-        // Unsupported grant type namespace
-        return callback(Hapi.Session.error('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
-    }
-
-    // Check if client has 'login' scope
-
-    if ((!client.scope || client.scope.indexOf('login' === -1)) &&
-        (!request.session || !request.session.scope || request.session.scope.indexOf('login') === -1)) {
-
-        // No client scope for local account access
-        return callback(Hapi.Session.error('unauthorized_client', 'Client missing \'login\' scope'));
-    }
-
-    // Switch on grant type
-
-    var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
-    if (grantType === 'id') {
-
-        // Get user
-
-        User.load(request.payload.x_user_id, function (user, err) {
-
-            if (!user) {
-                // Unknown local account
-                return callback(Hapi.Session.error('invalid_grant', 'Unknown local account'));
-            }
-
-            return callback(null, internals.ozify(user));
-        });
-    }
-    else if (grantType === 'twitter' ||
-             grantType === 'facebook' ||
-             grantType === 'yahoo') {
-
-        // Check network identifier
-
-        User.validate(request.payload.x_user_id, grantType, function (user, err) {
-
-            if (!user) {
-                // Unregistered network account
-                return callback(Hapi.Session.error('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
-            }
-
-            return callback(null, internals.ozify(user));
-        });
-    }
-    else if (grantType === 'email') {
-
-        // Check email identifier
-
-        Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
-
-            if (!ticket) {
-                // Invalid email token
-                return callback(Hapi.Session.error('invalid_grant', err.message));
-            }
-
-            return callback(null, internals.ozify(user), { 'x_action': ticket.action });
-        });
-    }
-    else {
-        // Unsupported grant type
-        return callback(Hapi.Session.error('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
-    }
 };
 
 
@@ -237,7 +261,7 @@ exports.extensionGrant = function (request, client, callback) {
 
 exports.validate = function (message, token, mac, callback) {
 
-    Hapi.Session.parseTicket(token, function (err, session) {
+    Oz.Ticket.parse(token, Vault.oauthToken.aes256Key, function (err, session) {
 
         if (err || !session) {
             return callback(null, Hapi.Error.notFound('Invalid token'));
@@ -261,81 +285,6 @@ exports.validate = function (message, token, mac, callback) {
 exports.delUser = function (userId, callback) {
 
     callback(null);
-};
-
-
-// AES256 Symmetric encryption
-
-exports.encrypt = function (key, value) {
-
-    var envelope = JSON.stringify({ v: value, a: exports.getRandomString(2) });
-
-    var cipher = Crypto.createCipher('aes256', key);
-    var enc = cipher.update(envelope, 'utf8', 'binary');
-    enc += cipher.final('binary');
-
-    var result = (new Buffer(enc, 'binary')).toString('base64').replace(/\+/g, '-').replace(/\//g, ':').replace(/\=/g, '');
-    return result;
-};
-
-
-exports.decrypt = function (key, value) {
-
-    var input = (new Buffer(value.replace(/-/g, '+').replace(/:/g, '/'), 'base64')).toString('binary');
-
-    var decipher = Crypto.createDecipher('aes256', key);
-    var dec = decipher.update(input, 'binary', 'utf8');
-    dec += decipher.final('utf8');
-
-    var envelope = null;
-
-    try {
-        envelope = JSON.parse(dec);
-    }
-    catch (e) {
-        Log.event('err', 'Invalid encrypted envelope: ' + dec + ' / Exception: ' + JSON.stringify(e));
-    }
-
-    return envelope ? envelope.v : null;
-};
-
-
-// Random string
-
-exports.getRandomString = function (size) {
-
-    var randomSource = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var len = randomSource.length;
-    size = size || 10;
-
-    if (typeof size === 'number' &&
-        !isNaN(size) && size >= 0 &&
-        (parseFloat(size) === parseInt(size))) {
-
-        var result = [];
-
-        for (var i = 0; i < size; ++i) {
-            result[i] = randomSource[Math.floor(Math.random() * len)];
-        }
-
-        return result.join('');
-    }
-    else {
-        return null;
-    }
-};
-
-
-// Convert user object to Oz structure
-
-internals.ozify = function (user) {
-
-    var ozUser = {
-        id: user._id,
-        tos: internals.getLatestTOS(user)
-    };
-
-    return ozUser;
 };
 
 

@@ -20,9 +20,7 @@ exports.get = function (req, res, next) {
          req.params.panel === 'emails')) {
 
         var locals = {
-
             env: {
-
                 username: req.api.profile.username,
                 currentUsername: req.api.profile.username,
                 name: req.api.profile.name,
@@ -34,9 +32,7 @@ exports.get = function (req, res, next) {
         next();
     }
     else {
-
         if (req.api.jar.message) {
-
             res.api.jar.message = req.api.jar.message;
         }
 
@@ -50,43 +46,23 @@ exports.get = function (req, res, next) {
 
 exports.reminder = function (req, res, next) {
 
-    Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (result, err, code) {
+    Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (err, code, payload) {
 
-        if (result && result.result === 'ok') {
-
-            res.api.result = result;
-            next();
-        }
-        else if (err &&
-                 err.code) {
-
-            if (err.code === 404) {
-
-                res.api.error = Err.notFound();
-                res.api.isAPI = true;
-                next();
-            }
-            else if (err.code === 400) {
-
-                res.api.error = Err.badRequest();
-                res.api.isAPI = true;
-                next();
-            }
-            else {
-
-                res.api.error = Err.internal('Unexpected API response', err);
-                res.api.isAPI = true;
-                next();
-            }
-        }
-        else {
-
+        if (err) {
             res.api.error = Err.internal('Unexpected API response', err);
             res.api.isAPI = true;
-            next();
+            return next();
         }
-    });
 
+        if (code !== 200) {
+            res.api.error = (code === 404 ? Err.notFound() : (code === 400 ? Err.badRequest() : Err.internal('Unexpected API response: ' + payload)));
+            res.api.isAPI = true;
+            return next();
+        }
+
+        res.api.result = payload;
+        return next();
+    });
 };
 
 
