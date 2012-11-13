@@ -135,8 +135,8 @@
         .section Authentication
 
           .text
-            | Every API request must include an OAuth 2.0 access token via the 
-            a(href: 'http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac') MAC authentication scheme
+            | Every API request must include an Oz ticket via the 
+            a(href: 'https://github.com/hueniverse/oz') Oz authentication scheme
             |. For example:
 
           pre
@@ -1034,12 +1034,12 @@
           | socket.connect();
 
         .text The connection must be initialized with the "initialize" message request before any subscriptions are made.
-          |  To initialize the request, the client must calculate an HMAC over the session identifier using its the OAuth credentials.
+          |  To initialize the request, the client must calculate an HMAC over the session identifier using its the Oz credentials.
           |  The
-          a(href: '/test/api') API test utility
-          |  includes a small module for MAC authentication which provides the MAC.macMessage() function. Just open the test utility page
+          a(href: '/developer/console') API test utility
+          |  includes a small module for Oz authentication which provides the Oz.macMessage() function. Just open the test utility page
           |  source to see how it's done. The credentials object in the example is a simple JSON structure with "id", "key", and "algorithm"
-          |  keys which contain the OAuth credentials.
+          |  keys which contain the Oz credentials.
 
         a(name: 'stream-types')
         .section Update Types
@@ -1114,7 +1114,7 @@
 
             .text Notes:
               ul
-                li The "macId" includes the first few characters of the OAuth token used to make the change being reported. This can be used
+                li The "macId" includes the first few characters of the Oz ticket id used to make the change being reported. This can be used
                   |  to differentiate between changes made locally on the client and those made by the same user on another client.
                 li Update notifications do not include the actual data changed, only the identifier of what was changed.
 

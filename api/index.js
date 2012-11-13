@@ -79,7 +79,7 @@ var configuration = {
 
     auth: {
         scheme: 'oz',
-        encryptionPassword: Vault.oauthToken.aes256Key,
+        encryptionPassword: Vault.ozTicket.password,
 
         loadAppFunc: Session.loadApp,
         loadGrantFunc: Session.loadGrant,

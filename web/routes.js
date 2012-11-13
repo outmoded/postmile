@@ -53,9 +53,9 @@ exports.endpoints = [
     { method: 'GET',    path: '/feedback',                  handler: Misc.feedback },
     { method: 'POST',   path: '/feedback',                  handler: Misc.feedback },
 
-    { method: 'GET',    path: '/oauth/authorize',           handler: Session.oauth,         authentication: 'session' },
-    { method: 'POST',   path: '/oauth/authorize',           handler: Session.oauth,         authentication: 'session' },
-    { method: 'GET',    path: '/oauth/issue',               handler: Session.issue },
+    { method: 'GET',    path: '/oz/authorize',              handler: Session.ask,           authentication: 'session' },
+    { method: 'POST',   path: '/oz/authorize',              handler: Session.answer,        authentication: 'session' },
+    { method: 'GET',    path: '/oz/session',                handler: Session.session,         authentication: 'session' },
 
     { method: 'GET',    path: '/socket.io.js',              handler: Misc.socketio },
     { method: 'GET',    path: '/config.js',                 handler: Misc.config }

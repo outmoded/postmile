@@ -41,7 +41,7 @@ $ npm update
 $ cp vault.js.example vault.js
 ```
 
-Edit postmile/web/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
+Edit postmile/web/vault.js and set the values of the 'aes256Key' and 'password' variables to different random secrets sufficiently long (e.g. 40 characters).
 
 Set the values of the postmileAPI 'clientId' and 'clientSecret' variables to the WEB client id and secret saved earlier.
 Set the value of the 'viewClientId' variable to the VIEW client id saved earlier.
@@ -56,7 +56,7 @@ $ cd ..
 ```
 
 Make sure to protect your vault.js files. If an attacker gets hold of them, you're screwed.
-If you are going to run this in a production environment, you should use TLS (HTTPS) for the web server (otherwise it's cookies and OAuth 2.0 bits are
+If you are going to run this in a production environment, you should use TLS (HTTPS) for the web server (otherwise it's cookies and Oz bits are
 pretty open for attacks). To configure TLS, set the 'process.web.tls' variable in the postmile/config.js file to point to your TLS key and certificate.
 
 # Startup

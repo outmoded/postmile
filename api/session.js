@@ -177,7 +177,7 @@ exports.login = {
 
         var issue = function (appId, grantId, ext) {
 
-            Oz.rsvp.issue({ id: appId }, { id: grantId }, Vault.oauthToken.aes256Key, function (err, rsvp) {
+            Oz.rsvp.issue({ id: appId }, { id: grantId }, Vault.ozTicket.password, function (err, rsvp) {
 
                 if (err) {
                     return request.reply(Hapi.Error.internal('Failed generating rsvp: ' + err));
@@ -259,12 +259,12 @@ exports.loadGrant = function (grantId, callback) {
 
 // Validate message
 
-exports.validate = function (message, token, mac, callback) {
+exports.validate = function (message, ticket, mac, callback) {
 
-    Oz.Ticket.parse(token, Vault.oauthToken.aes256Key, function (err, session) {
+    Oz.Ticket.parse(ticket, Vault.ozTicket.password, function (err, session) {
 
         if (err || !session) {
-            return callback(null, Hapi.Error.notFound('Invalid token'));
+            return callback(null, Hapi.Error.notFound('Invalid ticket'));
         }
 
         // Mac message

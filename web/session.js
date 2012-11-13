@@ -60,7 +60,7 @@ internals.loadProfile = function (res, session, callback) {
             exports.clear(res);
             return callback(null, null);
         }
-        
+
         return callback(session, payload);
     });
 };
@@ -138,214 +138,151 @@ exports.clear = function (res) {
 };
 
 
-// OAuth authorization endpoint
+// Oz authorization endpoint
 
-exports.oauth = function (req, res, next) {
+exports.ask = function (req, res, next) {
 
-    if (req.method === 'GET') {
+    // Lookup client identifier
 
-        // Lookup client identifier
+    if (req.query.client_id) {
 
-        if (req.query.client_id) {
+        // Missing client identifier
 
-            Api.clientCall('GET', '/oz/app/' + req.query.client_id, null, function (client, err, code) {
+        var locals = {
+            code: 500,
+            message: 'sorry, the application that sent you here messed something up...'
+        };
 
-                if (client &&
-                    client.name) {
+        res.api.view = { template: 'error', locals: locals };
+        return next();
+    }
 
-                    // Validate callback
+    Api.clientCall('GET', '/oz/app/' + req.query.client_id, null, function (err, code, client) {
 
-                    var redirectionURI;
-                    var untrustedClient = true;
+        if (err ||
+            !client ||
+            (code !== 200 && code !== 404)) {
 
-                    if (client.callback) {
-
-                        // Pre-configured (locked)
-
-                        if (req.query.redirect_uri) {
-
-                            res.api.error = Err.internal('Client request includes a redirection URI for a pre-configured callback client', client);
-                            next();
-                        }
-                        else {
-
-                            redirectionURI = client.callback;
-                            untrustedClient = false;
-                        }
-                    }
-                    else if (req.query.redirect_uri) {
-
-                        // Dynamic redirection URI
-
-                        redirectionURI = req.query.redirect_uri;
-                    }
-                    else {
-
-                        res.api.error = Err.internal('Client missing callback', client);
-                        next();
-                    }
-
-                    if (redirectionURI) {
-
-                        if (req.query.response_type) {
-
-                            if (req.query.response_type === 'token') {
-
-                                // Implicit grant type
-
-                                res.api.jar.oauth = { client: client, redirection: redirectionURI };
-                                if (req.query.state) {
-
-                                    res.api.jar.oauth.state = req.query.state;
-                                }
-
-                                var locals = {
-
-                                    title: client.title,
-                                    description: client.description,
-                                    warning: untrustedClient
-                                };
-
-                                res.api.view = { template: 'oauth', locals: locals };
-                                next();
-                            }
-                            else if (req.query.response_type === 'authorization_code') {
-
-                                // Authorization code grant type
-
-                                res.api.redirect = redirectionURI + '?error=unsupported_response_type' + (req.query.state ? '&state=' + encodeURIComponent(req.query.state) : '');
-                                next();
-                            }
-                            else {
-
-                                // Unknown response type parameter
-
-                                res.api.redirect = redirectionURI + '?error=invalid_request&error_description=Unknown%20response_type%20parameter' + (req.query.state ? '&state=' + encodeURIComponent(req.query.state) : '');
-                                next();
-                            }
-                        }
-                        else {
-
-                            // Missing response type parameter
-
-                            res.api.redirect = redirectionURI + '?error=invalid_request&error_description=Missing%20response_type%20parameter' + (req.query.state ? '&state=' + encodeURIComponent(req.query.state) : '');
-                            next();
-                        }
-                    }
-                }
-                else if (err &&
-                         err.code &&
-                         err.code === 404) {
-
-                    // Unknown client
-
-                    var locals = {
-
-                        code: 'unknown',
-                        message: 'sorry, we can\'t find the application that sent you here...'
-                    };
-
-                    res.api.view = { template: 'error', locals: locals };
-                    next();
-                }
-                else {
-
-                    res.api.error = Err.internal('Unexpected API response', err);
-                    next();
-                }
-            });
+            res.api.error = Err.internal('Unexpected API response', err);
+            return next();
         }
-        else {
 
-            // Missing client identifier
+        if (code === 404) {
+
+            // Unknown client
 
             var locals = {
-
-                code: 500,
-                message: 'sorry, the application that sent you here messed something up...'
+                code: 'unknown',
+                message: 'sorry, we can\'t find the application that sent you here...'
             };
 
             res.api.view = { template: 'error', locals: locals };
-            next();
+            return next();
         }
-    }
-    else {
 
-        // POST
+        // Application callback
 
-        if (req.api.jar.oauth &&
-            req.api.jar.oauth.client) {
+        if (client.callback &&
+            req.query.redirect_uri) {
 
-            var tokenRequest = {
-                client_id: req.api.jar.oauth.client.name,
-                client_secret: '',
-                type: 'id',
-                id: req.api.profile.id
-            };
-
-            Api.clientCall('POST', '/oz/ticket', tokenRequest, function (token, err, code) {
-
-                if (token) {
-                    if (req.api.jar.oauth.state) {
-                        token.state = req.api.jar.oauth.state;
-                    }
-
-                    res.api.redirect = req.api.jar.oauth.redirection + '#' + QueryString.stringify(token);
-                    next();
-                }
-                else {
-                    res.api.error = Err.internal('Unexpected API response', err);
-                    next();
-                }
-            });
+            res.api.error = Err.internal('Client request includes a redirection URI for a pre-configured callback client', client);
+            return next();
         }
-        else {
 
-            // Missing jar
+        if (!client.callback &&
+            !req.query.redirect_uri) {
 
-            res.api.redirect = '/';
-            next();
+            res.api.error = Err.internal('Client missing callback', client);
+            return next();
         }
-    }
+
+        var redirectionURI = client.callback || req.query.redirect_uri;
+        var untrustedClient = !!client.callback;
+
+        // Response type
+
+        if (!req.query.response_type ||
+            req.query.response_type !== 'token') {
+
+            res.api.redirect = redirectionURI + '?error=invalid_request&error_description=Bad%20response_type%20parameter' + (req.query.state ? '&state=' + encodeURIComponent(req.query.state) : '');
+            return next();
+        }
+
+        // Implicit grant type
+
+        res.api.jar.oz = { client: client, redirection: redirectionURI };
+        if (req.query.state) {
+            res.api.jar.oz.state = req.query.state;
+        }
+
+        var locals = {
+            title: client.title,
+            description: client.description,
+            warning: untrustedClient
+        };
+
+        res.api.view = { template: 'oz', locals: locals };
+        return next();
+    });
 };
 
 
-exports.issue = function (req, res, next) {
+exports.answer = function (req, res, next) {
 
-    if (req.api.session) {
-        var tokenRequest = {
-            grant_type: 'rsvp',
-            grant: req.api.session.rsvp,
-            client_id: Vault.postmileAPI.viewClientId,
-            client_secret: ''
-        };
+    if (!req.api.jar.oz ||
+        !req.api.jar.oz.client) {
 
-        Api.clientCall('POST', '/oz/ticket', tokenRequest, function (token, err, code) {
-
-            if (token) {
-                if (token.ext.tos >= Tos.minimumTOS) {
-                    res.api.result = token;
-                    res.api.isAPI = true;
-                    next();
-                }
-                else {
-                    res.api.error = Err.badRequest('Restricted session');
-                    res.api.isAPI = true;
-                    next();
-                }
-            }
-            else {
-                res.api.error = Err.internal('Failed refresh', err);
-                res.api.isAPI = true;
-                next();
-            }
-        });
+        res.api.redirect = '/';
+        return next();
     }
-    else {
-        res.api.error = Err.badRequest();
+
+    var options = {
+        issueTo: req.api.jar.oz.client.id,
+        scope: []
+    };
+
+    Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
+
+        if (err || code !== 200) {
+            res.api.error = Err.internal('Unexpected API response', err);
+            return next();
+        }
+
+        if (req.api.jar.oz.state) {
+            ticket.state = req.api.jar.oz.state;
+        }
+
+        res.api.redirect = req.api.jar.oz.redirection + '#' + QueryString.stringify(ticket);
+        return next();
+    });
+};
+
+
+exports.session = function (req, res, next) {
+
+    var options = {
+        issueTo: Vault.postmileAPI.viewClientId,
+        scope: []
+    };
+
+    Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
+
+        if (err || code !== 200) {
+            res.api.error = Err.internal('Failed refresh', err);
+            res.api.isAPI = true;
+            return next();
+        }
+
+        if (ticket.ext.tos < Tos.minimumTOS) {
+            res.api.error = Err.badRequest('Restricted session');
+            res.api.isAPI = true;
+            return next();
+        }
+        
+        res.api.result = ticket;
         res.api.isAPI = true;
-        next();
-    }
+        return next();
+    });
 };
 
 

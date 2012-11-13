@@ -41,7 +41,6 @@ internals.forbiddenUsernames = {
     imwithstupid: true,
     login: true,
     logout: true,
-    oauth: true,
     privacy: true,
     scripts: true,
     script: true,

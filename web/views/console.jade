@@ -63,13 +63,13 @@ script
                 }
                 else {
 
-                    window.location = '/login?next=%2Ftest%2Fapi';
+                    window.location = '/login?next=%2Fdeveloper%2Fconsole';
                     return;
                 }
             }
         };
 
-        request.open('GET', '#{host.uri('web')}/oauth/issue');
+        request.open('GET', '#{host.uri('web')}/oz/session');
         request.send();
     }
 

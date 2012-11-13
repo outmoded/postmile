@@ -18,7 +18,7 @@
       - if (warning)
         p.warning This application is untrusted and cannot be verified - do not authorize access unless you are sure you know what you are doing!
 
-      form(method: 'post', action: '/oauth/authorize')
+      form(method: 'post', action: '/oz/authorize')
         input(type: 'hidden', name: 'crumb', value: crumb)
         button.blue-button Authorize
 

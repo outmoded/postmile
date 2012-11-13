@@ -30,27 +30,16 @@ exports.err = function (error, req) {
 internals.log = function (level, error, req) {
 
     if (typeof error === 'string') {
-
         internals.print(level, error, req);
     }
     else if (req) {
-
-        if (error.type === 'oauth') {
-
-            internals.print(level, 'OAuth: ' + error.error + ' (' + error.text + ')', req);
-        }
-        else {
-
-            internals.print(level, 'HTTP: ' + error.code + ' ' + (error.message || error.text), req);
-        }
+        internals.print(level, 'HTTP: ' + error.code + ' ' + (error.message || error.text), req);
 
         if (error.log) {
-
             internals.print(level, 'Log: ' + JSON.stringify(error.log), req);
         }
     }
     else {
-
         internals.print(level, JSON.stringify(error));
     }
 };
@@ -61,7 +50,6 @@ internals.log = function (level, error, req) {
 internals.print = function (level, message, req) {
 
     function pad(value) {
-
         return (value < 10 ? '0' : '') + value;
     }
 
