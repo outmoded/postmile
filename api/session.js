@@ -46,10 +46,12 @@ exports.app = {
 
 
 exports.login = {
-    schema: {
-        type: Hapi.types.String().valid('id', 'twitter', 'facebook', 'yahoo', 'email').required(),
-        id: Hapi.types.String().required(),
-        issueTo: Hapi.types.String()
+    validate: {
+        schema: {
+            type: Hapi.types.String().valid('id', 'twitter', 'facebook', 'yahoo', 'email').required(),
+            id: Hapi.types.String().required(),
+            issueTo: Hapi.types.String()
+        }
     },
     auth: {
         scope: 'login',

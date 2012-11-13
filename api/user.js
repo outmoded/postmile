@@ -80,9 +80,11 @@ exports.get = {
 // Change profile properties
 
 exports.post = {
-    schema: {
-        name: Hapi.Types.String(),
-        username: Hapi.Types.String().emptyOk()
+    validate: {
+        schema: {
+            name: Hapi.Types.String(),
+            username: Hapi.Types.String().emptyOk()
+        }
     },
     auth: {
         tos: null
@@ -157,9 +159,11 @@ exports.post = {
 // Change profile email settings
 
 exports.email = {
-    schema: {
-        address: Hapi.Types.String().required(),
-        action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
+    validate: {
+        schema: {
+            address: Hapi.Types.String().required(),
+            action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
+        }
     },
     auth: {
         tos: null
@@ -506,26 +510,21 @@ exports.who = {
 // Register new user
 
 exports.put = {
-    
-    query: {
-
-        invite: Hapi.Types.String().required()
+    validate: {
+        query: {
+            invite: Hapi.Types.String().required()
+        },
+        schema: {
+            username: Hapi.Types.String(),
+            name: Hapi.Types.String(),
+            network: Hapi.Types.Array().includes(Hapi.Types.String()),
+            email: Hapi.Types.String().email()
+        }
     },
-
-    schema: {
-
-        username: Hapi.Types.String(),
-        name: Hapi.Types.String(),
-        network: Hapi.Types.Array().includes(Hapi.Types.String()),
-        email: Hapi.Types.String().email()
-    },
-
     auth: {
-
         scope: 'signup',
         entity: 'app'
     },
-
     handler: function (request) {
 
         // Check invitation code
@@ -907,18 +906,15 @@ exports.tos = {
 // Link other account
 
 exports.link = {
-    
-    schema: {
-
-        id: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            id: Hapi.Types.String().required()
+        }
     },
-
     auth: {
-
         scope: 'login',
         entity: 'app'
     },
-
     handler: function (request) {
 
         if (request.params.network === 'facebook' ||
@@ -1185,17 +1181,15 @@ exports.lookup = {
 // Send email reminder account based on email or username and take action
 
 exports.reminder = {
-    
-    schema: {
-
-        account: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            account: Hapi.Types.String().required()
+        }
     },
-
     auth: {
         scope: 'reminder',
         entity: 'app'
     },
-
     handler: function (request) {
 
         var isEmail = request.payload.account.indexOf('@') !== -1;

@@ -75,12 +75,11 @@ exports.get = {
 // Set user client data
 
 exports.post = {
-
-    schema: {
-
-        value: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            value: Hapi.Types.String().required()
+        }
     },
-
     handler: function (request) {
 
         if (internals.checkKey(request.params.id)) {

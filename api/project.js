@@ -112,20 +112,17 @@ exports.list = {
 // Update project properties
 
 exports.post = {
-    
-    query: {
-
-        position: Hapi.Types.Number().min(0)
+    validate: {
+        query: {
+            position: Hapi.Types.Number().min(0)
+        },
+        schema: {
+            title: Hapi.Types.String(),
+            date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
+            time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
+            place: Hapi.Types.String().emptyOk()
+        }
     },
-
-    schema: {
-
-        title: Hapi.Types.String(),
-        date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
-        time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
-        place: Hapi.Types.String().emptyOk()
-    },
-
     handler: function (request) {
 
         exports.load(request.params.id, request.session.user, true, function (project, member, err) {
@@ -198,15 +195,14 @@ exports.post = {
 // Create new project
 
 exports.put = {
-    
-    schema: {
-
-        title: Hapi.Types.String().required(),
-        date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
-        time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
-        place: Hapi.Types.String().emptyOk()
+    validate: {
+        schema: {
+            title: Hapi.Types.String().required(),
+            date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
+            time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
+            place: Hapi.Types.String().emptyOk()
+        }
     },
-
     handler: function (request) {
 
         var project = request.payload;
@@ -371,18 +367,15 @@ exports.suggestions = {
 // Add new participants to a project
 
 exports.participants = {
-    
-    query: {
-
-        message: Hapi.Types.String().max(250)
+    validate: {
+        query: {
+            message: Hapi.Types.String().max(250)
+        },
+        schema: {
+            participants: Hapi.Types.Array().includes(Hapi.Types.String()),     //!! ids or emails
+            names: Hapi.Types.Array().includes(Hapi.Types.String())
+        }
     },
-
-    schema: {
-
-        participants: Hapi.Types.Array().includes(Hapi.Types.String()),     //!! ids or emails
-        names: Hapi.Types.Array().includes(Hapi.Types.String())
-    },
-
     handler: function (request) {
 
         if (request.query.message) {
@@ -613,12 +606,11 @@ exports.participants = {
 // Remove participant from project
 
 exports.uninvite = {
-    
-    schema: {
-
-        participants: Hapi.Types.Array().required().includes(Hapi.Types.String())
+    validate: {
+        schema: {
+            participants: Hapi.Types.Array().required().includes(Hapi.Types.String())
+        }
     },
-
     handler: function (request) {
 
         // Load project for write
