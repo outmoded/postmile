@@ -94,7 +94,7 @@ script
 
         // Calculate Signature
 
-        var authorization = Oz.getAuthorizationHeader(method, uri, credentials, (content || method == 'POST' || method == 'PUT' ? content : null), null);
+        var authorization = Oz.request.generateHeader({ method: method, uri: uri }, credentials);
 
         // Send request
 
