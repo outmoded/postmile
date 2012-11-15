@@ -213,8 +213,9 @@ exports.put = {
             if (err === null) {
 
                 Stream.update({ object: 'projects', user: request.session.user }, request);
-                request.reply.created('project/' + items[0]._id)
-                             .send({ status: 'ok', id: items[0]._id });
+                request.reply.payload({ status: 'ok', id: items[0]._id })
+                             .created('project/' + items[0]._id)
+                             .send();
             }
             else {
 

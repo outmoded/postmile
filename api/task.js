@@ -313,11 +313,9 @@ exports.put = {
             Db.insert('task', task, function (items, err) {
 
                 if (err === null) {
-
                     Stream.update({ object: 'tasks', project: task.project }, request);
                     var result = { status: 'ok', id: items[0]._id };
-
-                    request.reply.created('task/' + items[0]._id);
+                    var created = 'task/' + items[0]._id;
 
                     if (request.query.position !== null &&
                         request.query.position !== undefined) {        // Must test explicitly as value can be 0
@@ -327,20 +325,17 @@ exports.put = {
                         Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
 
                             if (err === null) {
-
                                 result.position = request.query.position;
                             }
 
-                            request.reply(result);
+                            request.reply.payload(result).created(created).send();
                         });
                     }
                     else {
-
-                        request.reply(result);
+                        request.reply.payload(result).created(created).send();
                     }
                 }
                 else {
-
                     request.reply(err);
                 }
             });
