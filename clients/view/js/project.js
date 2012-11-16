@@ -78,8 +78,7 @@ YUI.add('postmile-project', function (Y) {
             // once we've rendered project, dump the initial cache, get tips, sugs, etc
             Y.postmile.initialTasks = Y.postmile.initialProjectId = null;
 
-        } else {
-
+        } /*else*/ {
             // do not refretch/rerender details we aleady have  
 
             renderProjectTasks(project);
