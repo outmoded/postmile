@@ -23,38 +23,30 @@ var internals = {};
 
 // Post handler extension middleware
 
-internals.onPostHandler = function (request, next) {
+internals.formatPayload = function (payload) {
 
-    if (request.response &&
-        request.response.result &&
-        !(request.response.result instanceof Error)) {
+    if (typeof payload !== 'object' ||
+        payload instanceof Array) {
 
-        var result = request.response.result;
+        return payload;
+    }
 
-        // Sanitize database fields
+    // Sanitize database fields
 
-        if (result._id) {
+    if (payload._id) {
+        payload.id = payload._id;
+        delete payload._id;
+    }
 
-            result.id = result._id;
-            delete result._id;
-        }
-
-        if (result instanceof Object) {
-
-            for (var i in result) {
-
-                if (result.hasOwnProperty(i)) {
-
-                    if (i[0] === '_') {
-
-                        delete result[i];
-                    }
-                }
+    for (var i in payload) {
+        if (payload.hasOwnProperty(i)) {
+            if (i[0] === '_') {
+                delete payload[i];
             }
         }
     }
 
-    next();
+    return payload;
 };
 
 
@@ -69,10 +61,10 @@ var configuration = {
 
     name: 'http',
 
-    // Extension points
+    // Formatter
 
-    ext: {
-        onPostHandler: internals.onPostHandler
+    format: {
+        payload: internals.formatPayload
     },
 
     // Authentication
