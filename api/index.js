@@ -21,6 +21,13 @@ var Vault = require('./vault');
 var internals = {};
 
 
+// Catch uncaught exceptions
+
+process.on('uncaughtException', function (err) {
+    Hapi.Utils.abort('Uncaught exception: ' + err.stack);
+});
+
+
 // Post handler extension middleware
 
 internals.formatPayload = function (payload) {
@@ -50,25 +57,12 @@ internals.formatPayload = function (payload) {
 };
 
 
-// Catch uncaught exceptions
-
-process.on('uncaughtException', function (err) {
-    Hapi.Utils.abort('Uncaught exception: ' + err.stack);
-});
-
+// Create server
 
 var configuration = {
-
-    name: 'http',
-
-    // Formatter
-
     format: {
         payload: internals.formatPayload
     },
-
-    // Authentication
-
     auth: {
         scheme: 'oz',
         encryptionPassword: Vault.ozTicket.password,
@@ -77,7 +71,6 @@ var configuration = {
         loadGrantFunc: Session.loadGrant,
         tos: 20110623
     },
-
     debug: true,
     monitor: true
 };
@@ -85,28 +78,16 @@ var configuration = {
 var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
 server.addRoutes(Routes.endpoints);
 
-// Initialize database connection
-
 Db.initialize(function (err) {
 
-    if (err === null) {
-
-        // Load in-memory cache
-
-        Suggestions.initialize();
-        Tips.initialize();
-
-        // Start Server
-
-        server.start();
-        Stream.initialize(server.listener);
-    }
-    else {
-
-        // Database connection failed
-
+    if (err) {
         Hapi.Log.event('err', err);
         process.exit(1);
     }
+
+    Suggestions.initialize();
+    Tips.initialize();
+    server.start();
+    Stream.initialize(server.listener);
 });
 
