@@ -80,7 +80,7 @@ exports.refresh = function (req, res, session, callback) {
 
         if (code !== 200) {
             exports.clear(res);
-            return callback(Err.badRequest(err.message));
+            return callback(Err.badRequest(ticket.message));
         }
 
         exports.set(res, ticket, function (isValid, restrictions) {
