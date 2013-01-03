@@ -11,8 +11,8 @@ var options = {
     nativeClientId: 'postmile.view',
     clientProfileURI: 'client.json',
     loginURI: postmile.web.uri + '/login',
-    authorizationEndpointURI: postmile.web.uri + '/oauth/authorize',
-    issueEndpointURI: postmile.web.uri + '/oauth/issue'
+    authorizationEndpointURI: postmile.web.uri + '/oz/authorize',
+    issueEndpointURI: postmile.web.uri + '/oz/session'
 };
 
 
@@ -28,12 +28,12 @@ getCredentials = function (callback, isRefresh) {
 
     if (isRefresh) {
 
-        localStorage.removeItem('oauth');
+        localStorage.removeItem('oz');
     }
 
     // Lookup credentials in local storage
 
-    var storage = localStorage.getItem('oauth');
+    var storage = localStorage.getItem('oz');
     if (storage) {
 
         try {
@@ -51,7 +51,7 @@ getCredentials = function (callback, isRefresh) {
         }
         else {
 
-            localStorage.removeItem('oauth');
+            localStorage.removeItem('oz');
         }
     }
 
@@ -111,7 +111,7 @@ getCredentials = function (callback, isRefresh) {
                     algorithm: parameters.mac_algorithm
                 };
 
-                localStorage.setItem('oauth', JSON.stringify(credentials));
+                localStorage.setItem('oz', JSON.stringify(credentials));
 
                 parent.location.hash = (parameters.state ? '#' + parameters.state : '');
                 callback(credentials);
@@ -136,7 +136,7 @@ getCredentials = function (callback, isRefresh) {
                 }
                 else {
 
-                    // Third-party OAuth 2.0 flow
+                    // Third-party Oz flow
 
                     var state;
                     var uriBits = document.location.href.split("#");

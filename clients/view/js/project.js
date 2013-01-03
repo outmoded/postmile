@@ -79,7 +79,6 @@ YUI.add('postmile-project', function (Y) {
             Y.postmile.initialTasks = Y.postmile.initialProjectId = null;
 
         } else {
-
             // do not refretch/rerender details we aleady have  
 
             renderProjectTasks(project);

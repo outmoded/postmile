@@ -11,19 +11,11 @@ exports.emailToken = {
 };
 
 
-// OAuth token
+// Oz token
 
-exports.oauthToken = {
+exports.ozTicket = {
 
-    aes256Key: ''
-};
-
-
-// OAuth refresh token
-
-exports.oauthRefresh = {
-
-    aes256Key: ''
+    password: ''
 };
 
 

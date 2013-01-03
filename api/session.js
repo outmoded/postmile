@@ -6,6 +6,7 @@
 // Load modules
 
 var Hapi = require('hapi');
+var Oz = require('oz');
 var Crypto = require('crypto');
 var Db = require('./db');
 var User = require('./user');
@@ -18,291 +19,265 @@ var Vault = require('./vault');
 var internals = {};
 
 
-// Get client information endpoint
+// Get application information endpoint
 
-exports.client = {
-    
+exports.app = {
     auth: {
-
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
-    
     handler: function (request) {
 
-        exports.loadClient(request.params.id, function (err, client) {
+        Db.queryUnique('client', { name: request.params.id }, function (client, err) {
 
-            if (err === null) {
-
-                if (client) {
-
-                    Hapi.Utils.removeKeys(client, ['secret', 'scope']);
-                    request.reply(client);
-                }
-                else {
-
-                    request.reply(Hapi.Error.notFound());
-                }
+            if (err) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
+            if (!client) {
+                return request.reply(Hapi.Error.notFound());
             }
+
+            Hapi.Utils.removeKeys(client, ['secret', 'scope']);
+            return request.reply(client);
         });
     }
 };
 
 
-// Get client
-
-exports.loadClient = function (id, callback) {
-
-    Db.queryUnique('client', { name: id }, function (client, err) {
-
-        if (client) {
-
-            callback(null, client);
+exports.login = {
+    validate: {
+        schema: {
+            type: Hapi.types.String().valid('id', 'twitter', 'facebook', 'yahoo', 'email').required(),
+            id: Hapi.types.String().required(),
+            issueTo: Hapi.types.String()
         }
-        else {
+    },
+    auth: {
+        scope: 'login',
+        entity: 'app'
+    },
+    handler: function (request) {
 
-            if (err === null) {
+        var type = request.payload.type;
+        var id = request.payload.id;
 
-                callback(null, null);
-            }
-            else {
+        var loadUser = function () {
 
-                callback(err, null);
-            }
-        }
-    });
-};
+            if (type === 'id') {
 
+                User.load(id, function (user, err) {
 
-// Get user authentication information
-
-exports.loadUser = function (id, callback) {
-
-    User.load(id, function (user, err) {
-
-        if (user) {
-
-            callback(null, user);
-        }
-        else {
-
-            callback(err);
-        }
-    });
-};
-
-
-// Check client authorization grant
-
-exports.checkAuthorization = function (userId, clientId, callback) {
-
-    Db.query('grant', { user: userId, client: clientId }, function (items, err) {
-
-        if (err === null) {
-
-            if (items &&
-                items.length > 0) {
-
-                items.sort(function (a, b) {
-
-                    if (a.expiration < b.expiration) {
-
-                        return -1;
+                    if (err) {
+                        return request.reply(Hapi.Error.unauthorized(err.message));
                     }
 
-                    if (a.expiration > b.expiration) {
-
-                        return 1;
-                    }
-
-                    return 0;
+                    loadGrant(user);
                 });
+            }
+            else if (type === 'email') {
 
-                var isAuthorized = false;
-                var now = Date.now();
+                Email.loadTicket(id, function (emailTicket, user, err) {
 
-                var expired = [];
-                for (var i = 0, il = items.length; i < il; ++i) {
-
-                    if ((items[i].expiration || 0) <= now) {
-
-                        expired.push(items[i]._id);
+                    if (err) {
+                        return request.reply(Hapi.Error.unauthorized(err.message));
                     }
-                    else {
 
-                        isAuthorized = true;
-                    }
-                }
-
-                if (expired.length > 0) {
-
-                    Db.removeMany('grant', expired, function (err) {});         // Ignore callback
-                }
-
-                if (isAuthorized) {
-
-                    callback(null);
-                }
-                else {
-
-                    callback(Hapi.Error._oauth('invalid_grant', 'Client authorization expired'));
-                }
+                    loadGrant(user, { 'action': emailTicket.action });
+                });
             }
             else {
+                
+                // twitter, facebook, yahoo
 
-                callback(Hapi.Error._oauth('invalid_grant', 'Client is not authorized'));
+                User.validate(id, type, function (err, user) {
+
+                    if (err || !user) {
+                        return request.reply(Hapi.Error.unauthorized());
+                    }
+
+                    loadGrant(user);
+                });
             }
-        }
-        else {
+        };
 
-            callback(Hapi.Error._oauth('server_error', 'Failed retrieving authorization'));
-        }
-    });
-};
+        var loadGrant = function (user, ext) {
 
+            // Lookup existing grant
 
-// Extension OAuth grant types
+            var now = Date.now();
 
-exports.extensionGrant = function (request, client, callback) {
+            var appId = request.payload.issueTo || request.session.app;
+            Db.query('grant', { user: user.id, app: appId }, function (items, err) {
 
-    // Verify grant type prefix
+                if (err) {
+                    return request.reply(err);
+                }
 
-    if (request.payload.grant_type.search('http://ns.postmile.net/') !== 0) {
+                if (items &&
+                    items.length > 0) {
 
-        // Unsupported grant type namespace
-        callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type namespace'));
+                    items.sort(function (a, b) {
+
+                        if (a.exp < b.exp) {
+                            return -1;
+                        }
+
+                        if (a.exp > b.exp) {
+                            return 1;
+                        }
+
+                        return 0;
+                    });
+
+                    var grant = null;
+
+                    var expired = [];
+                    for (var i = 0, il = items.length; i < il; ++i) {
+                        if ((items[i].exp || 0) <= now) {
+                            expired.push(items[i]._id);
+                        }
+                        else {
+                            grant = items[i];
+                        }
+                    }
+
+                    if (expired.length > 0) {
+                        Db.removeMany('grant', expired, function (err) { });         // Ignore callback
+                    }
+
+                    if (grant) {
+                        return issue(appId, grant._id, ext);
+                    }
+                }
+
+                // No active grant
+
+                var newGrant = {
+                    user: user._id,
+                    app: appId,
+                    exp: now + 30 * 24 * 60 * 60 * 1000,                        // 30 days //////////////////
+                    scope: []                                                   // Find app scope ////////////
+                };
+
+                Db.insert('grant', newGrant, function (items, err) {
+
+                    if (err) {
+                        return request.reply(err);
+                    }
+
+                    if (items.length !== 1 ||
+                        !items[0]._id) {
+
+                        return request.reply(Hapi.Error.internal('Failed to add new grant'));
+                    }
+
+                    return issue(appId, items[0]._id, ext);
+                });
+            });
+        };
+
+        var issue = function (appId, grantId, ext) {
+
+            Oz.rsvp.issue({ id: appId }, { id: grantId }, Vault.ozTicket.password, function (err, rsvp) {
+
+                if (err) {
+                    return request.reply(Hapi.Error.internal('Failed generating rsvp: ' + err));
+                }
+
+                var response = {
+                    rsvp: rsvp
+                };
+
+                if (ext) {
+                    response.ext = ext;
+                }
+
+                return request.reply(response);
+            });
+        };
+
+        loadUser();
     }
-    else {
+};
 
-        var grantType = request.payload.grant_type.replace('http://ns.postmile.net/', '');
 
-        // Check if client has 'login' scope
+exports.loadApp = function (id, callback) {
 
-        if ((client.scope && client.scope.login === true) ||
-            (request.session && request.session.scope && request.session.scope.login === true)) {
-
-            // Switch on grant type
-
-            if (grantType === 'id') {
-
-                // Get user
-
-                User.load(request.payload.x_user_id, function (user, err) {
-
-                    if (user) {
-
-                        callback(null, user);
-                    }
-                    else {
-
-                        // Unknown local account
-                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown local account'));
-                    }
-                });
-            }
-            else if (grantType === 'twitter' ||
-                     grantType === 'facebook' ||
-                     grantType === 'yahoo') {
-
-                    // Check network identifier
-
-                User.validate(request.payload.x_user_id, grantType, function (user, err) {
-
-                    if (user) {
-
-                        callback(null, user);
-                    }
-                    else {
-
-                        // Unregistered network account
-                        callback(Hapi.Error._oauth('invalid_grant', 'Unknown ' + grantType.charAt(0).toUpperCase() + grantType.slice(1) + ' account: ' + request.payload.x_user_id));
-                    }
-                });
-            }
-            else if (grantType === 'email') {
-
-                    // Check email identifier
-
-                Email.loadTicket(request.payload.x_email_token, function (ticket, user, err) {
-
-                    if (ticket) {
-
-                        callback(null, user, { 'x_action': ticket.action });
-                    }
-                    else {
-
-                        // Invalid email token
-                        callback(Hapi.Error._oauth('invalid_grant', err.message));
-                    }
-                });
-            }
-            else {
-
-                // Unsupported grant type
-                callback(Hapi.Error._oauth('unsupported_grant_type', 'Unknown or unsupported grant type: ' + grantType));
-            }
-        }
-        else {
-
-            // No client scope for local account access
-            callback(Hapi.Error._oauth('unauthorized_client', 'Client missing \'login\' scope'));
-        }
+    if (!id) {
+        return callback();
     }
+
+    Db.get('client', id, function (client, err) {
+
+        if (err || !client) {
+            return callback();
+        }
+
+        var app = {
+            id: client._id,
+            secret: client.secret,
+            scope: client.scope
+        };
+
+        return callback(app);
+    });
+};
+
+
+exports.loadGrant = function (grantId, callback) {
+
+    Db.get('grant', grantId, function (item, err) {
+
+        // Verify grant is still valid
+
+        if (err || !item) {
+            return callback();
+        }
+
+        User.load(item.user, function (user, err) {
+
+            if (err || !user) {
+                callback();
+            }
+
+            var result = {
+                id: item._id,
+                app: item.app,
+                user: item.user,
+                exp: item.exp,
+                scope: item.scope
+            };
+
+            var ext = {
+                tos: internals.getLatestTOS(user)
+            };
+
+            return callback(result, ext);
+        });
+    });
 };
 
 
 // Validate message
 
-exports.validate = function (message, token, mac, callback) {
+exports.validate = function (message, ticket, mac, callback) {
 
-    Hapi.Session.loadToken(Vault.oauthToken.aes256Key, token, function (session) {
+    Oz.Ticket.parse(ticket, Vault.ozTicket.password, function (err, session) {
 
-        if (session &&
-            session.algorithm &&
-            session.key &&
-            session.user) {
-
-            // Lookup hash function
-
-            var hashMethod = null;
-            switch (session.algorithm) {
-
-                case 'hmac-sha-1': hashMethod = 'sha1'; break;
-                case 'hmac-sha-256': hashMethod = 'sha256'; break;
-            }
-
-            if (hashMethod) {
-
-                // Sign message
-
-                var hmac = Crypto.createHmac(hashMethod, session.key).update(message);
-                var digest = hmac.digest('base64');
-
-                if (digest === mac) {
-
-                    callback(session.user, null);
-                }
-                else {
-
-                    // Invalid signature
-                    callback(null, Hapi.Error.unauthorized('Invalid mac'));
-                }
-            }
-            else {
-
-                // Invalid algorithm
-                callback(null, Hapi.Error.internal('Unknown algorithm'));
-            }
+        if (err || !session) {
+            return callback(null, Hapi.Error.notFound('Invalid ticket'));
         }
-        else {
 
-            // Invalid token
-            callback(null, Hapi.Error.notFound('Invalid token'));
+        // Mac message
+
+        var hmac = Crypto.createHmac(session.algorithm, session.key).update(message);
+        var digest = hmac.digest('base64');
+        if (digest !== mac) {
+            return callback(null, Hapi.Error.unauthorized('Invalid mac'));
         }
+        
+        return callback(session.user, null);
     });
 };
 
@@ -315,4 +290,21 @@ exports.delUser = function (userId, callback) {
 };
 
 
+// Find latest accepted TOS
+
+internals.getLatestTOS = function (user) {
+
+    if (user &&
+        user.tos &&
+        typeof user.tos === 'object') {
+
+        var versions = Object.keys(user.tos);
+        if (versions.length > 0) {
+            versions.sort();
+            return versions[versions.length - 1];
+        }
+    }
+
+    return 0;
+};
 
