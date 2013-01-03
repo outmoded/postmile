@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -22,7 +17,7 @@ exports.getProject = {
     
     handler: function (request) {
 
-        exports.load(request.session.user, function (last, err) {
+        exports.load(request.session.user, function (err, last) {
 
             if (last &&
                 last.projects &&
@@ -33,7 +28,7 @@ exports.getProject = {
 
                 request.reply(record);
             }
-            else if (err === null) {
+            else if (!err) {
 
                 request.reply({ id: request.session.user, projects: {} });
             }
@@ -52,13 +47,13 @@ exports.postProject = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
                 exports.setLast(request.session.user, project, null, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         request.reply({ status: 'ok' });
                     }
@@ -83,11 +78,11 @@ exports.getTask = {
     
     handler: function (request) {
 
-        Task.load(request.params.id, request.session.user, false, function (task, err, project) {
+        Task.load(request.params.id, request.session.user, false, function (err, task, project) {
 
             if (task) {
 
-                exports.load(request.session.user, function (last, err) {
+                exports.load(request.session.user, function (err, last) {
 
                     if (last &&
                         last.projects &&
@@ -101,7 +96,7 @@ exports.getTask = {
 
                         request.reply(record);
                     }
-                    else if (err === null) {
+                    else if (!err) {
 
                         request.reply({ id: request.session.user, projects: {} });
                     }
@@ -126,13 +121,13 @@ exports.postTask = {
     
     handler: function (request) {
 
-        Task.load(request.params.id, request.session.user, false, function (task, err, project) {
+        Task.load(request.params.id, request.session.user, false, function (err, task, project) {
 
             if (task) {
 
                 exports.setLast(request.session.user, project, task, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         request.reply({ status: 'ok' });
                     }
@@ -155,21 +150,21 @@ exports.postTask = {
 
 exports.load = function (userId, callback) {
 
-    Db.get('user.last', userId, function (item, err) {
+    Db.get('user.last', userId, function (err, item) {
 
         if (item) {
 
-            callback(item, null);
+            callback(null, item);
         }
         else {
 
-            if (err === null) {
+            if (!err) {
 
                 callback(null, null);
             }
             else {
 
-                callback(null, err);
+                callback(err);
             }
         }
     });
@@ -180,7 +175,7 @@ exports.load = function (userId, callback) {
 
 exports.delProject = function (userId, projectId, callback) {
 
-    exports.load(userId, function (last, err) {
+    exports.load(userId, function (err, last) {
 
         if (last &&
             last.projects &&
@@ -191,7 +186,7 @@ exports.delProject = function (userId, projectId, callback) {
 
             Db.update('user.last', last._id, changes, function (err) {
 
-                if (err === null) {
+                if (!err) {
 
                     callback(null);
                 }
@@ -215,9 +210,9 @@ exports.setLast = function (userId, project, task, callback) {
 
     var now = Date.now();
 
-    exports.load(userId, function (last, err) {
+    exports.load(userId, function (err, last) {
 
-        if (err === null) {
+        if (!err) {
 
             if (last) {
 
@@ -299,7 +294,7 @@ exports.setLast = function (userId, project, task, callback) {
                     last.projects[project._id].tasks[task._id] = now;
                 }
 
-                Db.insert('user.last', last, function (items, err) {
+                Db.insert('user.last', last, function (err, items) {
 
                     callback(err);
                 });

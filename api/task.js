@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -20,7 +15,7 @@ exports.get = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, false, function (task, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, task) {
 
             if (task) {
 
@@ -53,11 +48,11 @@ exports.list = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
-                Sort.list('task', request.params.id, 'project', function (tasks) {
+                Sort.list('task', request.params.id, 'project', function (err, tasks) {
 
                     if (tasks) {
 
@@ -143,7 +138,7 @@ exports.post = {
     },
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, true, function (task, err, project) {
+        exports.load(request.params.id, request.session.user, true, function (err, task, project) {
 
             if (task) {
 
@@ -193,7 +188,7 @@ exports.post = {
 
                             Db.update('task', task._id, Db.toChanges(request.payload), function (err) {
 
-                                if (err === null) {
+                                if (!err) {
 
                                     Stream.update({ object: 'task', project: task.project, task: task._id }, request);
                                     request.reply({ status: 'ok' });
@@ -217,7 +212,7 @@ exports.post = {
 
                     Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             Stream.update({ object: 'tasks', project: task.project }, request);
                             request.reply({ status: 'ok' });
@@ -257,7 +252,7 @@ exports.put = {
     },
     handler: function (request) {
 
-        Project.load(request.params.id, request.session.user, true, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, true, function (err, project, member) {
 
             if (project) {
 
@@ -310,9 +305,9 @@ exports.put = {
             task.project = request.params.id;
             task.status = task.status || 'open';
 
-            Db.insert('task', task, function (items, err) {
+            Db.insert('task', task, function (err, items) {
 
-                if (err === null) {
+                if (!err) {
                     Stream.update({ object: 'tasks', project: task.project }, request);
                     var result = { status: 'ok', id: items[0]._id };
                     var created = 'task/' + items[0]._id;
@@ -324,7 +319,7 @@ exports.put = {
 
                         Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
 
-                            if (err === null) {
+                            if (!err) {
                                 result.position = request.query.position;
                             }
 
@@ -350,13 +345,13 @@ exports.del = {
     
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, true, function (task, err) {
+        exports.load(request.params.id, request.session.user, true, function (err, task) {
 
             if (task) {
 
                 Db.remove('task', task._id, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         Db.remove('task.details', task._id, function (err) { });
 
@@ -382,31 +377,31 @@ exports.del = {
 
 exports.load = function (taskId, userId, isWritable, callback) {
 
-    Db.get('task', taskId, function (item, err) {
+    Db.get('task', taskId, function (err, item) {
 
         if (item) {
 
-            Project.load(item.project, userId, isWritable, function (project, member, err) {
+            Project.load(item.project, userId, isWritable, function (err, project, member) {
 
                 if (project) {
 
-                    callback(item, null, project);
+                    callback(null, item, project);
                 }
                 else {
 
-                    callback(null, err, null);
+                    callback(err);
                 }
             });
         }
         else {
 
-            if (err === null) {
+            if (!err) {
 
-                callback(null, Hapi.Error.notFound(), null);
+                callback(Hapi.Error.notFound());
             }
             else {
 
-                callback(null, err, null);
+                callback(err);
             }
         }
     });
@@ -419,7 +414,7 @@ exports.delProject = function (projectId, callback) {
 
     Db.removeCriteria('task', { project: projectId }, function (err) {
 
-        if (err === null) {
+        if (!err) {
 
             Db.removeCriteria('task.details', { project: projectId }, function (err) {
 
@@ -440,15 +435,15 @@ exports.delProject = function (projectId, callback) {
 
 exports.userTaskList = function (projectId, userId, callback) {
 
-    Db.query('task', { project: projectId, participants: userId }, function (items, err) {
+    Db.query('task', { project: projectId, participants: userId }, function (err, items) {
 
-        if (err === null) {
+        if (!err) {
 
-            callback(items, null);
+            callback(null, items);
         }
         else {
 
-            callback(null, err);
+            callback(err);
         }
     });
 };
@@ -458,15 +453,15 @@ exports.userTaskList = function (projectId, userId, callback) {
 
 exports.count = function (projectId, callback) {
 
-    Db.count('task', { project: projectId }, function (count, err) {
+    Db.count('task', { project: projectId }, function (err, count) {
 
-        if (err === null) {
+        if (!err) {
 
-            callback(count, null);
+            callback(null, count);
         }
         else {
 
-            callback(null, err);
+            callback(err);
         }
     });
 };

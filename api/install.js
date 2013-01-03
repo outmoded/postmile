@@ -9,7 +9,7 @@ var Utils = require('./utils');
 
 Db.initialize(true, function (err) {
 
-    if (err === null) {
+    if (!err) {
 
         Hapi.Log.event('info', 'Database initialized');
 
@@ -29,15 +29,15 @@ Db.initialize(true, function (err) {
             }
         ];
 
-        Db.insert('client', clients, function (items, err) {
+        Db.insert('client', clients, function (err, items) {
 
-            if (err === null) {
+            if (!err) {
 
                 // Add public invite to disable invitations
 
-                Db.insert('invite', { code: 'public' }, function (items, err) {
+                Db.insert('invite', { code: 'public' }, function (err, items) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         Hapi.Log.event('info', 'Initial dataset created successfully');
                         Hapi.Log.event('info', '>>>>> WEB client id: ' + clients[0]._id);

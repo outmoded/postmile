@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load Modules
 
 var MongoDB = require('mongodb');
@@ -15,7 +10,7 @@ var Config = require('./config');
 
 var internals = {
 
-    collectionNames: [ 'client',
+    collectionNames: ['client',
                        'invite',
                        'grant',
                        'project', 'project.sort',
@@ -42,38 +37,26 @@ exports.initialize = function (arg1, arg2) {        // [isNew,] callback
 
     internals.client.open(function (err, client) {
 
-        if (err === null) {
-
-            if (Vault.database.username) {
-
-                internals.client.authenticate(Vault.database.username, Vault.database.password, function (err, result) {
-
-                    if (err === null) {
-
-                        if (result === true) {
-
-                            internals.initCollection(0, isNew, callback);
-                        }
-                        else {
-
-                            callback('Database authentication failed');
-                        }
-                    }
-                    else {
-
-                        callback('Database authentication error: ' + JSON.stringify(err));
-                    }
-                });
-            }
-            else {
-
-                internals.initCollection(0, isNew, callback);
-            }
+        if (err) {
+            return callback('Database connection error: ' + JSON.stringify(err));
         }
-        else {
 
-            callback('Database connection error: ' + JSON.stringify(err));
+        if (!Vault.database.username) {
+            return internals.initCollection(0, isNew, callback);
         }
+
+        internals.client.authenticate(Vault.database.username, Vault.database.password, function (err, result) {
+
+            if (err) {
+                return callback('Database authentication error: ' + JSON.stringify(err));
+            }
+
+            if (!result) {
+                return callback('Database authentication failed');
+            }
+
+            return internals.initCollection(0, isNew, callback);
+        });
     });
 
     // TODO: find a way to close the connection
@@ -82,34 +65,25 @@ exports.initialize = function (arg1, arg2) {        // [isNew,] callback
 
 internals.initCollection = function (i, isNew, callback) {
 
-    if (i < internals.collectionNames.length) {
+    var next = function (err, collection) {
 
-        if (isNew) {
-
-            internals.client.createCollection(internals.collectionNames[i], next);
+        if (err) {
+            return callback('Failed opening collection: ' + internals.collectionNames[i] + ' due to: ' + err);
         }
-        else {
 
-            internals.client.collection(internals.collectionNames[i], next);
-        }
-    }
-    else {
+        internals.collections[internals.collectionNames[i]] = collection;
+        internals.initCollection(i + 1, isNew, callback);
+    };
 
-        callback(null);
+    if (i >= internals.collectionNames.length) {
+        return callback(null);
     }
 
-    function next(err, collection) {
-
-        if (err === null) {
-
-            internals.collections[internals.collectionNames[i]] = collection;
-            internals.initCollection(i + 1, isNew, callback);
-        }
-        else {
-
-            callback('Failed opening collection: ' + internals.collectionNames[i] + ' due to: ' + err);
-        }
+    if (isNew) {
+        return internals.client.createCollection(internals.collectionNames[i], next);
     }
+
+    return internals.client.collection(internals.collectionNames[i], next);
 };
 
 
@@ -118,35 +92,26 @@ internals.initCollection = function (i, isNew, callback) {
 exports.all = function (collectionName, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'all'));
+    }
 
-        collection.find(function (err, cursor) {
+    collection.find(function (err, cursor) {
 
-            if (err === null) {
+        if (err) {
+            return callback(internals.error(err, collectionName, 'all'));
+        }
 
-                cursor.toArray(function (err, results) {
+        cursor.toArray(function (err, results) {
 
-                    if (err === null) {
-
-                        internals.normalize(results);
-                        callback(results, null);
-                    }
-                    else {
-
-                        callback(null, internals.error(err, collectionName, 'all'));
-                    }
-                });
+            if (err) {
+                return callback(internals.error(err, collectionName, 'all'));
             }
-            else {
 
-                callback(null, internals.error(err, collectionName, 'all'));
-            }
+            internals.normalize(results);
+            return callback(null, results);
         });
-    }
-    else {
-
-        callback(null, internals.error('Collection not found', collectionName, 'all'));
-    }
+    });
 };
 
 
@@ -155,33 +120,24 @@ exports.all = function (collectionName, callback) {
 exports.get = function (collectionName, id, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
-
-        var dbId = internals.getDbId(id);
-        if (dbId) {
-
-            collection.findOne(dbId, function (err, result) {
-
-                if (err === null) {
-
-                    internals.normalize(result);
-                    callback(result, null);
-                }
-                else {
-
-                    callback(null, internals.error(err, collectionName, 'get', id));
-                }
-            });
-        }
-        else {
-
-            callback(null, null);
-        }
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'get', id));
     }
-    else {
 
-        callback(null, internals.error('Collection not found', collectionName, 'get', id));
+    var dbId = internals.getDbId(id);
+    if (!dbId) {
+        return callback(null, null);
     }
+
+    collection.findOne(dbId, function (err, result) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'get', id));
+        }
+
+        internals.normalize(result);
+        return callback(null, result);
+    });
 };
 
 
@@ -190,87 +146,65 @@ exports.get = function (collectionName, id, callback) {
 exports.getMany = function (collectionName, ids, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'getMany', ids), ids);
+    }
 
-        var notFound = [];
-        var criteria = { _id: {} };
-        criteria._id.$in = [];
-        for (var i = 0, il = ids.length; i < il; ++i) {
-
-            var dbId = internals.getDbId(ids[i]);
-            if (dbId) {
-
-                criteria._id.$in.push(dbId);
-            }
-            else {
-
-                notFound.push(ids[i]);
-            }
-        }
-
-        if (criteria._id.$in.length > 0) {
-
-            collection.find(criteria, function (err, cursor) {
-
-                if (err === null) {
-
-                    cursor.toArray(function (err, results) {
-
-                        if (err === null) {
-
-                            if (results.length > 0) {
-
-                                internals.normalize(results);
-
-                                // Sort based on requested ids
-
-                                var map = {};
-                                for (i = 0, il = results.length; i < il; ++i) {
-
-                                    map[results[i]._id] = results[i];
-                                }
-
-                                var items = [];
-                                for (i = 0, il = ids.length; i < il; ++i) {
-
-                                    if (map[ids[i]]) {
-
-                                        items.push(map[ids[i]]);
-                                    }
-                                    else {
-
-                                        notFound.push(ids[i]);
-                                    }
-                                }
-
-                                callback(items, null, notFound);
-                            }
-                            else {
-
-                                callback([], null, ids);
-                            }
-                        }
-                        else {
-
-                            callback(null, internals.error(err, collectionName, 'getMany', ids), ids);
-                        }
-                    });
-                }
-                else {
-
-                    callback(null, internals.error(err, collectionName, 'getMany', ids), ids);
-                }
-            });
+    var notFound = [];
+    var criteria = { _id: {} };
+    criteria._id.$in = [];
+    for (var i = 0, il = ids.length; i < il; ++i) {
+        var dbId = internals.getDbId(ids[i]);
+        if (dbId) {
+            criteria._id.$in.push(dbId);
         }
         else {
-
-            callback([], null, ids);
+            notFound.push(ids[i]);
         }
     }
-    else {
 
-        callback(null, internals.error('Collection not found', collectionName, 'getMany', ids), ids);
+    if (criteria._id.$in.length <= 0) {
+        return callback(null, [], ids);
     }
+
+    collection.find(criteria, function (err, cursor) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'getMany', ids), ids);
+        }
+
+        cursor.toArray(function (err, results) {
+
+            if (err) {
+                return callback(internals.error(err, collectionName, 'getMany', ids), ids);
+            }
+
+            if (results.length <= 0) {
+                return callback(null, [], ids);
+            }
+
+            internals.normalize(results);
+
+            // Sort based on requested ids
+
+            var map = {};
+            for (i = 0, il = results.length; i < il; ++i) {
+                map[results[i]._id] = results[i];
+            }
+
+            var items = [];
+            for (i = 0, il = ids.length; i < il; ++i) {
+                if (map[ids[i]]) {
+                    items.push(map[ids[i]]);
+                }
+                else {
+                    notFound.push(ids[i]);
+                }
+            }
+
+            return callback(null, items, notFound);
+        });
+    });
 };
 
 
@@ -279,36 +213,27 @@ exports.getMany = function (collectionName, ids, callback) {
 exports.query = function (collectionName, criteria, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'query', criteria));
+    }
 
-        internals.idifyString(criteria);
-        collection.find(criteria, function (err, cursor) {
+    internals.idifyString(criteria);
+    collection.find(criteria, function (err, cursor) {
 
-            if (err === null) {
+        if (err) {
+            return callback(internals.error(err, collectionName, 'query', criteria));
+        }
 
-                cursor.toArray(function (err, results) {
+        cursor.toArray(function (err, results) {
 
-                    if (err === null) {
-
-                        internals.normalize(results);
-                        callback(results, null);
-                    }
-                    else {
-
-                        callback(null, internals.error(err, collectionName, 'query', criteria));
-                    }
-                });
+            if (err) {
+                return callback(internals.error(err, collectionName, 'query', criteria));
             }
-            else {
 
-                callback(null, internals.error(err, collectionName, 'query', criteria));
-            }
+            internals.normalize(results);
+            return callback(null, results);
         });
-    }
-    else {
-
-        callback(null, internals.error('Collection not found', collectionName, 'query', criteria));
-    }
+    });
 };
 
 
@@ -317,59 +242,40 @@ exports.query = function (collectionName, criteria, callback) {
 exports.queryUnique = function (collectionName, criteria, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'queryUnique', criteria));
+    }
 
-        internals.idifyString(criteria);
-        collection.find(criteria, function (err, cursor) {
+    internals.idifyString(criteria);
+    collection.find(criteria, function (err, cursor) {
 
-            if (err === null) {
+        if (err) {
+            return callback(internals.error(err, collectionName, 'queryUnique', criteria));
+        }
 
-                cursor.toArray(function (err, results) {
+        cursor.toArray(function (err, results) {
 
-                    if (err === null) {
-
-                        if (results) {
-
-                            if (results.length > 0) {
-
-                                if (results.length === 1) {
-
-                                    var result = results[0];
-                                    internals.normalize(result);
-                                    callback(result, null);
-                                }
-                                else {
-
-                                    callback(null, internals.error('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
-                                }
-                            }
-                            else {
-
-                                // Not found
-                                callback(null, null);
-                            }
-                        }
-                        else {
-
-                            callback(null, internals.error('Null result array', collectionName, 'queryUnique', criteria));
-                        }
-                    }
-                    else {
-
-                        callback(null, internals.error(err, collectionName, 'queryUnique', criteria));
-                    }
-                });
+            if (err) {
+                return callback(internals.error(err, collectionName, 'queryUnique', criteria));
             }
-            else {
 
-                callback(null, internals.error(err, collectionName, 'queryUnique', criteria));
+            if (!results) {
+                return callback(internals.error('Null result array', collectionName, 'queryUnique', criteria));
             }
+
+            if (results.length <= 0) {
+                return callback(null, null);
+            }
+
+            if (results.length !== 1) {
+                return callback(internals.error('Found multiple results for unique criteria', collectionName, 'queryUnique', criteria));
+            }
+
+            var result = results[0];
+            internals.normalize(result);
+            return callback(null, result);
         });
-    }
-    else {
-
-        callback(null, internals.error('Collection not found', collectionName, 'queryUnique', criteria));
-    }
+    });
 };
 
 
@@ -378,25 +284,19 @@ exports.queryUnique = function (collectionName, criteria, callback) {
 exports.count = function (collectionName, criteria, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
-
-        internals.idifyString(criteria);
-        collection.count(criteria, function (err, count) {
-
-            if (err === null) {
-
-                callback(count, null);
-            }
-            else {
-
-                callback(null, internals.error(err, collectionName, 'count', criteria));
-            }
-        });
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'count', criteria));
     }
-    else {
 
-        callback(null, internals.error('Collection not found', collectionName, 'count', criteria));
-    }
+    internals.idifyString(criteria);
+    collection.count(criteria, function (err, count) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'count', criteria));
+        }
+
+        return callback(null, count);
+    });
 };
 
 
@@ -405,49 +305,39 @@ exports.count = function (collectionName, criteria, callback) {
 exports.insert = function (collectionName, items, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'insert', items));
+    }
 
-        var now = Date.now();
+    var now = Date.now();
 
-        if (items instanceof Array) {
-
-            for (var i = 0, il = items.length; i < il; ++i) {
-
-                items[i].created = now;
-                items[i].modified = now;
-            }
+    if (items instanceof Array) {
+        for (var i = 0, il = items.length; i < il; ++i) {
+            items[i].created = now;
+            items[i].modified = now;
         }
-        else {
-
-            items.created = now;
-            items.modified = now;
-        }
-
-        internals.idifyString(items);
-        collection.insert(items, function (err, results) {
-
-            if (err === null) {
-
-                if (results && results.length > 0) {
-
-                    internals.normalize(results);
-                    callback(results, null);
-                }
-                else {
-
-                    callback(null, internals.error('No database insert output', collectionName, 'insert', items));
-                }
-            }
-            else {
-
-                callback(null, internals.error(err, collectionName, 'insert', items));
-            }
-        });
     }
     else {
-
-        callback(null, internals.error('Collection not found', collectionName, 'insert', items));
+        items.created = now;
+        items.modified = now;
     }
+
+    internals.idifyString(items);
+    collection.insert(items, function (err, results) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'insert', items));
+        }
+
+        if (!results ||
+            results.length <= 0) {
+
+            return callback(internals.error('No database insert output', collectionName, 'insert', items));
+        }
+
+        internals.normalize(results);
+        return callback(null, results);
+    });
 };
 
 
@@ -456,40 +346,31 @@ exports.insert = function (collectionName, items, callback) {
 exports.replace = function (collectionName, item, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'replace', item));
+    }
 
-        var now = Date.now();
-        if (item.created === undefined) {
+    var now = Date.now();
+    if (item.created === undefined) {
 
-            item.created = now;
+        item.created = now;
+    }
+
+    item.modified = now;
+
+    internals.idifyString(item);
+    collection.update({ _id: item._id }, item, function (err, count) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'replace', item));
         }
 
-        item.modified = now;
+        if (!count) {
+            return callback(internals.error('No document found to replace', collectionName, 'replace', item));
+        }
 
-        internals.idifyString(item);
-        collection.update({ _id: item._id }, item, function (err, count) {
-
-            if (err === null) {
-
-                if (count) {
-
-                    callback(null);
-                }
-                else {
-
-                    callback(internals.error('No document found to replace', collectionName, 'replace', item));
-                }
-            }
-            else {
-
-                callback(internals.error(err, collectionName, 'replace', item));
-            }
-        });
-    }
-    else {
-
-        callback(internals.error('Collection not found', collectionName, 'replace', item));
-    }
+        return callback(null);
+    });
 };
 
 
@@ -498,45 +379,33 @@ exports.replace = function (collectionName, item, callback) {
 exports.update = function (collectionName, id, changes, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
-
-        changes = changes || {};
-        changes.$set = changes.$set || {};
-
-        var now = Date.now();
-        changes.$set.modified = now;
-
-        var dbId = internals.getDbId(id);
-        if (dbId) {
-
-            collection.update({ _id: dbId }, changes, function (err, count) {
-
-                if (err === null) {
-
-                    if (count) {
-
-                        callback(null);
-                    }
-                    else {
-
-                        callback(internals.error('No document found to update', collectionName, 'update', [id, changes]));
-                    }
-                }
-                else {
-
-                    callback(internals.error(err, collectionName, 'update', [id, changes]));
-                }
-            });
-        }
-        else {
-
-            callback(internals.error('Invalid id', collectionName, 'update', [id, changes]));
-        }
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'update', [id, changes]));
     }
-    else {
 
-        callback(internals.error('Collection not found', collectionName, 'update', [id, changes]));
+    changes = changes || {};
+    changes.$set = changes.$set || {};
+
+    var now = Date.now();
+    changes.$set.modified = now;
+
+    var dbId = internals.getDbId(id);
+    if (!dbId) {
+        return callback(internals.error('Invalid id', collectionName, 'update', [id, changes]));
     }
+
+    collection.update({ _id: dbId }, changes, function (err, count) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'update', [id, changes]));
+        }
+
+        if (!count) {
+            return callback(internals.error('No document found to update', collectionName, 'update', [id, changes]));
+        }
+
+        return callback(null);
+    });
 };
 
 
@@ -545,74 +414,55 @@ exports.update = function (collectionName, id, changes, callback) {
 exports.updateCriteria = function (collectionName, id, itemCriteria, changes, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
+    }
 
-        changes = changes || {};
-        changes.$set = changes.$set || {};
+    changes = changes || {};
+    changes.$set = changes.$set || {};
 
-        var now = Date.now();
-        changes.$set.modified = now;
+    var now = Date.now();
+    changes.$set.modified = now;
 
-        var isValid = true;
+    var isValid = true;
 
-        // Add id to criteria if present
+    // Add id to criteria if present
 
-        var options = {};
+    var options = {};
 
-        if (id) {
-
-            var dbId = internals.getDbId(id);
-            if (dbId) {
-
-                itemCriteria._id = dbId;
-            }
-            else {
-
-                isValid = false;
-            }
+    if (id) {
+        var dbId = internals.getDbId(id);
+        if (dbId) {
+            itemCriteria._id = dbId;
         }
         else {
-
-            options.multi = true;
-        }
-
-        if (isValid) {
-
-            collection.update(itemCriteria, changes, options, function (err, count) {
-
-                if (err === null) {
-
-                    if (id) {
-
-                        if (count) {
-
-                            callback(null);
-                        }
-                        else {
-
-                            callback(internals.error('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
-                        }
-                    }
-                    else {
-
-                        callback(null);
-                    }
-                }
-                else {
-
-                    callback(internals.error(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
-                }
-            });
-        }
-        else {
-
-            callback(internals.error('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+            isValid = false;
         }
     }
     else {
-
-        callback(internals.error('Collection not found', collectionName, 'updateCriteria', [id, itemCriteria, changes]));
+        options.multi = true;
     }
+
+    if (!isValid) {
+        return callback(internals.error('Invalid id', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+    }
+
+    collection.update(itemCriteria, changes, options, function (err, count) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+        }
+
+        if (!id) {
+            return callback(null);
+        }
+
+        if (!count) {
+            return callback(internals.error('No document found to update', collectionName, 'updateCriteria', [id, itemCriteria, changes, options]));
+        }
+
+        return callback(null);
+    });
 };
 
 
@@ -621,25 +471,19 @@ exports.updateCriteria = function (collectionName, id, itemCriteria, changes, ca
 exports.remove = function (collectionName, id, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
-
-        var dbId = new internals.ObjectID(id);
-        collection.remove({ _id: dbId }, function (err, collection) {
-
-            if (err === null) {
-
-                callback(null);
-            }
-            else {
-
-                callback(internals.error(err, collectionName, 'remove', id));
-            }
-        });
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'remove', id));
     }
-    else {
 
-        callback(internals.error('Collection not found', collectionName, 'remove', id));
-    }
+    var dbId = new internals.ObjectID(id);
+    collection.remove({ _id: dbId }, function (err, collection) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'remove', id));
+        }
+
+        return callback(null);
+    });
 };
 
 
@@ -648,25 +492,19 @@ exports.remove = function (collectionName, id, callback) {
 exports.removeCriteria = function (collectionName, criteria, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
-
-        internals.idifyString(criteria);
-        collection.remove(criteria, function (err, collection) {
-
-            if (err === null) {
-
-                callback(null);
-            }
-            else {
-
-                callback(internals.error(err, collectionName, 'remove', id));
-            }
-        });
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'remove', id));
     }
-    else {
 
-        callback(internals.error('Collection not found', collectionName, 'remove', id));
-    }
+    internals.idifyString(criteria);
+    collection.remove(criteria, function (err, collection) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'remove', id));
+        }
+
+        return callback(null);
+    });
 };
 
 
@@ -675,42 +513,31 @@ exports.removeCriteria = function (collectionName, criteria, callback) {
 exports.removeMany = function (collectionName, ids, callback) {
 
     var collection = internals.collections[collectionName];
-    if (collection) {
+    if (!collection) {
+        return callback(internals.error('Collection not found', collectionName, 'remove', ids));
+    }
 
-        var criteria = { _id: {} };
-        criteria._id.$in = [];
-        for (var i = 0, il = ids.length; i < il; ++i) {
-
-            var dbId = internals.getDbId(ids[i]);
-            if (dbId) {
-
-                criteria._id.$in.push(dbId);
-            }
-        }
-
-        if (criteria._id.$in.length > 0) {
-
-            collection.remove(criteria, function (err, collection) {
-
-                if (err === null) {
-
-                    callback(null);
-                }
-                else {
-
-                    callback(internals.error(err, collectionName, 'remove', ids));
-                }
-            });
-        }
-        else {
-
-            callback(internals.error('Invalid ids', collectionName, 'remove', ids));
+    var criteria = { _id: {} };
+    criteria._id.$in = [];
+    for (var i = 0, il = ids.length; i < il; ++i) {
+        var dbId = internals.getDbId(ids[i]);
+        if (dbId) {
+            criteria._id.$in.push(dbId);
         }
     }
-    else {
 
-        callback(internals.error('Collection not found', collectionName, 'remove', ids));
+    if (criteria._id.$in.length <= 0) {
+        return callback(internals.error('Invalid ids', collectionName, 'remove', ids));
     }
+
+    collection.remove(criteria, function (err, collection) {
+
+        if (err) {
+            return callback(internals.error(err, collectionName, 'remove', ids));
+        }
+
+        return callback(null);
+    });
 };
 
 
@@ -727,9 +554,7 @@ exports.toChanges = function (item) {
         changes.$set = {};
 
         for (var i in item) {
-
             if (item.hasOwnProperty(i)) {
-
                 changes.$set[i] = item[i];
             }
         }
@@ -769,21 +594,15 @@ exports.decodeKey = function (value) {
 internals.normalize = function (obj) {
 
     if (obj !== null) {
-
         for (var i in obj) {
-
             if (obj.hasOwnProperty(i)) {
-
                 if (obj[i] instanceof internals.Long) {
-
                     obj[i] = obj[i].toNumber();
                 }
                 else if (obj[i] instanceof internals.ObjectID) {
-
                     obj[i] = obj[i].toString();
                 }
                 else if (obj[i] && typeof obj[i] === 'object') {
-
                     internals.normalize(obj[i]);
                 }
             }
@@ -797,21 +616,15 @@ internals.normalize = function (obj) {
 internals.idifyString = function (items) {
 
     if (items) {
-
         if (items instanceof Array) {
-
             for (var i = 0, il = items.length; i < il; ++i) {
-
                 if (items[i]._id) {
-
                     items[i]._id = new internals.ObjectID(items[i]._id);
                 }
             }
         }
         else {
-
             if (items._id) {
-
                 items._id = new internals.ObjectID(items._id);
             }
         }
@@ -824,11 +637,9 @@ internals.idifyString = function (items) {
 internals.getDbId = function (id) {
 
     if (/^[0-9a-fA-F]{24}$/.test(id)) {
-
         return new internals.ObjectID(id);
     }
     else {
-
         return null;
     }
 };

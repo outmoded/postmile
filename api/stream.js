@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -83,9 +78,9 @@ exports.subscribe = {
 
                     // Lookup project
 
-                    Project.load(request.params.project, request.session.user, false, function (project, member, err) {
+                    Project.load(request.params.project, request.session.user, false, function (err, project, member) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             // Add to subscriber list
 
@@ -254,7 +249,7 @@ internals.messageHandler = function (socket) {
             if (message) {
                 switch (message.type) {
                     case 'initialize':
-                        Session.validate(socket.id, message.id, message.mac, function (userId, err) {
+                        Session.validate(socket.id, message.id, message.mac, function (err, userId) {
 
                             if (userId) {
                                 connection.userId = userId;

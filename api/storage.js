@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -20,7 +15,7 @@ exports.get = {
     
     handler: function (request) {
 
-        exports.load(request.session.user, function (storage, err) {
+        internals.load(request.session.user, function (err, storage) {
 
             if (storage &&
                 storage.clients &&
@@ -52,7 +47,7 @@ exports.get = {
                     request.reply(storage.clients[request.session.app]);
                 }
             }
-            else if (err === null) {
+            else if (!err) {
 
                 if (request.params.id) {
 
@@ -84,9 +79,9 @@ exports.post = {
 
         if (internals.checkKey(request.params.id)) {
 
-            exports.load(request.session.user, function (storage, err) {
+            internals.load(request.session.user, function (err, storage) {
 
-                if (err === null) {
+                if (!err) {
 
                     if (storage) {
 
@@ -114,7 +109,7 @@ exports.post = {
 
                         Db.update('user.storage', storage._id, changes, function (err) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 request.reply({ status: 'ok' });
                             }
@@ -132,9 +127,9 @@ exports.post = {
                         storage.clients[request.session.app] = {};
                         storage.clients[request.session.app][request.params.id] = request.payload.value;
 
-                        Db.insert('user.storage', storage, function (items, err) {
+                        Db.insert('user.storage', storage, function (err, items) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 request.reply({ status: 'ok' });
                             }
@@ -167,7 +162,7 @@ exports.del = {
 
         if (internals.checkKey(request.params.id)) {
 
-            exports.load(request.session.user, function (storage, err) {
+            internals.load(request.session.user, function (err, storage) {
 
                 if (storage) {
 
@@ -181,7 +176,7 @@ exports.del = {
 
                         Db.update('user.storage', storage._id, changes, function (err) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 request.reply({ status: 'ok' });
                             }
@@ -196,7 +191,7 @@ exports.del = {
                         request.reply(Hapi.Error.notFound());
                     }
                 }
-                else if (err === null) {
+                else if (!err) {
 
                     request.reply(Hapi.Error.notFound());
                 }
@@ -216,23 +211,23 @@ exports.del = {
 
 // Load user last timestamps
 
-exports.load = function (userId, callback) {
+internals.load = function (userId, callback) {
 
-    Db.get('user.storage', userId, function (item, err) {
+    Db.get('user.storage', userId, function (err, item) {
 
         if (item) {
 
-            callback(item, null);
+            callback(null, item);
         }
         else {
 
-            if (err === null) {
+            if (!err) {
 
                 callback(null, null);
             }
             else {
 
-                callback(null, err);
+                callback(err);
             }
         }
     });

@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -29,7 +24,7 @@ exports.get = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
@@ -55,7 +50,7 @@ exports.list = {
 
     handler: function (request) {
 
-        Sort.list('project', request.session.user, 'participants.id', function (projects) {
+        Sort.list('project', request.session.user, 'participants.id', function (err, projects) {
 
             if (projects) {
 
@@ -83,7 +78,7 @@ exports.list = {
                     list.push(item);
                 }
 
-                Last.load(request.session.user, function (last, err) {
+                Last.load(request.session.user, function (err, last) {
 
                     if (last &&
                         last.projects) {
@@ -125,7 +120,7 @@ exports.post = {
     },
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, true, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, true, function (err, project, member) {
 
             if (project) {
 
@@ -135,7 +130,7 @@ exports.post = {
 
                         Db.update('project', project._id, Db.toChanges(request.payload), function (err) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 Stream.update({ object: 'project', project: project._id }, request);
 
@@ -167,7 +162,7 @@ exports.post = {
 
                     Sort.set('project', request.session.user, 'participants.id', request.params.id, request.query.position, function (err) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             Stream.update({ object: 'projects', user: request.session.user }, request);
                             request.reply({ status: 'ok' });
@@ -207,7 +202,7 @@ exports.put = {
 
         var project = request.payload;
         project.participants = [{ id: request.session.user }];
-        Db.insert('project', project, function (items, err) {
+        Db.insert('project', project, function (err, items) {
 
             if (err) {
                 return request.reply(err);
@@ -228,7 +223,7 @@ exports.del = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
@@ -240,13 +235,13 @@ exports.del = {
 
                     Task.delProject(project._id, function (err) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             // Delete project
 
                             Db.remove('project', project._id, function (err) {
 
-                                if (err === null) {
+                                if (!err) {
 
                                     Last.delProject(request.session.user, project._id, function (err) { });
 
@@ -281,7 +276,7 @@ exports.del = {
 
                     internals.leave(project, member, function (err) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             Stream.update({ object: 'project', project: project._id }, request);
                             Stream.update({ object: 'projects', user: request.session.user }, request);
@@ -313,7 +308,7 @@ exports.tips = {
 
         // Get project
 
-        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
@@ -341,7 +336,7 @@ exports.suggestions = {
 
         // Get project
 
-        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
@@ -396,7 +391,7 @@ exports.participants = {
             if (request.payload.participants ||
                 request.payload.names) {
 
-                exports.load(request.params.id, request.session.user, true, function (project, member, err) {
+                exports.load(request.params.id, request.session.user, true, function (err, project, member) {
 
                     if (project) {
 
@@ -418,7 +413,7 @@ exports.participants = {
 
                                 Db.update('project', project._id, change, function (err) {
 
-                                    if (err === null) {
+                                    if (!err) {
 
                                         // Return success
 
@@ -438,15 +433,15 @@ exports.participants = {
 
                             // Get user
 
-                            User.load(request.session.user, function (user, err) {
+                            User.load(request.session.user, function (err, user) {
 
                                 if (user) {
 
                                     // Lookup existing users
 
-                                    User.find(request.payload.participants, function (users, emailsNotFound, err) {
+                                    User.find(request.payload.participants, function (err, users, emailsNotFound) {
 
-                                        if (err === null) {
+                                        if (!err) {
 
                                             var prevParticipants = Hapi.Utils.mapToObject(project.participants, 'id');
 
@@ -509,7 +504,7 @@ exports.participants = {
 
                                                     // Non-blocking
 
-                                                    if (err === null) {
+                                                    if (!err) {
 
                                                         Stream.update({ object: 'contacts', user: user._id }, request);
                                                     }
@@ -522,7 +517,7 @@ exports.participants = {
 
                                                 Db.update('project', project._id, change, function (err) {
 
-                                                    if (err === null) {
+                                                    if (!err) {
 
                                                         for (var i = 0, il = changedUsers.length; i < il; ++i) {
 
@@ -579,7 +574,7 @@ exports.participants = {
 
             // Reload project (changed, use direct DB to skip load processing)
 
-            Db.get('project', request.params.id, function (project, err) {
+            Db.get('project', request.params.id, function (err, project) {
 
                 if (project) {
 
@@ -612,7 +607,7 @@ exports.uninvite = {
 
         // Load project for write
 
-        exports.load(request.params.id, request.session.user, true, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, true, function (err, project, member) {
 
             if (project) {
 
@@ -635,7 +630,7 @@ exports.uninvite = {
 
                                 internals.leave(project, uninvitedMember, function (err) {
 
-                                    if (err === null) {
+                                    if (!err) {
 
                                         // Return success
 
@@ -704,7 +699,7 @@ exports.uninvite = {
 
                             batch(project, uninvitedMembers, 0, function (err) {
 
-                                if (err === null) {
+                                if (!err) {
 
                                     // Return success
 
@@ -747,7 +742,7 @@ exports.uninvite = {
 
                 internals.leave(project, members[pos], function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         // Return success
 
@@ -773,7 +768,7 @@ exports.uninvite = {
 
             // Reload project (changed, use direct DB to skip load processing)
 
-            Db.get('project', request.params.id, function (project, err) {
+            Db.get('project', request.params.id, function (err, project) {
 
                 if (project) {
 
@@ -801,7 +796,7 @@ exports.join = {
     handler: function (request) {
 
         // The only place allowed to request a non-writable copy for modification
-        exports.load(request.params.id, request.session.user, false, function (project, member, err) {
+        exports.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
@@ -811,7 +806,7 @@ exports.join = {
 
                     Db.updateCriteria('project', project._id, { 'participants.id': request.session.user }, { $unset: { 'participants.$.isPending': 1 } }, function (err) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             // Return success
 
@@ -844,7 +839,7 @@ exports.join = {
 
 exports.load = function (projectId, userId, isWritable, callback) {
 
-    Db.get('project', projectId, function (item, err) {
+    Db.get('project', projectId, function (err, item) {
 
         if (item) {
 
@@ -869,29 +864,29 @@ exports.load = function (projectId, userId, isWritable, callback) {
                 if (isWritable === false ||
                     item.isPending !== true) {
 
-                    callback(item, member, null);
+                    callback(null, item, member);
                 }
                 else {
 
                     // Invitation pending
-                    callback(null, null, Hapi.Error.forbidden('Must accept project invitation before making changes'));
+                    callback(Hapi.Error.forbidden('Must accept project invitation before making changes'));
                 }
             }
             else {
 
                 // Not allowed
-                callback(null, null, Hapi.Error.forbidden('Not a project member'));
+                callback(Hapi.Error.forbidden('Not a project member'));
             }
         }
         else {
 
-            if (err === null) {
+            if (!err) {
 
-                callback(null, null, Hapi.Error.notFound());
+                callback(Hapi.Error.notFound());
             }
             else {
 
-                callback(null, null, err);
+                callback(err);
             }
         }
     });
@@ -1032,9 +1027,9 @@ internals.leave = function (project, member, callback) {
 
     // Check if user is assigned tasks
 
-    Task.userTaskList(project._id, (isPid ? 'pid:' + userId : userId), function (tasks, err) {
+    Task.userTaskList(project._id, (isPid ? 'pid:' + userId : userId), function (err, tasks) {
 
-        if (err === null) {
+        if (!err) {
 
             if (tasks.length > 0) {
 
@@ -1044,7 +1039,7 @@ internals.leave = function (project, member, callback) {
 
                     // Load user
 
-                    User.load(userId, function (user, err) {
+                    User.load(userId, function (err, user) {
 
                         if (user) {
 
@@ -1062,13 +1057,13 @@ internals.leave = function (project, member, callback) {
                             var taskChange = { $set: { 'participants.$': 'pid:' + participant.pid } };
                             Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
-                                if (err === null) {
+                                if (!err) {
 
                                     // Save project
 
                                     Db.updateCriteria('project', project._id, { 'participants.id': userId }, { $set: { 'participants.$': participant } }, function (err) {
 
-                                        if (err === null) {
+                                        if (!err) {
 
                                             // Cleanup last information
 
@@ -1121,7 +1116,7 @@ internals.leave = function (project, member, callback) {
 
                 Db.update('project', project._id, change, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         if (isPid === false) {
 
@@ -1157,7 +1152,7 @@ exports.replacePid = function (project, pid, userId, callback) {
     var taskChange = { $set: { 'participants.$': userId } };
     Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
-        if (err === null) {
+        if (!err) {
 
             // Check if user already a member
 
@@ -1167,7 +1162,7 @@ exports.replacePid = function (project, pid, userId, callback) {
 
                 Db.update('project', project._id, { $pull: { participants: { pid: pid } } }, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         callback(null);
                     }
@@ -1183,7 +1178,7 @@ exports.replacePid = function (project, pid, userId, callback) {
 
                 Db.updateCriteria('project', project._id, { 'participants.pid': pid }, { $set: { 'participants.$': { id: userId } } }, function (err) {
 
-                    if (err === null) {
+                    if (!err) {
 
                         callback(null);
                     }
@@ -1206,9 +1201,9 @@ exports.replacePid = function (project, pid, userId, callback) {
 
 exports.unsortedList = function (userId, callback) {
 
-    Db.query('project', { 'participants.id': request.session.user }, function (projects, err) {
+    Db.query('project', { 'participants.id': request.session.user }, function (err, projects) {
 
-        if (err === null) {
+        if (!err) {
 
             if (projects.length > 0) {
 
@@ -1240,16 +1235,16 @@ exports.unsortedList = function (userId, callback) {
                     }
                 }
 
-                callback(projects, owner, notOwner, null);
+                callback(null, projects, owner, notOwner);
             }
             else {
 
-                callback([], [], [], null);
+                callback(null, [], [], []);
             }
         }
         else {
 
-            callback(null, null, null, err);
+            callback(err);
         }
     });
 };
@@ -1263,7 +1258,7 @@ exports.delEmpty = function (projectId, callback) {
 
     Task.delProject(projectId, function (err) {
 
-        if (err === null) {
+        if (!err) {
 
             // Delete project
 

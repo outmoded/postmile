@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -28,7 +23,7 @@ exports.get = {
 
             details = details || { id: request.params.id, thread: [] };
 
-            if (err === null) {
+            if (!err) {
 
                 // Clear thread from old entries
 
@@ -100,7 +95,7 @@ exports.post = {
 
             if (task) {
 
-                if (err === null) {
+                if (!err) {
 
                     var detail = request.payload;
                     detail.created = now;
@@ -112,7 +107,7 @@ exports.post = {
 
                         Db.update('task.details', details._id, { $push: { thread: detail } }, function (err) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 finalize(task, project);
                             }
@@ -129,9 +124,9 @@ exports.post = {
                         details = { _id: task._id, project: project._id, thread: [] };
                         details.thread.push(detail);
 
-                        Db.insert('task.details', details, function (items, err) {
+                        Db.insert('task.details', details, function (err, items) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 finalize(task, project);
                             }
@@ -171,11 +166,11 @@ exports.post = {
 
 exports.load = function (taskId, userId, isWritable, callback) {
 
-    Task.load(taskId, userId, isWritable, function (task, err, project) {      // Check ownership
+    Task.load(taskId, userId, isWritable, function (err, task, project) {      // Check ownership
 
         if (task) {
 
-            Db.get('task.details', taskId, function (item, err) {
+            Db.get('task.details', taskId, function (err, item) {
 
                 if (item) {
 
@@ -183,7 +178,7 @@ exports.load = function (taskId, userId, isWritable, callback) {
                 }
                 else {
 
-                    if (err === null) {
+                    if (!err) {
 
                         callback(null, null, task, project);
                     }
@@ -206,11 +201,11 @@ exports.load = function (taskId, userId, isWritable, callback) {
 
 exports.expandIds = function (ids, projectId, userId, callback) {
 
-    Db.getMany('task.details', ids, function (items, err, notFound) {
+    Db.getMany('task.details', ids, function (err, items, notFound) {
 
-        if (err === null) {
+        if (!err) {
 
-            Last.load(userId, function (last, err) {
+            Last.load(userId, function (err, last) {
 
                 var records = {};
                 var userIds = [];

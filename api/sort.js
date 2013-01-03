@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -16,11 +11,11 @@ exports.list = function (collectionName, listId, key, callback) {
     var criteria = {};
     criteria[key] = listId;
 
-    Db.query(collectionName, criteria, function (items, err) {
+    Db.query(collectionName, criteria, function (err, items) {
 
-        if (err === null) {
+        if (!err) {
 
-            Db.get(collectionName + '.sort', listId, function (item, err) {
+            Db.get(collectionName + '.sort', listId, function (err, item) {
 
                 var sort = item;
 
@@ -69,12 +64,12 @@ exports.list = function (collectionName, listId, key, callback) {
                     return 0;
                 });
 
-                callback(items, sort, null);
+                callback(null, items, sort);
             });
         }
         else {
 
-            callback(null, null, err);
+            callback(err);
         }
     });
 };
@@ -84,7 +79,7 @@ exports.list = function (collectionName, listId, key, callback) {
 
 exports.set = function (collectionName, listId, key, itemId, pos, callback) {
 
-    exports.list(collectionName, listId, key, function (items, sort, err) {
+    exports.list(collectionName, listId, key, function (err, items, sort) {
 
         if (items) {
 
@@ -146,7 +141,7 @@ exports.set = function (collectionName, listId, key, itemId, pos, callback) {
 
                     if (isNew) {
 
-                        Db.insert(collectionName + '.sort', newSort, function (items, err) {
+                        Db.insert(collectionName + '.sort', newSort, function (err, items) {
 
                             callback(err);
                         });

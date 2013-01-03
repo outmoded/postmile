@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -23,7 +18,7 @@ internals.tips = {};
 
 exports.initialize = function () {
 
-    Db.all('tip', function (results, err) {
+    Db.all('tip', function (err, results) {
 
         for (var i = 0, il = results.length; i < il; ++i) {
 

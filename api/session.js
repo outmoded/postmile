@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -28,7 +23,7 @@ exports.app = {
     },
     handler: function (request) {
 
-        Db.queryUnique('client', { name: request.params.id }, function (client, err) {
+        Db.queryUnique('client', { name: request.params.id }, function (err, client) {
 
             if (err) {
                 return request.reply(err);
@@ -66,7 +61,7 @@ exports.login = {
 
             if (type === 'id') {
 
-                User.load(id, function (user, err) {
+                User.load(id, function (err, user) {
 
                     if (err) {
                         return request.reply(Hapi.Error.unauthorized(err.message));
@@ -77,7 +72,7 @@ exports.login = {
             }
             else if (type === 'email') {
 
-                Email.loadTicket(id, function (emailTicket, user, err) {
+                Email.loadTicket(id, function (err, emailTicket, user) {
 
                     if (err) {
                         return request.reply(Hapi.Error.unauthorized(err.message));
@@ -108,7 +103,7 @@ exports.login = {
             var now = Date.now();
 
             var appId = request.payload.issueTo || request.session.app;
-            Db.query('grant', { user: user.id, app: appId }, function (items, err) {
+            Db.query('grant', { user: user.id, app: appId }, function (err, items) {
 
                 if (err) {
                     return request.reply(err);
@@ -160,7 +155,7 @@ exports.login = {
                     scope: []                                                   // Find app scope ////////////
                 };
 
-                Db.insert('grant', newGrant, function (items, err) {
+                Db.insert('grant', newGrant, function (err, items) {
 
                     if (err) {
                         return request.reply(err);
@@ -208,7 +203,7 @@ exports.loadApp = function (id, callback) {
         return callback();
     }
 
-    Db.get('client', id, function (client, err) {
+    Db.get('client', id, function (err, client) {
 
         if (err || !client) {
             return callback();
@@ -227,7 +222,7 @@ exports.loadApp = function (id, callback) {
 
 exports.loadGrant = function (grantId, callback) {
 
-    Db.get('grant', grantId, function (item, err) {
+    Db.get('grant', grantId, function (err, item) {
 
         // Verify grant is still valid
 
@@ -235,7 +230,7 @@ exports.loadGrant = function (grantId, callback) {
             return callback();
         }
 
-        User.load(item.user, function (user, err) {
+        User.load(item.user, function (err, user) {
 
             if (err || !user) {
                 callback();
@@ -266,7 +261,7 @@ exports.validate = function (message, ticket, mac, callback) {
     Oz.Ticket.parse(ticket, Vault.ozTicket.password, function (err, session) {
 
         if (err || !session) {
-            return callback(null, Hapi.Error.notFound('Invalid ticket'));
+            return callback(Hapi.Error.notFound('Invalid ticket'));
         }
 
         // Mac message
@@ -274,10 +269,10 @@ exports.validate = function (message, ticket, mac, callback) {
         var hmac = Crypto.createHmac(session.algorithm, session.key).update(message);
         var digest = hmac.digest('base64');
         if (digest !== mac) {
-            return callback(null, Hapi.Error.unauthorized('Invalid mac'));
+            return callback(Hapi.Error.unauthorized('Invalid mac'));
         }
         
-        return callback(session.user, null);
+        return callback(null, session.user);
     });
 };
 

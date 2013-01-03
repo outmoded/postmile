@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -86,13 +81,13 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     Db.update('user', user._id, change, function (err) {
 
-        if (err === null) {
+        if (!err) {
 
-            callback(token, null);
+            callback(null, token);
         }
         else {
 
-            callback(null, err);
+            callback(err);
         }
     });
 };
@@ -115,7 +110,7 @@ exports.loadTicket = function (token, callback) {
 
         // Load user
 
-        User.load(userId, function (user, err) {
+        User.load(userId, function (err, user) {
 
             if (user) {
 
@@ -203,13 +198,13 @@ exports.loadTicket = function (token, callback) {
 
                                     Db.updateCriteria('user', user._id, criteria, change, function (err) {
 
-                                        if (err === null) {
+                                        if (!err) {
 
-                                            callback(ticket, user, null);
+                                            callback(null, ticket, user);
                                         }
                                         else {
 
-                                            callback(null, null, err);
+                                            callback(err);
                                         }
                                     });
                                 }
@@ -217,48 +212,48 @@ exports.loadTicket = function (token, callback) {
 
                                     Db.update('user', user._id, change, function (err) {
 
-                                        if (err === null) {
+                                        if (!err) {
 
-                                            callback(ticket, user, null);
+                                            callback(null, ticket, user);
                                         }
                                         else {
 
-                                            callback(null, null, err);
+                                            callback(err);
                                         }
                                     });
                                 }
                             }
                             else {
 
-                                callback(ticket, user, null);
+                                callback(null, ticket, user);
                             }
                         }
                         else {
 
                             // Don't cleanup now, do it later
-                            callback(null, user, Hapi.Error.notFound('Email token sent to address no longer associated with this account'));
+                            callback(Hapi.Error.notFound('Email token sent to address no longer associated with this account'), null, user);
                         }
                     }
                     else {
 
                         // Don't cleanup now, do it later
-                        callback(null, user, Hapi.Error.notFound('Expired email token'));
+                        callback(Hapi.Error.notFound('Expired email token'), null, user);
                     }
                 }
                 else {
 
-                    callback(null, user, Hapi.Error.notFound('Invalid or expired email token'));
+                    callback(Hapi.Error.notFound('Invalid or expired email token'), null, user);
                 }
             }
             else {
 
-                callback(null, null, Hapi.Error.notFound('Unknown email token account'));
+                callback(Hapi.Error.notFound('Unknown email token account'));
             }
         });
     }
     else {
 
-        callback(null, null, Hapi.Error.internal('Invalid email token syntax'));
+        callback(Hapi.Error.internal('Invalid email token syntax'));
     }
 };
 
@@ -273,7 +268,7 @@ exports.sendReminder = function (user, callback) {
         user.emails[0].address) {
 
         var options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
-        exports.generateTicket(user, user.emails[0].address, options, function (ticket, err) {
+        exports.generateTicket(user, user.emails[0].address, options, function (err, ticket) {
 
             if (ticket) {
 
@@ -305,7 +300,7 @@ exports.sendValidation = function (user, address, callback) {
     if (user && address) {
 
         var options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
-        exports.generateTicket(user, address, options, function (ticket, err) {
+        exports.generateTicket(user, address, options, function (err, ticket) {
 
             if (ticket) {
 
@@ -350,7 +345,7 @@ exports.sendWelcome = function (user, callback) {
             // Email verification email
 
             options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
-            exports.generateTicket(user, address, options, function (ticket, err) {
+            exports.generateTicket(user, address, options, function (err, ticket) {
 
                 if (ticket) {
 
@@ -383,7 +378,7 @@ exports.sendWelcome = function (user, callback) {
             // Login link email
 
             options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
-            exports.generateTicket(user, address, options, function (ticket, err) {
+            exports.generateTicket(user, address, options, function (err, ticket) {
 
                 if (ticket) {
 

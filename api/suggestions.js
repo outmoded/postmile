@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -25,7 +20,7 @@ internals.suggestions = {};
 
 exports.initialize = function () {
 
-    Db.all('suggestion', function (results, err) {
+    Db.all('suggestion', function (err, results) {
 
         for (var i = 0, il = results.length; i < il; ++i) {
 
@@ -59,16 +54,16 @@ exports.exclude = {
     
     handler: function (request) {
 
-        Project.load(request.params.id, request.session.user, false, function (project, member, err) {
+        Project.load(request.params.id, request.session.user, false, function (err, project, member) {
 
             if (project) {
 
                 var suggestion = internals.suggestions[request.params.drop];
                 if (suggestion) {
 
-                    Db.get('user.exclude', request.session.user, function (excludes, err) {
+                    Db.get('user.exclude', request.session.user, function (err, excludes) {
 
-                        if (err === null) {
+                        if (!err) {
 
                             if (excludes) {
 
@@ -106,7 +101,7 @@ exports.exclude = {
 
                                 Db.update('user.exclude', excludes._id, changes, function (err) {
 
-                                    if (err === null) {
+                                    if (!err) {
 
                                         request.reply({ status: 'ok' });
                                     }
@@ -124,9 +119,9 @@ exports.exclude = {
                                 excludes.projects[project._id] = { suggestions: {} };
                                 excludes.projects[project._id].suggestions[request.params.drop] = Date.now();
 
-                                Db.insert('user.exclude', excludes, function (items, err) {
+                                Db.insert('user.exclude', excludes, function (err, items) {
 
-                                    if (err === null) {
+                                    if (!err) {
 
                                         request.reply({ status: 'ok' });
                                     }
@@ -161,7 +156,7 @@ exports.exclude = {
 
 exports.list = function (project, userId, callback) {
 
-    Db.get('user.exclude', userId, function (item, err) {
+    Db.get('user.exclude', userId, function (err, item) {
 
         if (err) {
             return callback(err, null);

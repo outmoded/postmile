@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Hapi = require('hapi');
@@ -39,7 +34,7 @@ exports.get = {
 
             // Load project (not using Project.load since active user is not a member)
 
-            Db.get('project', projectId, function (project, err) {
+            Db.get('project', projectId, function (err, project) {
 
                 if (project) {
 
@@ -96,9 +91,9 @@ exports.get = {
 
             // Registration invitation code
 
-            exports.load(request.params.id, function (invite, err) {
+            exports.load(request.params.id, function (err, invite) {
 
-                if (err === null) {
+                if (!err) {
 
                     request.reply(invite);
                 }
@@ -130,7 +125,7 @@ exports.claim = {
 
             // Load project (not using Project.load since active user is not a member)
 
-            Db.get('project', projectId, function (project, err) {
+            Db.get('project', projectId, function (err, project) {
 
                 if (project) {
 
@@ -161,7 +156,7 @@ exports.claim = {
 
                         Project.replacePid(project, projectPid.pid, request.session.user, function (err) {
 
-                            if (err === null) {
+                            if (!err) {
 
                                 Stream.update({ object: 'project', project: projectId }, request);
                                 request.reply({ status: 'ok', project: projectId });
@@ -195,7 +190,7 @@ exports.claim = {
 
 exports.load = function (code, callback) {
 
-    Db.queryUnique('invite', { code: code }, function (invite, err) {
+    Db.queryUnique('invite', { code: code }, function (err, invite) {
 
         //    { "_id": "4d8629d32d0cba57313953b4",
         //      "code": "emu2011",
@@ -204,7 +199,7 @@ exports.load = function (code, callback) {
         //      "limit": 10,
         //      "expires" : 1332173847002 }
 
-        if (err === null) {
+        if (!err) {
 
             if (invite) {
 
@@ -218,26 +213,26 @@ exports.load = function (code, callback) {
                         invite.count === undefined ||
                         invite.count <= invite.limit) {
 
-                        callback(invite, null);
+                        callback(null, invite);
                     }
                     else {
 
-                        callback(null, Hapi.Error.badRequest('Invitation code reached limit'));
+                        callback(Hapi.Error.badRequest('Invitation code reached limit'));
                     }
                 }
                 else {
 
-                    callback(null, Hapi.Error.badRequest('Invitation Code expired'));
+                    callback(Hapi.Error.badRequest('Invitation Code expired'));
                 }
             }
             else {
 
-                callback(null, Hapi.Error.notFound('Invitation code not found'));
+                callback(Hapi.Error.notFound('Invitation code not found'));
             }
         }
         else {
 
-            callback(null, err);
+            callback(err);
         }
     });
 };
