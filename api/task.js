@@ -131,19 +131,16 @@ exports.list = {
 // Update task properties
 
 exports.post = {
-    
-    query: {
-        
-        position: Hapi.Types.Number().min(0)
+    validate: {
+        query: {
+            position: Hapi.types.Number().min(0)
+        },
+        schema: {
+            title: Hapi.types.String(),
+            status: Hapi.types.String().valid('open', 'pending', 'close'),
+            participants: Hapi.types.Array().includes(Hapi.types.String()) //!! .emptyOk()
+        }
     },
-    
-    schema: {
-
-        title: Hapi.Types.String(),
-        status: Hapi.Types.String().valid('open', 'pending', 'close'),
-        participants: Hapi.Types.Array().includes(Hapi.Types.String()) //!! .emptyOk()
-    },
-
     handler: function (request) {
 
         exports.load(request.params.id, request.session.user, true, function (task, err, project) {
@@ -216,7 +213,7 @@ exports.post = {
                 else if (request.query.position !== null &&
                          request.query.position !== undefined) {        // Must test explicitly as value can be 0
 
-                        // Set task position in list
+                    // Set task position in list
 
                     Sort.set('task', task.project, 'project', request.params.id, request.query.position, function (err) {
 
@@ -248,19 +245,16 @@ exports.post = {
 // Create new task
 
 exports.put = {
-    
-    query: {
-
-        position: Hapi.Types.Number(),
-        suggestion: Hapi.Types.String()
+    validate: {
+        query: {
+            position: Hapi.types.Number(),
+            suggestion: Hapi.types.String()
+        },
+        schema: {
+            title: Hapi.types.String(),
+            status: Hapi.types.String().valid('open', 'pending', 'close')
+        }
     },
-
-    schema: {
-
-        title: Hapi.Types.String(),
-        status: Hapi.Types.String().valid('open', 'pending', 'close')
-    },
-
     handler: function (request) {
 
         Project.load(request.params.id, request.session.user, true, function (project, member, err) {
@@ -319,10 +313,9 @@ exports.put = {
             Db.insert('task', task, function (items, err) {
 
                 if (err === null) {
-
                     Stream.update({ object: 'tasks', project: task.project }, request);
                     var result = { status: 'ok', id: items[0]._id };
-                    request.created('task/' + items[0]._id);
+                    var created = 'task/' + items[0]._id;
 
                     if (request.query.position !== null &&
                         request.query.position !== undefined) {        // Must test explicitly as value can be 0
@@ -332,20 +325,17 @@ exports.put = {
                         Sort.set('task', task.project, 'project', result.id, request.query.position, function (err) {
 
                             if (err === null) {
-
                                 result.position = request.query.position;
                             }
 
-                            request.reply(result);
+                            request.reply.payload(result).created(created).send();
                         });
                     }
                     else {
-
-                        request.reply(result);
+                        request.reply.payload(result).created(created).send();
                     }
                 }
                 else {
-
                     request.reply(err);
                 }
             });

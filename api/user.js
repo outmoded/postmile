@@ -41,7 +41,6 @@ internals.forbiddenUsernames = {
     imwithstupid: true,
     login: true,
     logout: true,
-    oauth: true,
     privacy: true,
     scripts: true,
     script: true,
@@ -59,23 +58,18 @@ internals.forbiddenUsernames = {
 // Current user information
 
 exports.get = {
-    
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         exports.load(request.session.user, function (user, err) {
 
             if (user) {
-
                 Hapi.Utils.removeKeys(user, ['contacts', 'origin', 'tos', 'tickets']);
                 request.reply(user);
             }
             else {
-
                 request.reply(err);
             }
         });
@@ -86,18 +80,15 @@ exports.get = {
 // Change profile properties
 
 exports.post = {
-
-    schema: {
-
-        name: Hapi.Types.String(),
-        username: Hapi.Types.String().emptyOk()
+    validate: {
+        schema: {
+            name: Hapi.types.String(),
+            username: Hapi.types.String().emptyOk()
+        }
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         exports.load(request.session.user, function (user, err) {
@@ -168,18 +159,15 @@ exports.post = {
 // Change profile email settings
 
 exports.email = {
-    
-    schema: {
-
-        address: Hapi.Types.String().required(),
-        action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
+    validate: {
+        schema: {
+            address: Hapi.types.String().required(),
+            action: Hapi.types.String().required().valid('remove', 'primary', 'add', 'verify')
+        }
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         var address = request.payload.address.toLowerCase();
@@ -390,17 +378,12 @@ exports.email = {
 // Current user contacts list
 
 exports.contacts = {
-
     query: {
-
-        exclude: Hapi.Types.String()
+        exclude: Hapi.types.String()
     },
-
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         if (request.query.exclude) {
@@ -463,7 +446,7 @@ exports.contacts = {
                                 }
                                 else if (user.contacts[i].type === 'email') {
 
-                                        // Email contact
+                                    // Email contact
 
                                     var email = Db.decodeKey(i);
                                     if (exclude === null ||
@@ -514,12 +497,9 @@ exports.contacts = {
 // Who am I?
 
 exports.who = {
-    
     auth: {
-
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         request.reply({ user: request.session.user });
@@ -530,26 +510,21 @@ exports.who = {
 // Register new user
 
 exports.put = {
-    
-    query: {
-
-        invite: Hapi.Types.String().required()
+    validate: {
+        query: {
+            invite: Hapi.types.String().required()
+        },
+        schema: {
+            username: Hapi.types.String(),
+            name: Hapi.types.String(),
+            network: Hapi.types.Array().includes(Hapi.types.String()),
+            email: Hapi.types.String().email()
+        }
     },
-
-    schema: {
-
-        username: Hapi.Types.String(),
-        name: Hapi.Types.String(),
-        network: Hapi.Types.Array().includes(Hapi.Types.String()),
-        email: Hapi.Types.String().email()
-    },
-
     auth: {
-
         scope: 'signup',
-        entity: 'client'
+        entity: 'app'
     },
-
     handler: function (request) {
 
         // Check invitation code
@@ -891,11 +866,11 @@ exports.put = {
 // Set Terms of Service version
 
 exports.tos = {
-    
-    auth: {
 
+    auth: {
+        tos: null,
         scope: 'tos',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -931,18 +906,15 @@ exports.tos = {
 // Link other account
 
 exports.link = {
-    
-    schema: {
-
-        id: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            id: Hapi.types.String().required()
+        }
     },
-
     auth: {
-
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
-
     handler: function (request) {
 
         if (request.params.network === 'facebook' ||
@@ -1017,11 +989,11 @@ exports.link = {
 // Unlink other account
 
 exports.unlink = {
-    
+
     auth: {
 
         scope: 'login',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -1088,11 +1060,11 @@ exports.unlink = {
 // Set default view
 
 exports.view = {
-    
+
     auth: {
 
         scope: 'view',
-        entity: 'client'
+        entity: 'app'
     },
 
     handler: function (request) {
@@ -1125,12 +1097,9 @@ exports.view = {
 // Lookup user based on account and type
 
 exports.lookup = {
-    
     auth: {
-        
         mode: 'none'
     },
-
     handler: function (request) {
 
         if (request.params.type === 'username') {
@@ -1212,17 +1181,15 @@ exports.lookup = {
 // Send email reminder account based on email or username and take action
 
 exports.reminder = {
-    
-    schema: {
-
-        account: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            account: Hapi.types.String().required()
+        }
     },
-
     auth: {
         scope: 'reminder',
-        entity: 'client'
+        entity: 'app'
     },
-
     handler: function (request) {
 
         var isEmail = request.payload.account.indexOf('@') !== -1;
@@ -1274,13 +1241,10 @@ exports.reminder = {
 // Delete account
 
 exports.del = {
-    
     auth: {
-
         scope: 'quit',
-        tos: 'none'
+        tos: null
     },
-
     handler: function (request) {
 
         // Check if user has any projects
@@ -1303,7 +1267,7 @@ exports.del = {
                     }
                     else if (owner.length === 1) {
 
-                            // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
+                        // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
 
                         if (owner[0].participants.length === 1) {
 
@@ -1635,7 +1599,7 @@ exports.find = function (ids, callback) {
 
                     // Try getting all emails
 
-                    Db.query('user', { 'emails.address': { '$in': emails} }, function (items, err) {
+                    Db.query('user', { 'emails.address': { '$in': emails } }, function (items, err) {
 
                         if (err === null) {
 
@@ -1702,34 +1666,20 @@ exports.find = function (ids, callback) {
 
 exports.validate = function (id, network, callback) {
 
-    if (id) {
-
-        var criteria = {};
-        criteria[network] = id;
-
-        Db.queryUnique('user', criteria, function (user, err) {
-
-            if (err === null) {
-
-                if (user) {
-
-                    callback(user, null);
-                }
-                else {
-
-                    callback(null, null);
-                }
-            }
-            else {
-
-                callback(null, err);
-            }
-        });
+    if (!id) {
+        return callback(null, null);
     }
-    else {
 
-        callback(null, null);
-    }
+    var criteria = {};
+    criteria[network] = id;
+    Db.queryUnique('user', criteria, function (user, err) {
+
+        if (err) {
+            return callback(err);
+        }
+
+        return callback(null, user);
+    });
 };
 
 

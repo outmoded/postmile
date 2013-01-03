@@ -45,8 +45,8 @@ exports.login = function (req, res, next) {
     if (req.api.profile) {
 
         if (req.api.session.restriction === 'tos' ||
-            !req.api.session.tos ||
-            req.api.session.tos < Tos.minimumTOS) {
+            !req.api.session.ext.tos ||
+            req.api.session.ext.tos < Tos.minimumTOS) {
 
             res.api.redirect = '/tos' + (req.query.next && req.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(req.query.next) : '');
             next();
@@ -499,7 +499,7 @@ exports.auth = function (req, res, next) {
 
             // Link
 
-            Api.clientCall('POST', '/user/' + req.api.profile.id + '/link/' + account.network, { id: account.id }, function (result, err, code) {
+            Api.clientCall('POST', '/user/' + req.api.profile.id + '/link/' + account.network, { id: account.id }, function (err, code, payload) {
 
                 res.api.redirect = '/account/linked';
                 next();
@@ -509,14 +509,8 @@ exports.auth = function (req, res, next) {
 
             // Login
 
-            var tokenRequest = {
-
-                grant_type: 'http://ns.postmile.net/' + account.network,
-                x_user_id: account.id
-            };
-
             var destination = req.api.jar.auth ? req.api.jar.auth.next : null;
-            exports.loginCall(tokenRequest, res, next, destination, account);
+            exports.loginCall(account.network, account.id, res, next, destination, account);
         }
     }
 
@@ -532,14 +526,13 @@ exports.unlink = function (req, res, next) {
         req.body.network === 'facebook' ||
         req.body.network === 'yahoo') {
 
-        Api.clientCall('DELETE', '/user/' + req.api.profile.id + '/link/' + req.body.network, '', function (result, err, code) {
+        Api.clientCall('DELETE', '/user/' + req.api.profile.id + '/link/' + req.body.network, '', function (err, code, payload) {
 
             res.api.redirect = '/account/linked';
             next();
         });
     }
     else {
-
         res.api.redirect = '/account/linked';
         next();
     }
@@ -550,104 +543,107 @@ exports.unlink = function (req, res, next) {
 
 exports.emailToken = function (req, res, next) {
 
-    var tokenRequest = {
-
-        grant_type: 'http://ns.postmile.net/email',
-        x_email_token: req.params.token
-    };
-
-    exports.loginCall(tokenRequest, res, next, null, null);
+    exports.loginCall('email', req.params.token, res, next, null, null);
 };
 
 
 // Login common function
 
-exports.loginCall = function (tokenRequest, res, next, destination, account) {
+exports.loginCall = function (type, id, res, next, destination, account) {
 
-    tokenRequest.client_id = 'postmile.view';
-    tokenRequest.client_secret = '';
+    var payload = {
+        type: type,
+        id: id
+    };
 
-    Api.clientCall('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+    Api.clientCall('POST', '/oz/login', payload, function (err, code, payload) {
 
-        if (token) {
-
-            // Registered user
-
-            Session.set(res, token, function (isValid, restriction) {
-
-                if (isValid) {
-
-                    if (token.x_action &&
-                        token.x_action.type) {
-
-                        switch (token.x_action.type) {
-
-                            case 'reminder':
-
-                                res.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
-                                destination = '/account/linked';
-                                break;
-
-                            case 'verify':
-
-                                res.api.jar.message = 'Email address verified';
-                                destination = '/account/emails';
-                                break;
-                        }
-                    }
-
-                    if (restriction === 'tos' &&
-                        (destination === null || destination.indexOf('/account') !== 0)) {
-
-                        res.api.redirect = '/tos' + (destination ? '?next=' + encodeURIComponent(destination) : '');
-                        next();
-                    }
-                    else {
-
-                        res.api.redirect = destination || '/';
-                        next();
-                    }
-                }
-                else {
-
-                    res.api.error = Err.internal('Invalid response parameters from API server');
-                    next();
-                }
-            });
+        if (err) {
+            res.api.error = Err.internal('Unexpected API response', err);
+            return next();
         }
-        else if (err &&
-                 err.error &&
-                 err.error === 'invalid_grant') {
 
+        if (code !== 200) {
             Session.clear(res);
 
-            if (tokenRequest.grant_type === 'http://ns.postmile.net/email') {
+            // Bad email invite
 
-                res.api.jar.message = err.error_description;
+            if (type === 'email') {
+                res.api.jar.message = payload.message;
                 res.api.redirect = '/';
-                next();
+                return next();
             }
-            else if (account) {
 
-                // Sign-up
+            // Sign-up
 
+            if (account) {
                 res.api.jar.signup = account;
                 res.api.redirect = '/signup/register';
-                next();
+                return next();
             }
-            else {
+
+            // Failed to login or register
+
+            res.api.redirect = '/';
+            return next();
+        }
+
+        // Registered user
+
+        Api.clientCall('POST', '/oz/rsvp', { rsvp: payload.rsvp }, function (err, code, ticket) {
+
+            if (err) {
+                res.api.error = Err.internal('Unexpected API response', err);
+                return next();
+            }
+
+            if (code !== 200) {
 
                 // Failed to login or register
 
                 res.api.redirect = '/';
-                next();
+                return next();
             }
-        }
-        else {
 
-            res.api.error = Err.internal('Unexpected API response', err);
-            next();
-        }
+            Session.set(res, ticket, function (isValid, restriction) {
+
+                if (!isValid) {
+                    res.api.error = Err.internal('Invalid response parameters from API server');
+                    return next();
+                }
+
+                if (payload.ext &&
+                    payload.ext.action &&
+                    payload.ext.action.type) {
+
+                    switch (payload.ext.action.type) {
+
+                        case 'reminder':
+
+                            res.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
+                            destination = '/account/linked';
+                            break;
+
+                        case 'verify':
+
+                            res.api.jar.message = 'Email address verified';
+                            destination = '/account/emails';
+                            break;
+                    }
+                }
+
+                if (restriction === 'tos' &&
+                    (destination === null || destination.indexOf('/account') !== 0)) {
+
+                    res.api.redirect = '/tos' + (destination ? '?next=' + encodeURIComponent(destination) : '');
+                }
+                else {
+                    res.api.redirect = destination || '/';
+                }
+
+                return next();
+            });
+        });
     });
 };
 

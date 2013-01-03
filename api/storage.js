@@ -24,16 +24,16 @@ exports.get = {
 
             if (storage &&
                 storage.clients &&
-                storage.clients[request.session.client]) {
+                storage.clients[request.session.app]) {
 
                 if (request.params.id) {
 
                     if (internals.checkKey(request.params.id)) {
 
-                        if (storage.clients[request.session.client][request.params.id]) {
+                        if (storage.clients[request.session.app][request.params.id]) {
 
                             var result = {};
-                            result[request.params.id] = storage.clients[request.session.client][request.params.id];
+                            result[request.params.id] = storage.clients[request.session.app][request.params.id];
 
                             request.reply(result);
                         }
@@ -49,7 +49,7 @@ exports.get = {
                 }
                 else {
 
-                    request.reply(storage.clients[request.session.client]);
+                    request.reply(storage.clients[request.session.app]);
                 }
             }
             else if (err === null) {
@@ -75,12 +75,11 @@ exports.get = {
 // Set user client data
 
 exports.post = {
-
-    schema: {
-
-        value: Hapi.Types.String().required()
+    validate: {
+        schema: {
+            value: Hapi.types.String().required()
+        }
     },
-
     handler: function (request) {
 
         if (internals.checkKey(request.params.id)) {
@@ -96,21 +95,21 @@ exports.post = {
                         var changes = { $set: {} };
                         if (storage.clients) {
 
-                            if (storage.clients[request.session.client]) {
+                            if (storage.clients[request.session.app]) {
 
-                                changes.$set['clients.' + request.session.client + '.' + request.params.id] = request.payload.value;
+                                changes.$set['clients.' + request.session.app + '.' + request.params.id] = request.payload.value;
                             }
                             else {
 
-                                changes.$set['clients.' + request.session.client] = {};
-                                changes.$set['clients.' + request.session.client][request.params.id] = request.payload.value;
+                                changes.$set['clients.' + request.session.app] = {};
+                                changes.$set['clients.' + request.session.app][request.params.id] = request.payload.value;
                             }
                         }
                         else {
 
                             changes.$set.clients = {};
-                            changes.$set.clients[request.session.client] = {};
-                            changes.$set.clients[request.session.client][request.params.id] = request.payload.value;
+                            changes.$set.clients[request.session.app] = {};
+                            changes.$set.clients[request.session.app][request.params.id] = request.payload.value;
                         }
 
                         Db.update('user.storage', storage._id, changes, function (err) {
@@ -130,8 +129,8 @@ exports.post = {
                         // First client data
 
                         storage = { _id: request.session.user, clients: {} };
-                        storage.clients[request.session.client] = {};
-                        storage.clients[request.session.client][request.params.id] = request.payload.value;
+                        storage.clients[request.session.app] = {};
+                        storage.clients[request.session.app][request.params.id] = request.payload.value;
 
                         Db.insert('user.storage', storage, function (items, err) {
 
@@ -174,11 +173,11 @@ exports.del = {
 
                     if (storage &&
                     storage.clients &&
-                    storage.clients[request.session.client] &&
-                    storage.clients[request.session.client][request.params.id]) {
+                    storage.clients[request.session.app] &&
+                    storage.clients[request.session.app][request.params.id]) {
 
                         var changes = { $unset: {} };
-                        changes.$unset['clients.' + request.session.client + '.' + request.params.id] = 1;
+                        changes.$unset['clients.' + request.session.app + '.' + request.params.id] = 1;
 
                         Db.update('user.storage', storage._id, changes, function (err) {
 

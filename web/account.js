@@ -20,9 +20,7 @@ exports.get = function (req, res, next) {
          req.params.panel === 'emails')) {
 
         var locals = {
-
             env: {
-
                 username: req.api.profile.username,
                 currentUsername: req.api.profile.username,
                 name: req.api.profile.name,
@@ -34,9 +32,7 @@ exports.get = function (req, res, next) {
         next();
     }
     else {
-
         if (req.api.jar.message) {
-
             res.api.jar.message = req.api.jar.message;
         }
 
@@ -50,43 +46,23 @@ exports.get = function (req, res, next) {
 
 exports.reminder = function (req, res, next) {
 
-    Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (result, err, code) {
+    Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (err, code, payload) {
 
-        if (result && result.result === 'ok') {
-
-            res.api.result = result;
-            next();
-        }
-        else if (err &&
-                 err.code) {
-
-            if (err.code === 404) {
-
-                res.api.error = Err.notFound();
-                res.api.isAPI = true;
-                next();
-            }
-            else if (err.code === 400) {
-
-                res.api.error = Err.badRequest();
-                res.api.isAPI = true;
-                next();
-            }
-            else {
-
-                res.api.error = Err.internal('Unexpected API response', err);
-                res.api.isAPI = true;
-                next();
-            }
-        }
-        else {
-
+        if (err) {
             res.api.error = Err.internal('Unexpected API response', err);
             res.api.isAPI = true;
-            next();
+            return next();
         }
-    });
 
+        if (code !== 200) {
+            res.api.error = (code === 404 ? Err.notFound() : (code === 400 ? Err.badRequest() : Err.internal('Unexpected API response: ' + payload)));
+            res.api.isAPI = true;
+            return next();
+        }
+
+        res.api.result = payload;
+        return next();
+    });
 };
 
 
@@ -109,11 +85,10 @@ exports.profile = function (req, res, next) {
 
     if (Object.keys(body).length > 0) {
 
-        Api.call('POST', '/profile', body, req.api.session, function (result, err, code) {
+        Api.call('POST', '/profile', body, req.api.session, function (err, code, payload) {
 
-            if (err) {
-
-                res.api.jar.message = 'Failed saving changes. ' + (err.code === 400 ? err.message : 'Service unavailable');
+            if (err || code !== 200) {
+                res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
             }
 
             res.api.redirect = '/account/profile';
@@ -139,14 +114,12 @@ exports.emails = function (req, res, next) {
         case 'primary':
         case 'verify':
 
-            Api.call('POST', '/profile/email', req.body, req.api.session, function (result, err, code) {
+            Api.call('POST', '/profile/email', req.body, req.api.session, function (err, code, payload) {
 
-                if (err) {
-
-                    res.api.jar.message = 'Failed saving changes. ' + (err.code === 400 ? err.message : 'Service unavailable');
+                if (err || code !== 200) {
+                    res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
                 }
                 else if (req.body.action === 'verify') {
-
                     res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
                 }
 

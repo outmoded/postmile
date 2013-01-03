@@ -5,59 +5,56 @@
 
 // Load modules
 
-var Api = require('./api');
-var Err = require('./error');
+var Request = require('request');
 var Vault = require('./vault');
+var Config = require('./config');
 
 
 // Declare internals
 
 var internals = {
-
-    clientToken: null
+    ticket: null
 };
 
 
 // Obtain client session token
 
-exports.getToken = function (callback) {
+exports.getTicket = function (callback) {
 
-    if (internals.clientToken) {
-
-        callback(internals.clientToken);
+    if (internals.ticket) {
+        return callback(internals.ticket);
     }
-    else {
 
-        var tokenRequest = {
-            grant_type: 'client_credentials',
-            client_id: Vault.postmileAPI.clientId,
-            client_secret: Vault.postmileAPI.clientSecret
-        };
+    var options = {
+        uri: 'http://' + Config.host.api.domain + ':' + Config.host.api.port + '/oz/app',
+        method: 'POST',
+        headers: {
+            Authorization: 'Basic ' + (new Buffer(Vault.postmileAPI.clientId + ':' + Vault.postmileAPI.clientSecret, 'ascii')).toString('base64')
+        },
+        json: true
+    };
 
-        Api.call('POST', '/oauth/token', tokenRequest, function (token, err, code) {
+    Request(options, function (err, response, body) {
 
-            if (token) {
+        if (err ||
+            response.statusCode !== 200 ||
+            !body) {
 
-                // { access_token: '', token_type: '', mac_key: '', mac_algorithm: '' }
+            return callback();
+        }
 
-                if (token.access_token &&
-                    token.mac_key &&
-                    token.mac_algorithm) {
-
-                    internals.clientToken = { id: token.access_token, key: token.mac_key, algorithm: token.mac_algorithm };
-                }
-            }
-
-            callback(internals.clientToken);
-        });
-    }
+        internals.ticket = body;
+        return callback(internals.ticket);
+    });
 };
 
 
 // Refresh client session token
 
-exports.refreshToken = function (callback) {
+exports.refreshTicket = function (callback) {
 
-    internals.clientToken = null;
-    exports.getToken(callback);
+    internals.ticket = null;
+    exports.getTicket(callback);
 };
+
+

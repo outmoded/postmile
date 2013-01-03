@@ -21,42 +21,6 @@ var Vault = require('./vault');
 var internals = {};
 
 
-// Post handler extension middleware
-
-internals.onPostHandler = function (request, next) {
-
-    if (request.response &&
-        request.response.result) {
-
-        var result = request.response.result;
-
-        // Sanitize database fields
-
-        if (result._id) {
-
-            result.id = result._id;
-            delete result._id;
-        }
-
-        if (result instanceof Object) {
-
-            for (var i in result) {
-
-                if (result.hasOwnProperty(i)) {
-
-                    if (i[0] === '_') {
-
-                        delete result[i];
-                    }
-                }
-            }
-        }
-    }
-
-    next();
-};
-
-
 // Catch uncaught exceptions
 
 process.on('uncaughtException', function (err) {
@@ -64,34 +28,49 @@ process.on('uncaughtException', function (err) {
 });
 
 
-var configuration = {
+// Post handler extension middleware
 
-    name: 'http',
+internals.formatPayload = function (payload) {
 
-    // Extension points
+    if (typeof payload !== 'object' ||
+        payload instanceof Array) {
 
-    ext: {
-        onPostHandler: internals.onPostHandler
-    },
+        return payload;
+    }
 
-    // Authentication
+    // Sanitize database fields
 
-    authentication: {
+    if (payload._id) {
+        payload.id = payload._id;
+        delete payload._id;
+    }
 
-        loadClientFunc: Session.loadClient,
-        loadUserFunc: Session.loadUser,
-        extensionFunc: Session.extensionGrant,
-        checkAuthorizationFunc: Session.checkAuthorization,
-        aes256Keys: {
-
-            oauthRefresh: Vault.oauthRefresh.aes256Key,
-            oauthToken: Vault.oauthToken.aes256Key
-        },
-        tos: {
-            min: '20110623'
+    for (var i in payload) {
+        if (payload.hasOwnProperty(i)) {
+            if (i[0] === '_') {
+                delete payload[i];
+            }
         }
-    },
+    }
 
+    return payload;
+};
+
+
+// Create server
+
+var configuration = {
+    format: {
+        payload: internals.formatPayload
+    },
+    auth: {
+        scheme: 'oz',
+        encryptionPassword: Vault.ozTicket.password,
+
+        loadAppFunc: Session.loadApp,
+        loadGrantFunc: Session.loadGrant,
+        tos: 20110623
+    },
     debug: true,
     monitor: true
 };
@@ -99,28 +78,16 @@ var configuration = {
 var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
 server.addRoutes(Routes.endpoints);
 
-// Initialize database connection
-
 Db.initialize(function (err) {
 
-    if (err === null) {
-
-        // Load in-memory cache
-
-        Suggestions.initialize();
-        Tips.initialize();
-
-        // Start Server
-
-        server.start();
-        Stream.initialize(server.listener);
-    }
-    else {
-
-        // Database connection failed
-
+    if (err) {
         Hapi.Log.event('err', err);
         process.exit(1);
     }
+
+    Suggestions.initialize();
+    Tips.initialize();
+    server.start();
+    Stream.initialize(server.listener);
 });
 

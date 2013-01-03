@@ -2,6 +2,7 @@
 
 var Hapi = require('hapi');
 var Db = require('./db');
+var Utils = require('./utils');
 
 
 // Initialize database connection
@@ -18,13 +19,13 @@ Db.initialize(true, function (err) {
 
             {
                 name: 'postmile.web',
-                scope: { authorized: true, login: true, reminder: true, signup: true, tos: true },
-                secret: Hapi.Session.getRandomString(64)
+                scope: ['authorized', 'login', 'reminder', 'signup', 'tos'],
+                secret: Utils.getRandomString(64)
             },
 
             {
                 name: 'postmile.view',
-                scope: {}
+                scope: []
             }
         ];
 
@@ -39,7 +40,9 @@ Db.initialize(true, function (err) {
                     if (err === null) {
 
                         Hapi.Log.event('info', 'Initial dataset created successfully');
-                        Hapi.Log.event('info', '>>>>> postmile.web client secret: ' + clients[0].secret);
+                        Hapi.Log.event('info', '>>>>> WEB client id: ' + clients[0]._id);
+                        Hapi.Log.event('info', '>>>>> WEB client secret: ' + clients[0].secret);
+                        Hapi.Log.event('info', '>>>>> VIEW client id: ' + clients[1]._id);
                         process.exit(0);
                     }
                     else {
