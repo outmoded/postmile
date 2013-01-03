@@ -133,12 +133,12 @@ exports.list = {
 exports.post = {
     validate: {
         query: {
-            position: Hapi.Types.Number().min(0)
+            position: Hapi.types.Number().min(0)
         },
         schema: {
-            title: Hapi.Types.String(),
-            status: Hapi.Types.String().valid('open', 'pending', 'close'),
-            participants: Hapi.Types.Array().includes(Hapi.Types.String()) //!! .emptyOk()
+            title: Hapi.types.String(),
+            status: Hapi.types.String().valid('open', 'pending', 'close'),
+            participants: Hapi.types.Array().includes(Hapi.types.String()) //!! .emptyOk()
         }
     },
     handler: function (request) {
@@ -247,12 +247,12 @@ exports.post = {
 exports.put = {
     validate: {
         query: {
-            position: Hapi.Types.Number(),
-            suggestion: Hapi.Types.String()
+            position: Hapi.types.Number(),
+            suggestion: Hapi.types.String()
         },
         schema: {
-            title: Hapi.Types.String(),
-            status: Hapi.Types.String().valid('open', 'pending', 'close')
+            title: Hapi.types.String(),
+            status: Hapi.types.String().valid('open', 'pending', 'close')
         }
     },
     handler: function (request) {

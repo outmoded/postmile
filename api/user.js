@@ -82,8 +82,8 @@ exports.get = {
 exports.post = {
     validate: {
         schema: {
-            name: Hapi.Types.String(),
-            username: Hapi.Types.String().emptyOk()
+            name: Hapi.types.String(),
+            username: Hapi.types.String().emptyOk()
         }
     },
     auth: {
@@ -161,8 +161,8 @@ exports.post = {
 exports.email = {
     validate: {
         schema: {
-            address: Hapi.Types.String().required(),
-            action: Hapi.Types.String().required().valid('remove', 'primary', 'add', 'verify')
+            address: Hapi.types.String().required(),
+            action: Hapi.types.String().required().valid('remove', 'primary', 'add', 'verify')
         }
     },
     auth: {
@@ -379,7 +379,7 @@ exports.email = {
 
 exports.contacts = {
     query: {
-        exclude: Hapi.Types.String()
+        exclude: Hapi.types.String()
     },
     auth: {
         tos: null
@@ -446,7 +446,7 @@ exports.contacts = {
                                 }
                                 else if (user.contacts[i].type === 'email') {
 
-                                        // Email contact
+                                    // Email contact
 
                                     var email = Db.decodeKey(i);
                                     if (exclude === null ||
@@ -512,13 +512,13 @@ exports.who = {
 exports.put = {
     validate: {
         query: {
-            invite: Hapi.Types.String().required()
+            invite: Hapi.types.String().required()
         },
         schema: {
-            username: Hapi.Types.String(),
-            name: Hapi.Types.String(),
-            network: Hapi.Types.Array().includes(Hapi.Types.String()),
-            email: Hapi.Types.String().email()
+            username: Hapi.types.String(),
+            name: Hapi.types.String(),
+            network: Hapi.types.Array().includes(Hapi.types.String()),
+            email: Hapi.types.String().email()
         }
     },
     auth: {
@@ -866,9 +866,9 @@ exports.put = {
 // Set Terms of Service version
 
 exports.tos = {
-    
-    auth: {
 
+    auth: {
+        tos: null,
         scope: 'tos',
         entity: 'app'
     },
@@ -908,7 +908,7 @@ exports.tos = {
 exports.link = {
     validate: {
         schema: {
-            id: Hapi.Types.String().required()
+            id: Hapi.types.String().required()
         }
     },
     auth: {
@@ -989,7 +989,7 @@ exports.link = {
 // Unlink other account
 
 exports.unlink = {
-    
+
     auth: {
 
         scope: 'login',
@@ -1060,7 +1060,7 @@ exports.unlink = {
 // Set default view
 
 exports.view = {
-    
+
     auth: {
 
         scope: 'view',
@@ -1183,7 +1183,7 @@ exports.lookup = {
 exports.reminder = {
     validate: {
         schema: {
-            account: Hapi.Types.String().required()
+            account: Hapi.types.String().required()
         }
     },
     auth: {
@@ -1267,7 +1267,7 @@ exports.del = {
                     }
                     else if (owner.length === 1) {
 
-                            // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
+                        // If only one project, check if it has other participants or any tasks (UX creates an empty project automatically)
 
                         if (owner[0].participants.length === 1) {
 
@@ -1599,7 +1599,7 @@ exports.find = function (ids, callback) {
 
                     // Try getting all emails
 
-                    Db.query('user', { 'emails.address': { '$in': emails} }, function (items, err) {
+                    Db.query('user', { 'emails.address': { '$in': emails } }, function (items, err) {
 
                         if (err === null) {
 
@@ -1666,34 +1666,20 @@ exports.find = function (ids, callback) {
 
 exports.validate = function (id, network, callback) {
 
-    if (id) {
-
-        var criteria = {};
-        criteria[network] = id;
-
-        Db.queryUnique('user', criteria, function (user, err) {
-
-            if (err === null) {
-
-                if (user) {
-
-                    callback(user, null);
-                }
-                else {
-
-                    callback(null, null);
-                }
-            }
-            else {
-
-                callback(null, err);
-            }
-        });
+    if (!id) {
+        return callback(null, null);
     }
-    else {
 
-        callback(null, null);
-    }
+    var criteria = {};
+    criteria[network] = id;
+    Db.queryUnique('user', criteria, function (user, err) {
+
+        if (err) {
+            return callback(err);
+        }
+
+        return callback(null, user);
+    });
 };
 
 

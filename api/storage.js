@@ -77,7 +77,7 @@ exports.get = {
 exports.post = {
     validate: {
         schema: {
-            value: Hapi.Types.String().required()
+            value: Hapi.types.String().required()
         }
     },
     handler: function (request) {

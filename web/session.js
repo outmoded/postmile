@@ -104,13 +104,13 @@ exports.logout = function (res, next) {
 };
 
 
-exports.set = function (res, token, callback) {
+exports.set = function (res, ticket, callback) {
 
-    if (!token) {
+    if (!ticket) {
         return callback(false, null);
     }
 
-    var session = token;
+    var session = ticket;
     session.restriction = (session.ext.tos < Tos.minimumTOS ? 'tos' : null);
 
     var nextYear = new Date();

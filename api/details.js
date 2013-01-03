@@ -19,7 +19,7 @@ exports.get = {
     
     query: {
 
-        since: Hapi.Types.Number().min(0)
+        since: Hapi.types.Number().min(0)
     },
 
     handler: function (request) {
@@ -85,11 +85,11 @@ exports.get = {
 exports.post = {
     validate: {
         query: {
-            last: Hapi.Types.Boolean()
+            last: Hapi.types.Boolean()
         },
         schema: {
-            type: Hapi.Types.String().required().valid('text'),
-            content: Hapi.Types.String().required()
+            type: Hapi.types.String().required().valid('text'),
+            content: Hapi.types.String().required()
         }
     },
     handler: function (request) {

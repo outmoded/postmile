@@ -26,7 +26,7 @@ var internals = {};
 // Get project information
 
 exports.get = {
-    
+
     handler: function (request) {
 
         exports.load(request.params.id, request.session.user, false, function (project, member, err) {
@@ -52,7 +52,7 @@ exports.get = {
 // Get list of projects for current user
 
 exports.list = {
-    
+
     handler: function (request) {
 
         Sort.list('project', request.session.user, 'participants.id', function (projects) {
@@ -114,13 +114,13 @@ exports.list = {
 exports.post = {
     validate: {
         query: {
-            position: Hapi.Types.Number().min(0)
+            position: Hapi.types.Number().min(0)
         },
         schema: {
-            title: Hapi.Types.String(),
-            date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
-            time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
-            place: Hapi.Types.String().emptyOk()
+            title: Hapi.types.String(),
+            date: Hapi.types.String().regex(Utils.dateRegex).emptyOk(),
+            time: Hapi.types.String().regex(Utils.timeRegex).emptyOk(),
+            place: Hapi.types.String().emptyOk()
         }
     },
     handler: function (request) {
@@ -197,30 +197,26 @@ exports.post = {
 exports.put = {
     validate: {
         schema: {
-            title: Hapi.Types.String().required(),
-            date: Hapi.Types.String().regex(Utils.dateRegex).emptyOk(),
-            time: Hapi.Types.String().regex(Utils.timeRegex).emptyOk(),
-            place: Hapi.Types.String().emptyOk()
+            title: Hapi.types.String().required(),
+            date: Hapi.types.String().regex(Utils.dateRegex).emptyOk(),
+            time: Hapi.types.String().regex(Utils.timeRegex).emptyOk(),
+            place: Hapi.types.String().emptyOk()
         }
     },
     handler: function (request) {
 
         var project = request.payload;
         project.participants = [{ id: request.session.user }];
-
         Db.insert('project', project, function (items, err) {
 
-            if (err === null) {
-
-                Stream.update({ object: 'projects', user: request.session.user }, request);
-                request.reply.payload({ status: 'ok', id: items[0]._id })
-                             .created('project/' + items[0]._id)
-                             .send();
+            if (err) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
-            }
+            Stream.update({ object: 'projects', user: request.session.user }, request);
+            return request.reply.payload({ status: 'ok', id: items[0]._id })
+                                .created('project/' + items[0]._id)
+                                .send();
         });
     }
 };
@@ -229,7 +225,7 @@ exports.put = {
 // Delete a project
 
 exports.del = {
-    
+
     handler: function (request) {
 
         exports.load(request.params.id, request.session.user, false, function (project, member, err) {
@@ -312,7 +308,7 @@ exports.del = {
 // Get list of project tips
 
 exports.tips = {
-    
+
     handler: function (request) {
 
         // Get project
@@ -340,7 +336,7 @@ exports.tips = {
 // Get list of project suggestions
 
 exports.suggestions = {
-    
+
     handler: function (request) {
 
         // Get project
@@ -370,11 +366,11 @@ exports.suggestions = {
 exports.participants = {
     validate: {
         query: {
-            message: Hapi.Types.String().max(250)
+            message: Hapi.types.String().max(250)
         },
         schema: {
-            participants: Hapi.Types.Array().includes(Hapi.Types.String()),     //!! ids or emails
-            names: Hapi.Types.Array().includes(Hapi.Types.String())
+            participants: Hapi.types.Array().includes(Hapi.types.String()),     //!! ids or emails
+            names: Hapi.types.Array().includes(Hapi.types.String())
         }
     },
     handler: function (request) {
@@ -609,7 +605,7 @@ exports.participants = {
 exports.uninvite = {
     validate: {
         schema: {
-            participants: Hapi.Types.Array().required().includes(Hapi.Types.String())
+            participants: Hapi.types.Array().required().includes(Hapi.types.String())
         }
     },
     handler: function (request) {
@@ -666,7 +662,7 @@ exports.uninvite = {
                     }
                     else if (request.payload.participants) {
 
-                            // Batch delete
+                        // Batch delete
 
                         var error = null;
                         var uninvitedMembers = [];
@@ -801,7 +797,7 @@ exports.uninvite = {
 // Accept project invitation
 
 exports.join = {
-    
+
     handler: function (request) {
 
         // The only place allowed to request a non-writable copy for modification
@@ -1063,14 +1059,14 @@ internals.leave = function (project, member, callback) {
                             // Move any assignments to pid account (not details) and save tasks
 
                             var taskCriteria = { project: project._id, participants: userId };
-                            var taskChange = { $set: { 'participants.$': 'pid:' + participant.pid} };
+                            var taskChange = { $set: { 'participants.$': 'pid:' + participant.pid } };
                             Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
                                 if (err === null) {
 
                                     // Save project
 
-                                    Db.updateCriteria('project', project._id, { 'participants.id': userId }, { $set: { 'participants.$': participant} }, function (err) {
+                                    Db.updateCriteria('project', project._id, { 'participants.id': userId }, { $set: { 'participants.$': participant } }, function (err) {
 
                                         if (err === null) {
 
@@ -1120,7 +1116,7 @@ internals.leave = function (project, member, callback) {
             }
             else {
 
-                var change = { $pull: { participants: {}} };
+                var change = { $pull: { participants: {} } };
                 change.$pull.participants[isPid ? 'pid' : 'id'] = userId;
 
                 Db.update('project', project._id, change, function (err) {
@@ -1158,7 +1154,7 @@ exports.replacePid = function (project, pid, userId, callback) {
     // Move any assignments to pid account (not details) and save tasks
 
     var taskCriteria = { project: project._id, participants: 'pid:' + pid };
-    var taskChange = { $set: { 'participants.$': userId} };
+    var taskChange = { $set: { 'participants.$': userId } };
     Db.updateCriteria('task', null, taskCriteria, taskChange, function (err) {
 
         if (err === null) {
@@ -1169,7 +1165,7 @@ exports.replacePid = function (project, pid, userId, callback) {
 
                 // Remove Pid without adding
 
-                Db.update('project', project._id, { $pull: { participants: { pid: pid}} }, function (err) {
+                Db.update('project', project._id, { $pull: { participants: { pid: pid } } }, function (err) {
 
                     if (err === null) {
 
@@ -1185,7 +1181,7 @@ exports.replacePid = function (project, pid, userId, callback) {
 
                 // Replace pid with user
 
-                Db.updateCriteria('project', project._id, { 'participants.pid': pid }, { $set: { 'participants.$': { id: userId}} }, function (err) {
+                Db.updateCriteria('project', project._id, { 'participants.pid': pid }, { $set: { 'participants.$': { id: userId } } }, function (err) {
 
                     if (err === null) {
 

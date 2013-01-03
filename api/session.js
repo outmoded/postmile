@@ -90,10 +90,10 @@ exports.login = {
                 
                 // twitter, facebook, yahoo
 
-                User.validate(id, type, function (user, err) {
+                User.validate(id, type, function (err, user) {
 
-                    if (err) {
-                        return request.reply(Hapi.Error.unauthorized(err.message));
+                    if (err || !user) {
+                        return request.reply(Hapi.Error.unauthorized());
                     }
 
                     loadGrant(user);
