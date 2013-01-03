@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Adapted from: Version 1.0 12/25/99 Copyright (C) 1999 Masanao Izumo <iz@onicos.co.jp>
 
 // Declare internals
@@ -32,11 +27,8 @@ exports.encode = function (string) {
     var result = '';
 
     while (i < len) {
-
         c1 = string.charCodeAt(i++) & 0xff;
-
         if (i === len) {
-
             result += internals.encodeChars.charAt(c1 >> 2);
             result += internals.encodeChars.charAt((c1 & 0x3) << 4);
             result += '===';
@@ -44,9 +36,7 @@ exports.encode = function (string) {
         }
 
         c2 = string.charCodeAt(i++);
-
         if (i === len) {
-
             result += internals.encodeChars.charAt(c1 >> 2);
             result += internals.encodeChars.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
             result += internals.encodeChars.charAt((c2 & 0xF) << 2);
@@ -55,7 +45,6 @@ exports.encode = function (string) {
         }
 
         c3 = string.charCodeAt(i++);
-
         result += internals.encodeChars.charAt(c1 >> 2);
         result += internals.encodeChars.charAt(((c1 & 0x3) << 4) | ((c2 & 0xF0) >> 4));
         result += internals.encodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >> 6));
@@ -77,36 +66,29 @@ exports.decode = function (string) {
     var result = '';
 
     while (i < len) {
-
         do {
-
             c1 = internals.decodeChars[string.charCodeAt(i++) & 0xff];
         }
         while (i < len && c1 === -1);
 
         if (c1 === -1) {
-
             break;
         }
 
         do {
-
             c2 = internals.decodeChars[string.charCodeAt(i++) & 0xff];
         }
         while (i < len && c2 === -1);
 
         if (c2 === -1) {
-
             break;
         }
 
         result += String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4));
 
         do {
-
             c3 = string.charCodeAt(i++) & 0xff;
             if (c3 === 61) {
-
                 return result;
             }
 
@@ -115,17 +97,14 @@ exports.decode = function (string) {
         while (i < len && c3 === -1);
 
         if (c3 === -1) {
-
             break;
         }
 
         result += String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2));
 
         do {
-
             c4 = string.charCodeAt(i++) & 0xff;
             if (c4 === 61) {
-
                 return result;
             }
 
@@ -134,7 +113,6 @@ exports.decode = function (string) {
         while (i < len && c4 === -1);
 
         if (c4 === -1) {
-
             break;
         }
 

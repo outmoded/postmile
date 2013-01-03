@@ -1,7 +1,6 @@
 // Product Configuration
 
 exports.product = {
-
     name: 'Postmile'
 };
 
@@ -9,29 +8,21 @@ exports.product = {
 // Server Configuration
 
 exports.host = {
-
     web: {
-
         domain: 'localhost',
         port: 8000,
         scheme: 'http'
     },
-
     api: {
-
         domain: 'localhost',
         port: 8001,
         scheme: 'http'
     },
-
     uri: function (type) {
-
         var set = (type === 'web' ? exports.host.web : exports.host.api);
         return set.scheme + '://' + set.domain + (set.port ? ':' + set.port : '');
     },
-
     authority: function (type) {
-
         var set = (type === 'web' ? exports.host.web : exports.host.api);
         return set.domain + (set.port ? ':' + set.port : '');
     }
@@ -41,13 +32,9 @@ exports.host = {
 // Process Configuration
 
 exports.process = {
-
     web: {
-
         // runAs: 'www-data',
-
         // tls: {
-        //
         //     key: 'cert/postmile.net.key',
         //     cert: 'cert/postmile.net.crt'
         // }
@@ -58,7 +45,6 @@ exports.process = {
 // Database Configuration
 
 exports.database = {
-
     host: '127.0.0.1',
     port: 27017,
     db: 'postmile'
@@ -68,14 +54,11 @@ exports.database = {
 // Email Configuration
 
 exports.email = {
-
     fromName: 'Postmile',
     replyTo: 'no-reply@your.domain',
     admin: 'admin@your.domain',
     feedback: 'admin@your.domain',
-
     server: {
-
 //      port: 25,
 //      user: '',
 //      password: '',

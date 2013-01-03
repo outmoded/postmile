@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Email = require('./email');
@@ -51,7 +46,6 @@ exports.console = function (req, res, next) {
 exports.stupid = function (req, res, next) {
 
     res.api.cookie = {
-
         values: ['imwithstupid=true'],
         attributes: ['Path=/']
     };
@@ -66,12 +60,10 @@ exports.stupid = function (req, res, next) {
 exports.feedback = function (req, res, next) {
 
     if (req.method === 'GET') {
-
         res.api.view = { template: 'feedback' };
         next();
     }
     else {
-
         var feedback = 'From: ' + (req.body.username ? req.body.username : req.body.name + ' <' + req.body.email + '>') + '\n\n' + req.body.message;
         Email.send(Config.email.feedback, 'Posmile site feedback', feedback);
 

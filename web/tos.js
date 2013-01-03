@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Api = require('./api');
@@ -23,13 +18,12 @@ exports.get = function (req, res, next) {
         !req.api.session.ext.tos ||
         req.api.session.ext.tos < exports.minimumTOS) {
 
-        res.api.view = { template: 'tos', locals: { env: { next: req.query.next || ''}} };
-        next();
+        res.api.view = { template: 'tos', locals: { env: { next: req.query.next || '' } } };
+        return next();
     }
-    else {
-        res.api.redirect = (req.query.next && req.query.next.charAt(0) === '/' ? req.query.next : req.api.profile.view);
-        next();
-    }
+
+    res.api.redirect = (req.query.next && req.query.next.charAt(0) === '/' ? req.query.next : req.api.profile.view);
+    next();
 };
 
 

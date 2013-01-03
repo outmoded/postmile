@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Account = require('./account');
@@ -37,7 +32,7 @@ exports.endpoints = [
     { method: 'GET',    path: '/tos',                       handler: Tos.get,               authentication: 'session' },
     { method: 'POST',   path: '/tos',                       handler: Tos.post,              authentication: 'session' },
 
-    { method: 'GET',    path: '/signup/register',           handler: Signup.register },
+    { method: 'GET',    path: '/signup/register',           handler: Signup.form },
     { method: 'POST',   path: '/signup/register',           handler: Signup.register },
     { method: 'GET',    path: '/i/:id',                     handler: Signup.i },
     { method: 'GET',    path: '/signup/invite',             handler: Signup.invite },

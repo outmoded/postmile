@@ -1,12 +1,6 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Jar encryption key
 
 exports.jar = {
-
     aes256Key: ''
 };
 
@@ -14,7 +8,6 @@ exports.jar = {
 // Session token encryption key
 
 exports.session = {
-
     aes256Key: ''
 };
 
@@ -22,7 +15,6 @@ exports.session = {
 // Postmile API
 
 exports.postmileAPI = {
-
     clientId: '',
     clientSecret: '',
     viewClientId: ''
@@ -32,7 +24,6 @@ exports.postmileAPI = {
 // Twitter
 
 exports.twitter = {
-
     clientId: '',
     clientSecret: ''
 };
@@ -41,7 +32,6 @@ exports.twitter = {
 // Facebook
 
 exports.facebook = {
-
     clientId: '',
     clientSecret: '',
 };
@@ -50,7 +40,6 @@ exports.facebook = {
 // Yahoo!
 
 exports.yahoo = {
-
     clientId: '',
     clientSecret: ''
 };

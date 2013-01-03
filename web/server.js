@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Express = require('express');
@@ -53,9 +48,7 @@ exports.create = function (paths) {
     var tls = null;
 
     if (Config.process.web.tls) {
-
         var tls = {
-
             key: Fs.readFileSync(Config.process.web.tls.key),
             cert: Fs.readFileSync(Config.process.web.tls.cert)
         };
@@ -84,7 +77,6 @@ exports.create = function (paths) {
     // Load paths
 
     for (var i = 0; i < paths.length; ++i) {
-
         internals.setRoute(server, paths[i]);
     }
 
@@ -95,27 +87,25 @@ exports.create = function (paths) {
 
     // Start bouncer for port 80
     /*
-    var bouncer = Express.createServer();
-    bouncer.all(/.+/, function (req, res, next) {
+        var bouncer = Express.createServer();
+        bouncer.all(/.+/, function (req, res, next) {
 
-    res.send('You are being redirected...', { 'Location': Config.host.uri('web') + req.url }, 307);
-    });
+            res.send('You are being redirected...', { 'Location': Config.host.uri('web') + req.url }, 307);
+        });
 
-    bouncer.listen(80, Config.host.web.domain);
-    Log.info('Bouncer Server started at http://' + host + ':' + 80);
+        bouncer.listen(80, Config.host.web.domain);
+        Log.info('Bouncer Server started at http://' + host + ':' + 80);
     */
+
     // Change OS User
 
     if (Config.process.web.runAs) {
-
         Log.info('Web Server switching users from ' + process.getuid() + ' to ' + Config.process.web.runAs);
         try {
-
             process.setuid(Config.process.web.runAs);
             Log.info('Web Server active user: ' + process.getuid());
         }
         catch (err) {
-
             Log.err('Failed setting uid: ' + err);
             process.exit(1);
         }
@@ -138,7 +128,6 @@ internals.preprocessRequest = function (req, res, next) {
 
     var isNotWithStupid = true;
     if (req.headers['user-agent']) {
-
         req.api.agent = UserAgent.parse(req.headers['user-agent']);
 
         if (req.url !== '/imwithstupid' &&
@@ -155,7 +144,6 @@ internals.preprocessRequest = function (req, res, next) {
                 var version = (req.api.agent.name === 'chrome' ? req.api.agent.version.replace(/\.\d+$/, '') : req.api.agent.version);
 
                 if (version.split(/\./g).length - 1 < 2) {
-
                     version += '.0';
                 }
 
@@ -173,7 +161,6 @@ internals.preprocessRequest = function (req, res, next) {
         // Load cookie jar
 
         if (req.cookies.jar) {
-
             req.api.jar = Utils.decrypt(Vault.jar.aes256Key, req.cookies.jar) || {};
             delete req.cookies.jar;
             res.api.clearJar = true;
@@ -189,7 +176,6 @@ internals.preprocessRequest = function (req, res, next) {
             // Set default view
 
             if (req.api.profile) {
-
                 req.api.profile.view = req.api.profile.view || '/view/';
             }
 
@@ -215,7 +201,6 @@ internals.setRoute = function (server, config) {
     // Authentication
 
     switch (config.authentication) {
-
         case 'session': routes.push(internals.authenticate); break;
         default: break;
     }
@@ -223,14 +208,12 @@ internals.setRoute = function (server, config) {
     // Body structure
 
     if (config.body) {
-
         routes.push(internals.validateData(config.body));
     }
 
     // Set route
 
     switch (config.method) {
-
         case 'GET': server.get(config.path, internals.preprocessRequest, routes, config.handler, internals.finalizeResponse); break;
         case 'POST': server.post(config.path, internals.preprocessRequest, routes, config.handler, internals.finalizeResponse); break;
         default: process.exit(1); break;
@@ -248,7 +231,6 @@ internals.authenticate = function (req, res, next) {
         // Check crumb for any non GET action
 
         if (req.method === 'GET') {
-        
             next();
         }
         else if (req.body &&
@@ -291,13 +273,9 @@ internals.validateData = function (definition) {
         // Check required variables
 
         for (var i in definition) {
-
             if (definition.hasOwnProperty(i)) {
-
                 if (definition[i].optional === false) {
-
                     if (req.body[i] === undefined) {
-
                         err = 'missing required parameter';
                         isInvalid = true;
                         break;
@@ -306,18 +284,16 @@ internals.validateData = function (definition) {
             }
         }
 
-        if (isInvalid === false) {
+        if (!isInvalid) {
 
             // Check each incoming variable
 
             for (i in req.body) {
-
                 if (req.body.hasOwnProperty(i)) {
 
                     // Lookup variable definition
 
                     if (definition[i] === undefined) {
-
                         err = 'unknown parameter';
                         isInvalid = true;
                         break;
@@ -326,9 +302,7 @@ internals.validateData = function (definition) {
                     // Check for empty
 
                     if (definition.empty !== true) {
-
-                        if (req.body[i] === undefined ||
-                            req.body[i] === null ||
+                        if (!req.body[i] ||
                             (typeof req.body[i] === 'number' && isNaN(req.body[i])) ||
                             (typeof req.body[i] === 'string' && req.body[i] === '')) {
 
@@ -342,12 +316,10 @@ internals.validateData = function (definition) {
         }
 
         if (isInvalid) {
-
             res.api.error = Err.badRequest('\'' + i + '\': ' + err);
             internals.finalizeResponse(req, res, next);
         }
         else {
-
             next();
         }
     };
@@ -369,19 +341,12 @@ internals.finalizeResponse = function (req, res) {
         var cookies = [];
 
         if (res.api.cookie) {
-
             for (var i in res.api.cookie.values) {
-
                 if (res.api.cookie.values.hasOwnProperty(i)) {
-
                     var cookie = res.api.cookie.values[i];
-
                     if (res.api.cookie.attributes) {
-
                         for (var a in res.api.cookie.attributes) {
-
                             if (res.api.cookie.attributes.hasOwnProperty(a)) {
-
                                 cookie += '; ' + res.api.cookie.attributes[a];
                             }
                         }
@@ -399,7 +364,6 @@ internals.finalizeResponse = function (req, res) {
             cookies.push('jar=' + Utils.encrypt(Vault.jar.aes256Key, res.api.jar) + '; Path=/' + (Config.host.web.scheme === 'https' ? '; Secure' : ''));
         }
         else if (res.api.clearJar) {
-
             cookies.push('jar=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
         }
 
@@ -422,7 +386,6 @@ internals.finalizeResponse = function (req, res) {
         // Add crumb
 
         if (req.api.session) {
-
             locals.crumb = Crypto.createHash('sha1').update(req.api.session.id).digest('base64');
         }
 
@@ -435,7 +398,6 @@ internals.finalizeResponse = function (req, res) {
             locals.isMobile = true;
         }
         else {
-
             locals.isMobile = false;
         }
 
@@ -444,15 +406,14 @@ internals.finalizeResponse = function (req, res) {
         res.render(res.api.view.template, locals);
         Log.info('Replied', req);
     }
-    else if (res.api.result || res.api.redirect) {
+    else if (res.api.result ||
+             res.api.redirect) {
 
         if (res.api.redirect) {
-
             var location = ((res.api.redirect.indexOf('http') !== 0 && res.api.redirect.indexOf('postmile://') !== 0) ? Config.host.uri('web') + res.api.redirect : res.api.redirect);
             res.send(res.api.result || 'You are being redirected...', { 'Location': location }, (req.method === 'GET' || location.indexOf('http') !== 0 ? 307 : 303));
         }
         else {
-
             res.send(res.api.result);
         }
 
@@ -460,7 +421,6 @@ internals.finalizeResponse = function (req, res) {
         Log.info('Replied', req);
     }
     else if (res.api.error) {
-
         internals.errorPage(res.api.error.code, req, res, res.api.error.text + (res.api.error.message ? ': ' + res.api.error.message : ''), res.api.isAPI);
         Log.err(res.api.error, req);
     }
@@ -493,14 +453,11 @@ internals.errorHandler = function (err, req, res, next) {
 internals.errorPage = function (code, req, res, message, isAPI) {
 
     if (res.api) {
-
         res.api.isReplied = true;
     }
 
     if (isAPI !== true) {
-
         var locals = {
-
             profile: (req && req.api && req.api.profile ? req.api.profile : null),
             error: message,
             code: code === 404 ? 404 : 500,
@@ -513,7 +470,6 @@ internals.errorPage = function (code, req, res, message, isAPI) {
         res.render('error', locals);
     }
     else {
-
         res.send({ error: message }, code);
     }
 };

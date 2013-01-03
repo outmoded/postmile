@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Api = require('./api');
@@ -73,7 +68,6 @@ exports.profile = function (req, res, next) {
     var body = {};
 
     if (req.body.username !== req.api.profile.username) {
-
         body.username = req.body.username;
     }
 
@@ -83,23 +77,20 @@ exports.profile = function (req, res, next) {
         body.name = req.body.name;
     }
 
-    if (Object.keys(body).length > 0) {
-
-        Api.call('POST', '/profile', body, req.api.session, function (err, code, payload) {
-
-            if (err || code !== 200) {
-                res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
-            }
-
-            res.api.redirect = '/account/profile';
-            next();
-        });
+    if (!Object.keys(body).length) {
+        res.api.redirect = '/account/profile';
+        return next();
     }
-    else {
+
+    Api.call('POST', '/profile', body, req.api.session, function (err, code, payload) {
+
+        if (err || code !== 200) {
+            res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+        }
 
         res.api.redirect = '/account/profile';
         next();
-    }
+    });
 };
 
 
@@ -107,36 +98,24 @@ exports.profile = function (req, res, next) {
 
 exports.emails = function (req, res, next) {
 
-    switch (req.body.action) {
-
-        case 'add':
-        case 'remove':
-        case 'primary':
-        case 'verify':
-
-            Api.call('POST', '/profile/email', req.body, req.api.session, function (err, code, payload) {
-
-                if (err || code !== 200) {
-                    res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
-                }
-                else if (req.body.action === 'verify') {
-                    res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
-                }
-
-                res.api.redirect = '/account/emails';
-                next();
-            });
-
-            break;
-
-        default:
-
-            res.api.jar.message = 'Failed saving changes. Bad request';
-            res.api.redirect = '/account/emails';
-            next();
-
-            break;
+    if (['add', 'remove', 'primary', 'verify'].indexOf(req.body.action) === -1) {
+        res.api.jar.message = 'Failed saving changes. Bad request';
+        res.api.redirect = '/account/emails';
+        return next();
     }
+
+    Api.call('POST', '/profile/email', req.body, req.api.session, function (err, code, payload) {
+
+        if (err || code !== 200) {
+            res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+        }
+        else if (req.body.action === 'verify') {
+            res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
+        }
+
+        res.api.redirect = '/account/emails';
+        next();
+    });
 };
 
 

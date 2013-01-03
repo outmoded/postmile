@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Url = require('url');
@@ -42,26 +37,21 @@ var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2
 
 exports.login = function (req, res, next) {
 
-    if (req.api.profile) {
-
-        if (req.api.session.restriction === 'tos' ||
-            !req.api.session.ext.tos ||
-            req.api.session.ext.tos < Tos.minimumTOS) {
-
-            res.api.redirect = '/tos' + (req.query.next && req.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(req.query.next) : '');
-            next();
-        }
-        else {
-
-            res.api.redirect = req.query.next || req.api.profile.view;
-            next();
-        }
+    if (!req.api.profile) {
+        res.api.view = { template: 'login', hasMobile: true, locals: { logo: false, env: { next: (req.query.next ? encodeURIComponent(req.query.next) : '') } } };
+        return next();
     }
-    else {
 
-        res.api.view = { template: 'login', hasMobile: true, locals: { logo: false, env: { next: (req.query.next ? encodeURIComponent(req.query.next) : '')}} };
-        next();
+    if (req.api.session.restriction === 'tos' ||
+        !req.api.session.ext.tos ||
+        req.api.session.ext.tos < Tos.minimumTOS) {
+
+        res.api.redirect = '/tos' + (req.query.next && req.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(req.query.next) : '');
+        return next();
     }
+
+    res.api.redirect = req.query.next || req.api.profile.view;
+    return next();
 };
 
 
@@ -77,7 +67,7 @@ exports.logout = function (req, res, next) {
 
 exports.auth = function (req, res, next) {
 
-    function entry() {
+    var entry = function () {
 
         // Preserve parameters for OAuth authorization callback
 
@@ -87,141 +77,109 @@ exports.auth = function (req, res, next) {
             res.api.jar.auth = { next: req.query.x_next };
         }
 
+        if (['twitter', 'facebook', 'yahoo'].indexOf(req.params.network) === -1) {
+            res.api.error = Err.internal('Unknown third party network authentication', req.params.network);
+            return next();
+        }
+
         switch (req.params.network) {
 
             case 'twitter': twitter(); break;
             case 'facebook': facebook(); break;
             case 'yahoo': yahoo(); break;
-
-            default:
-
-                res.api.error = Err.internal('Unknown third party network authentication', req.params.network);
-                next();
-                break;
         }
-    }
+    };
 
-    function twitter() {
+    var twitter = function () {
 
-        if (req.query.oauth_token === undefined) {
+        // Sign-in Initialization
 
-            // Sign-in Initialization
+        if (!req.query.oauth_token) {
+            return twitterClient.getOAuthRequestToken(function (err, token, secret, authorizeUri, params) {
 
-            twitterClient.getOAuthRequestToken(function (err, token, secret, authorizeUri, params) {
-
-                if (err === null) {
-
-                    res.api.jar.twitter = { token: token, secret: secret };
-                    res.api.redirect = 'https://api.twitter.com/oauth/authenticate?oauth_token=' + token;
-                    res.api.result = 'You are being redirected to Twitter to sign-in...';
-                    next();
-                }
-                else {
-
+                if (err) {
                     res.api.error = Err.internal('Failed to obtain a Twitter request token', err);
-                    next();
+                    return next();
                 }
+
+                res.api.jar.twitter = { token: token, secret: secret };
+                res.api.redirect = 'https://api.twitter.com/oauth/authenticate?oauth_token=' + token;
+                res.api.result = 'You are being redirected to Twitter to sign-in...';
+                return next();
             });
         }
-        else {
 
-            // Authorization callback
+        // Authorization callback
 
-            if (req.query.oauth_verifier) {
-
-                if (req.api.jar.twitter) {
-
-                    var credentials = req.api.jar.twitter;
-                    if (req.query.oauth_token === credentials.token) {
-
-                        twitterClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
-
-                            if (err === null) {
-
-                                if (params.user_id) {
-
-                                    var account = {
-
-                                        network: 'twitter',
-                                        id: params.user_id,
-                                        username: params.screen_name || ''
-                                    };
-
-                                    if (req.api.profile) {
-
-                                        finalizedLogin(account);
-                                    }
-                                    else {
-
-                                        twitterClient.getProtectedResource('http://api.twitter.com/1/account/verify_credentials.json', 'GET', token, secret, function (err, response) {
-
-                                            if (err === null) {
-
-                                                var data = null;
-                                                try {
-
-                                                    data = JSON.parse(response);
-                                                }
-                                                catch (e) {
-                                                }
-
-                                                if (data &&
-                                                    data.name) {
-
-                                                    account.name = data.name;
-                                                }
-
-                                                finalizedLogin(account);
-                                            }
-                                        });
-                                    }
-                                }
-                                else {
-
-                                    res.api.error = Err.internal('Invalid Twitter access token response', err);
-                                    next();
-                                }
-                            }
-                            else {
-
-                                res.api.error = Err.internal('Failed to obtain a Twitter access token', err);
-                                next();
-                            }
-                        });
-                    }
-                    else {
-
-                        res.api.error = Err.internal('Twitter authorized request token mismatch');
-                        next();
-                    }
-                }
-                else {
-
-                    res.api.error = Err.internal('Missing Twitter request token cookie');
-                    next();
-                }
-            }
-            else {
-
-                res.api.error = Err.internal('Missing verifier parameter in Twitter authorization response');
-                next();
-            }
+        if (!req.query.oauth_verifier) {
+            res.api.error = Err.internal('Missing verifier parameter in Twitter authorization response');
+            return next();
         }
-    }
 
-    function facebook() {
+        if (!req.api.jar.twitter) {
+            res.api.error = Err.internal('Missing Twitter request token cookie');
+            return next();
+        }
 
-        if (req.query.code === undefined) {
+        var credentials = req.api.jar.twitter;
+        if (req.query.oauth_token !== credentials.token) {
+            res.api.error = Err.internal('Twitter authorized request token mismatch');
+            return next();
+        }
 
-            // Sign-in Initialization
+        twitterClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
 
+            if (err) {
+                res.api.error = Err.internal('Failed to obtain a Twitter access token', err);
+                return next();
+            }
+
+            if (!params.user_id) {
+                res.api.error = Err.internal('Invalid Twitter access token response', err);
+                return next();
+            }
+
+            var account = {
+                network: 'twitter',
+                id: params.user_id,
+                username: params.screen_name || ''
+            };
+
+            if (req.api.profile) {
+                return finalizedLogin(account);
+            }
+
+            twitterClient.getProtectedResource('http://api.twitter.com/1/account/verify_credentials.json', 'GET', token, secret, function (err, response) {
+
+                if (!err) {
+                    var data = null;
+                    try {
+                        data = JSON.parse(response);
+                    }
+                    catch (e) { }
+
+                    if (data &&
+                        data.name) {
+
+                        account.name = data.name;
+                    }
+                }
+
+                return finalizedLogin(account);
+            });
+        });
+    };
+
+    var facebook = function () {
+
+        // Sign-in Initialization
+
+        if (!req.query.code) {
             var request = {
-
                 protocol: 'https:',
                 host: 'graph.facebook.com',
                 pathname: '/oauth/authorize',
                 query: {
-
                     client_id: Vault.facebook.clientId,
                     response_type: 'code',
                     scope: 'email',
@@ -234,85 +192,68 @@ exports.auth = function (req, res, next) {
             res.api.jar.facebook = { state: request.query.state };
             res.api.redirect = Url.format(request);
             res.api.result = 'You are being redirected to Facebook to sign-in...';
-            next();
+            return next();
         }
-        else {
 
-            // Authorization callback
 
-            if (req.api.jar.facebook &&
-                req.api.jar.facebook.state) {
+        // Authorization callback
 
-                if (req.api.jar.facebook.state === req.query.state) {
+        if (!req.api.jar.facebook ||
+            !req.api.jar.facebook.state) {
 
-                    var query = {
-
-                        client_id: Vault.facebook.clientId,
-                        client_secret: Vault.facebook.clientSecret,
-                        grant_type: 'authorization_code',
-                        code: req.query.code,
-                        redirect_uri: Config.host.uri('web') + '/auth/facebook'
-                    };
-
-                    var body = QueryString.stringify(query);
-
-                    facebookRequest('POST', '/oauth/access_token', body, function (data, err) {
-
-                        if (data) {
-
-                            facebookRequest('GET', '/me?' + QueryString.stringify({ oauth_token: data.access_token }), null, function (data, err) {
-
-                                if (err === null) {
-
-                                    if (data &&
-                                data.id) {
-
-                                        var account = {
-
-                                            network: 'facebook',
-                                            id: data.id,
-                                            name: data.name || '',
-                                            username: data.username || '',
-                                            email: (data.email && data.email.match(/proxymail\.facebook\.com$/) === null ? data.email : '')
-                                        };
-
-                                        finalizedLogin(account);
-                                    }
-                                    else {
-
-                                        res.api.error = Err.internal('Invalid Facebook profile response', err);
-                                        next();
-                                    }
-                                }
-                                else {
-
-                                    res.api.error = err;
-                                    next();
-                                }
-                            });
-                        }
-                        else {
-
-                            res.api.error = err;
-                            next();
-                        }
-                    });
-                }
-                else {
-
-                    res.api.error = Err.internal('Facebook incorrect state parameter');
-                    next();
-                }
-            }
-            else {
-
-                res.api.error = Err.internal('Missing Facebook state cookie');
-                next();
-            }
+            res.api.error = Err.internal('Missing Facebook state cookie');
+            return next();
         }
-    }
 
-    function facebookRequest(method, path, body, callback) {
+        if (req.api.jar.facebook.state !== req.query.state) {
+            res.api.error = Err.internal('Facebook incorrect state parameter');
+            return next();
+        }
+
+        var query = {
+            client_id: Vault.facebook.clientId,
+            client_secret: Vault.facebook.clientSecret,
+            grant_type: 'authorization_code',
+            code: req.query.code,
+            redirect_uri: Config.host.uri('web') + '/auth/facebook'
+        };
+
+        var body = QueryString.stringify(query);
+        facebookRequest('POST', '/oauth/access_token', body, function (err, data) {
+
+            if (!data) {
+                res.api.error = err;
+                return next();
+            }
+
+            facebookRequest('GET', '/me?' + QueryString.stringify({ oauth_token: data.access_token }), null, function (err, data) {
+
+                if (err) {
+                    res.api.error = err;
+                    return next();
+                }
+
+                if (!data ||
+                    !data.id) {
+
+                    res.api.error = Err.internal('Invalid Facebook profile response', err);
+                    return next();
+                }
+
+                var account = {
+                    network: 'facebook',
+                    id: data.id,
+                    name: data.name || '',
+                    username: data.username || '',
+                    email: (data.email && !data.email.match(/proxymail\.facebook\.com$/) ? data.email : '')
+                };
+
+                finalizedLogin(account);
+            });
+        });
+    };
+
+    var facebookRequest = function (method, path, body, callback) {
 
         var options = {
             host: 'graph.facebook.com',
@@ -323,177 +264,137 @@ exports.auth = function (req, res, next) {
 
         var hreq = Https.request(options, function (hres) {
 
-            if (hres) {
-
-                var response = '';
-
-                hres.setEncoding('utf8');
-                hres.on('data', function (chunk) {
-
-                    response += chunk;
-                });
-
-                hres.on('end', function () {
-
-                    var data = null;
-                    var error = null;
-
-                    try {
-
-                        data = JSON.parse(response);
-                    }
-                    catch (err) {
-
-                        data = QueryString.parse(response);     // Hack until Facebook fixes their OAuth implementation
-                        // error = 'Invalid response body from Facebook token endpoint: ' + response + '(' + err + ')';
-                    }
-
-                    if (error === null) {
-
-                        if (hres.statusCode === 200) {
-
-                            callback(data, null);
-                        }
-                        else {
-
-                            callback(null, Err.internal('Facebook returned OAuth error on token request', data));
-                        }
-                    }
-                    else {
-
-                        callback(null, Err.internal(error));
-                    }
-                });
+            if (!hres) {
+                return callback(Err.internal('Failed sending Facebook token request'));
             }
-            else {
 
-                callback(null, Err.internal('Failed sending Facebook token request'));
-            }
+            var response = '';
+
+            hres.setEncoding('utf8');
+            hres.on('data', function (chunk) {
+
+                response += chunk;
+            });
+
+            hres.on('end', function () {
+
+                var data = null;
+                var error = null;
+
+                try {
+                    data = JSON.parse(response);
+                }
+                catch (err) {
+                    data = QueryString.parse(response);     // Hack until Facebook fixes their OAuth implementation
+                    // error = 'Invalid response body from Facebook token endpoint: ' + response + '(' + err + ')';
+                }
+
+                if (error) {
+                    return callback(Err.internal(error));
+                }
+
+                if (hres.statusCode !== 200) {
+                    return callback(Err.internal('Facebook returned OAuth error on token request', data));
+                }
+
+                return callback(null, data);
+            });
         });
 
         hreq.on('error', function (err) {
 
-            callback(null, Err.internal('HTTP socket error', err));
+            callback(Err.internal('HTTP socket error', err));
         });
 
         if (body !== null) {
-
             hreq.setHeader('Content-Type', 'application/x-www-form-urlencoded');
             hreq.write(body);
         }
 
         hreq.end();
-    }
+    };
 
-    function yahoo() {
+    var yahoo = function () {
 
-        if (req.query.oauth_token === undefined) {
+        // Sign-in Initialization
 
-            // Sign-in Initialization
-
+        if (!req.query.oauth_token) {
             yahooClient.getOAuthRequestToken(function (err, token, secret, authorizeUri, params) {
 
-                if (err === null) {
-
-                    res.api.jar.yahoo = { token: token, secret: secret };
-                    res.api.redirect = 'https://api.login.yahoo.com/oauth/v2/request_auth?oauth_token=' + token;
-                    res.api.result = 'You are being redirected to Yahoo! to sign-in...';
-                    next();
-                }
-                else {
-
+                if (err) {
                     res.api.error = Err.internal('Failed to obtain a Yahoo! request token', err);
-                    next();
+                    return next();
                 }
+
+                res.api.jar.yahoo = { token: token, secret: secret };
+                res.api.redirect = 'https://api.login.yahoo.com/oauth/v2/request_auth?oauth_token=' + token;
+                res.api.result = 'You are being redirected to Yahoo! to sign-in...';
+                return next();
             });
         }
-        else {
 
-            // Authorization callback
+        // Authorization callback
 
-            if (req.query.oauth_verifier) {
-
-                if (req.api.jar.yahoo) {
-
-                    credentials = req.api.jar.yahoo;
-
-                    if (req.query.oauth_token === credentials.token) {
-
-                        yahooClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
-
-                            if (err === null) {
-
-                                if (params &&
-                                    params.xoauth_yahoo_guid) {
-
-                                    var account = {
-
-                                        network: 'yahoo',
-                                        id: params.xoauth_yahoo_guid
-                                    };
-
-                                    if (req.api.profile) {
-
-                                        finalizedLogin(account);
-                                    }
-                                    else {
-
-                                        yahooClient.getProtectedResource('http://social.yahooapis.com/v1/user/' + params.xoauth_yahoo_guid + '/profile?format=json', 'GET', token, secret, function (err, response) {
-
-                                            if (err === null) {
-
-                                                var data = null;
-                                                try {
-
-                                                    data = JSON.parse(response);
-                                                }
-                                                catch (e) {
-                                                }
-
-                                                if (data && data.profile && data.profile.nickname) {
-
-                                                    account.name = data.profile.nickname;
-                                                }
-
-                                                finalizedLogin(account);
-                                            }
-                                        });
-                                    }
-                                }
-                                else {
-
-                                    res.api.error = Err.internal('Invalid Yahoo access token response', params);
-                                    next();
-                                }
-                            }
-                            else {
-
-                                res.api.error = Err.internal('Failed to obtain a Yahoo access token', err);
-                                next();
-                            }
-                        });
-                    }
-                    else {
-
-                        res.api.error = Err.internal('Yahoo authorized request token mismatch');
-                        next();
-                    }
-                }
-                else {
-
-                    res.api.error = Err.internal('Missing Yahoo request token cookie');
-                    next();
-                }
-            }
-            else {
-
-                res.api.error = Err.internal('Missing verifier parameter in Yahoo authorization response');
-                next();
-            }
+        if (!req.query.oauth_verifier) {
+            res.api.error = Err.internal('Missing verifier parameter in Yahoo authorization response');
+            return next();
         }
-    }
 
-    function finalizedLogin(account) {
+        if (!req.api.jar.yahoo) {
+            res.api.error = Err.internal('Missing Yahoo request token cookie');
+            return next();
+        }
+
+        credentials = req.api.jar.yahoo;
+
+        if (req.query.oauth_token !== credentials.token) {
+            res.api.error = Err.internal('Yahoo authorized request token mismatch');
+            return next();
+        }
+
+        yahooClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
+
+            if (err) {
+                res.api.error = Err.internal('Failed to obtain a Yahoo access token', err);
+                return next();
+            }
+
+            if (!params ||
+                !params.xoauth_yahoo_guid) {
+
+                res.api.error = Err.internal('Invalid Yahoo access token response', params);
+                return next();
+            }
+
+            var account = {
+                network: 'yahoo',
+                id: params.xoauth_yahoo_guid
+            };
+
+            if (req.api.profile) {
+                return finalizedLogin(account);
+            }
+
+            yahooClient.getProtectedResource('http://social.yahooapis.com/v1/user/' + params.xoauth_yahoo_guid + '/profile?format=json', 'GET', token, secret, function (err, response) {
+
+                if (!err) {
+                    var data = null;
+                    try {
+                        data = JSON.parse(response);
+                    }
+                    catch (e) { }
+
+                    if (data && data.profile && data.profile.nickname) {
+                        account.name = data.profile.nickname;
+                    }
+                }
+
+                return finalizedLogin(account);
+            });
+        });
+    };
+
+    var finalizedLogin = function (account) {
 
         if (req.api.profile) {
 
@@ -512,7 +413,7 @@ exports.auth = function (req, res, next) {
             var destination = req.api.jar.auth ? req.api.jar.auth.next : null;
             exports.loginCall(account.network, account.id, res, next, destination, account);
         }
-    }
+    };
 
     entry();
 };
@@ -522,20 +423,16 @@ exports.auth = function (req, res, next) {
 
 exports.unlink = function (req, res, next) {
 
-    if (req.body.network === 'twitter' ||
-        req.body.network === 'facebook' ||
-        req.body.network === 'yahoo') {
-
-        Api.clientCall('DELETE', '/user/' + req.api.profile.id + '/link/' + req.body.network, '', function (err, code, payload) {
-
-            res.api.redirect = '/account/linked';
-            next();
-        });
-    }
-    else {
+    if (['twitter', 'facebook', 'yahoo'].indexOf(req.body.network) === -1) {
         res.api.redirect = '/account/linked';
-        next();
+        return next();
     }
+
+    Api.clientCall('DELETE', '/user/' + req.api.profile.id + '/link/' + req.body.network, '', function (err, code, payload) {
+
+        res.api.redirect = '/account/linked';
+        return next();
+    });
 };
 
 
@@ -633,7 +530,7 @@ exports.loginCall = function (type, id, res, next, destination, account) {
                 }
 
                 if (restriction === 'tos' &&
-                    (destination === null || destination.indexOf('/account') !== 0)) {
+                    (!destination || destination.indexOf('/account') !== 0)) {
 
                     res.api.redirect = '/tos' + (destination ? '?next=' + encodeURIComponent(destination) : '');
                 }

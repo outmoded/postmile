@@ -1,8 +1,3 @@
-/*
-* Copyright (c) 2011 Eran Hammer-Lahav. All rights reserved. Copyrights licensed under the New BSD License.
-* See LICENSE file included with this code project for license terms.
-*/
-
 // Load modules
 
 var Validator = require('validator');
@@ -11,36 +6,22 @@ var Base64 = require('./base64');
 var Log = require('./log');
 
 
-// Get current date/time array
-
-exports.getTimestamp = function () {
-
-    return (new Date()).getTime();
-};
-
-
 // Clone object or array
 
 exports.clone = function (obj) {
 
-    if (obj === null ||
-        obj === undefined) {
-
+    if (!obj) {
         return null;
     }
 
     var newObj = (obj instanceof Array) ? [] : {};
 
     for (var i in obj) {
-
         if (obj.hasOwnProperty(i)) {
-
             if (obj[i] && typeof obj[i] === 'object') {
-
                 newObj[i] = exports.clone(obj[i]);
             }
             else {
-
                 newObj[i] = obj[i];
             }
         }
@@ -55,11 +36,9 @@ exports.clone = function (obj) {
 exports.checkEmail = function (email) {
 
     try {
-
         Validator.check(email).len(6, 64).isEmail();
     }
     catch (e) {
-
         return false;
     }
 
@@ -77,7 +56,6 @@ exports.getRandomString = function (size) {
     var result = [];
 
     for (var i = 0; i < size; ++i) {
-
         result[i] = randomSource[Math.floor(Math.random() * len)];
     }
 
@@ -111,11 +89,9 @@ exports.decrypt = function (key, value) {
     var envelope = null;
 
     try {
-
         envelope = JSON.parse(dec);
     }
     catch (e) {
-
         Log.err('Invalid encrypted envelope: ' + JSON.stringify(e));
     }
 
