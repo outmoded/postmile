@@ -21,25 +21,20 @@ exports.initialize = function () {
     Db.all('tip', function (err, results) {
 
         for (var i = 0, il = results.length; i < il; ++i) {
-
             var tip = results[i];
             if (tip.rule &&
                 tip.text) {
 
                 var statement = Rules.normalize(tip.rule);
-
                 if (statement) {
-
                     tip.statement = statement;
                     internals.tips[tip._id] = tip;
                 }
                 else {
-
                     Hapi.Log.event('err', 'Failed to load tips: ' + tip._id);
                 }
             }
             else {
-
                 Hapi.Log.event('err', 'Bad tip: missing rule or text');
             }
         }
@@ -54,27 +49,20 @@ exports.list = function (project, callback) {
     var results = [];
 
     for (var i in internals.tips) {
-
         if (internals.tips.hasOwnProperty(i)) {
-
             var tip = internals.tips[i];
 
             try {
-
                 if (eval(tip.statement)) {
-
                     results.push({ id: tip._id, text: tip.text, context: tip.context });
                 }
             }
             catch (e) {
-
-                // Bad context rule
-
                 Hapi.Log.event('err', 'Bad tip rule:' + tip._id);
             }
         }
     }
 
-    callback(results);
+    return callback(results);
 };
 

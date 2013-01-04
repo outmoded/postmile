@@ -60,7 +60,6 @@ exports.login = {
         var loadUser = function () {
 
             if (type === 'id') {
-
                 User.load(id, function (err, user) {
 
                     if (err) {
@@ -71,7 +70,6 @@ exports.login = {
                 });
             }
             else if (type === 'email') {
-
                 Email.loadTicket(id, function (err, emailTicket, user) {
 
                     if (err) {

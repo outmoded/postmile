@@ -31,17 +31,14 @@ exports.generateTicket = function (user, email, arg1, arg2) {
     var ticket = { timestamp: now, email: email };
 
     if (options.action) {
-
         ticket.action = options.action;
     }
 
     if (options.expiresInMin) {
-
         ticket.expires = now + (options.expiresInMin * 60 * 1000);
     }
 
     if (options.isSingleUse !== undefined) {
-
         ticket.isSingleUse = options.isSingleUse;
     }
 
@@ -51,13 +48,10 @@ exports.generateTicket = function (user, email, arg1, arg2) {
     // Cleanup expired tickets
 
     if (user.tickets) {
-
         var expiredIds = [];
 
         for (var i in user.tickets) {
-
             if (user.tickets.hasOwnProperty(i)) {
-
                 if (user.tickets[i].expires &&
                     user.tickets[i].expires <= now) {
 
@@ -67,11 +61,9 @@ exports.generateTicket = function (user, email, arg1, arg2) {
         }
 
         if (expiredIds.length > 0) {
-
             change.$unset = {};
 
             for (i = 0, il = expiredIds.length; i < il; ++i) {
-
                 change.$unset['tickets.' + expiredIds[i]] = 1;
             }
         }
@@ -81,14 +73,11 @@ exports.generateTicket = function (user, email, arg1, arg2) {
 
     Db.update('user', user._id, change, function (err) {
 
-        if (!err) {
-
-            callback(null, token);
+        if (err) {
+            return callback(err);
         }
-        else {
 
-            callback(err);
-        }
+        return callback(null, token);
     });
 };
 
@@ -101,160 +90,128 @@ exports.loadTicket = function (token, callback) {
 
     var record = Utils.decrypt(Vault.emailToken.aes256Key, token);
 
-    if (record &&
-        record instanceof Array &&
-        record.length === 2) {
+    if (!record ||
+        record instanceof Array === false ||
+        record.length !== 2) {
 
-        var userId = record[0];
-        var ticketId = record[1];
+        return callback(Hapi.Error.internal('Invalid email token syntax'));
+    }
 
-        // Load user
+    var userId = record[0];
+    var ticketId = record[1];
 
-        User.load(userId, function (err, user) {
+    // Load user
 
-            if (user) {
+    User.load(userId, function (err, user) {
 
-                // Lookup ticket
+        if (err || !user) {
+            return callback(Hapi.Error.notFound('Unknown email token account'));
+        }
 
-                if (user.tickets &&
-                    user.tickets[ticketId]) {
+        // Lookup ticket
 
-                    var ticket = user.tickets[ticketId];
-                    var now = Date.now();
+        if (!user.tickets ||
+            !user.tickets[ticketId]) {
 
-                    // Check expiration
+            return callback(Hapi.Error.notFound('Invalid or expired email token'), null, user);
+        }
 
-                    if ((ticket.expires || Infinity) > now) {
+        var ticket = user.tickets[ticketId];
+        var now = Date.now();
 
-                        // Verify email is still in user emails
+        // Check expiration
 
-                        var email = null;
-                        for (var i = 0, il = user.emails.length; i < il; ++i) {
+        if ((ticket.expires || Infinity) <= now) {
 
-                            if (ticket.email &&
-                                user.emails[i].address === ticket.email) {
+            return callback(Hapi.Error.notFound('Expired email token'), null, user);        // Don't cleanup now, do it later
+        }
 
-                                email = user.emails[i];
-                                break;
-                            }
-                        }
+        // Verify email is still in user emails
 
-                        if (email) {
+        var email = null;
+        for (var i = 0, il = user.emails.length; i < il; ++i) {
+            if (ticket.email &&
+                user.emails[i].address === ticket.email) {
 
-                            if (email.isVerified !== true ||
-                                ticket.isSingleUse) {
+                email = user.emails[i];
+                break;
+            }
+        }
 
-                                var change = {};
-                                var criteria = null;
+        if (!email) {
+            return callback(Hapi.Error.notFound('Email token sent to address no longer associated with this account'), null, user);     // Don't cleanup now, do it later
+        }
 
-                                // Mark as verified
+        if (!email.isVerified &&
+            !ticket.isSingleUse) {
 
-                                if (email.isVerified !== true) {
+            return callback(null, ticket, user);
+        }
 
-                                    criteria = { 'emails.address': email.address };
-                                    change.$set = { 'emails.$.isVerified': true };
-                                }
+        var change = {};
+        var criteria = null;
 
-                                // While at it, cleanup expired tickets
+        // Mark as verified
 
-                                if (user.tickets) {
+        if (email.isVerified !== true) {
+            criteria = { 'emails.address': email.address };
+            change.$set = { 'emails.$.isVerified': true };
+        }
 
-                                    var expiredIds = [];
+        // While at it, cleanup expired tickets
 
-                                    for (i in user.tickets) {
+        if (user.tickets) {
+            var expiredIds = [];
 
-                                        if (user.tickets.hasOwnProperty(i)) {
+            for (i in user.tickets) {
+                if (user.tickets.hasOwnProperty(i)) {
+                    if (user.tickets[i].expires &&
+                        user.tickets[i].expires <= now) {
 
-                                            if (user.tickets[i].expires &&
-                                                user.tickets[i].expires <= now) {
-
-                                                expiredIds.push(i);
-                                            }
-                                        }
-                                    }
-
-                                    if (expiredIds.length > 0) {
-
-                                        change.$unset = change.$unset || {};
-
-                                        for (i = 0, il = expiredIds.length; i < il; ++i) {
-
-                                            change.$unset['tickets.' + expiredIds[i]] = 1;
-                                        }
-                                    }
-                                }
-
-                                // Remove single use token
-
-                                if (ticket.isSingleUse) {
-
-                                    change.$unset = change.$unset || {};
-                                    change.$unset['tickets.' + ticketId] = 1;
-                                }
-
-                                // Save changes
-
-                                if (criteria) {
-
-                                    Db.updateCriteria('user', user._id, criteria, change, function (err) {
-
-                                        if (!err) {
-
-                                            callback(null, ticket, user);
-                                        }
-                                        else {
-
-                                            callback(err);
-                                        }
-                                    });
-                                }
-                                else {
-
-                                    Db.update('user', user._id, change, function (err) {
-
-                                        if (!err) {
-
-                                            callback(null, ticket, user);
-                                        }
-                                        else {
-
-                                            callback(err);
-                                        }
-                                    });
-                                }
-                            }
-                            else {
-
-                                callback(null, ticket, user);
-                            }
-                        }
-                        else {
-
-                            // Don't cleanup now, do it later
-                            callback(Hapi.Error.notFound('Email token sent to address no longer associated with this account'), null, user);
-                        }
-                    }
-                    else {
-
-                        // Don't cleanup now, do it later
-                        callback(Hapi.Error.notFound('Expired email token'), null, user);
+                        expiredIds.push(i);
                     }
                 }
-                else {
+            }
 
-                    callback(Hapi.Error.notFound('Invalid or expired email token'), null, user);
+            if (expiredIds.length > 0) {
+                change.$unset = change.$unset || {};
+                for (i = 0, il = expiredIds.length; i < il; ++i) {
+                    change.$unset['tickets.' + expiredIds[i]] = 1;
                 }
             }
-            else {
+        }
 
-                callback(Hapi.Error.notFound('Unknown email token account'));
-            }
-        });
-    }
-    else {
+        // Remove single use token
 
-        callback(Hapi.Error.internal('Invalid email token syntax'));
-    }
+        if (ticket.isSingleUse) {
+            change.$unset = change.$unset || {};
+            change.$unset['tickets.' + ticketId] = 1;
+        }
+
+        // Save changes
+
+        if (criteria) {
+            Db.updateCriteria('user', user._id, criteria, change, function (err) {
+
+                if (err) {
+                    return callback(err);
+                }
+
+                return callback(null, ticket, user);
+            });
+        }
+        else {
+
+            Db.update('user', user._id, change, function (err) {
+
+                if (err) {
+                    return callback(err);
+                }
+
+                return callback(null, ticket, user);
+            });
+        }
+    });
 };
 
 
@@ -262,34 +219,29 @@ exports.loadTicket = function (token, callback) {
 
 exports.sendReminder = function (user, callback) {
 
-    if (user &&
-        user.emails &&
-        user.emails[0] &&
-        user.emails[0].address) {
+    if (!user ||
+        !user.emails ||
+        !user.emails[0] ||
+        !user.emails[0].address) {
 
-        var options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
-        exports.generateTicket(user, user.emails[0].address, options, function (err, ticket) {
-
-            if (ticket) {
-
-                var subject = 'Help signing into ' + Config.product.name;
-                var text = 'Hey ' + (user.name || user.username || user.emails[0].address) + ',\n\n' +
-                       'Use this link to sign into ' + Config.product.name + ': \n\n' +
-                       '    ' + Config.host.uri('web') + '/t/' + ticket;
-
-                internals.sendEmail(user.emails[0].address, subject, text);
-                callback(null);
-            }
-            else {
-
-                callback(err);
-            }
-        });
+        return callback(Hapi.Error.internal('User has no email address'));
     }
-    else {
 
-        callback(Hapi.Error.internal('User has no email address'));
-    }
+    var options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
+    exports.generateTicket(user, user.emails[0].address, options, function (err, ticket) {
+
+        if (err || !ticket) {
+            return callback(err);
+        }
+
+        var subject = 'Help signing into ' + Config.product.name;
+        var text = 'Hey ' + (user.name || user.username || user.emails[0].address) + ',\n\n' +
+               'Use this link to sign into ' + Config.product.name + ': \n\n' +
+               '    ' + Config.host.uri('web') + '/t/' + ticket;
+
+        internals.sendEmail(user.emails[0].address, subject, text);
+        return callback(null);
+    });
 };
 
 
@@ -297,31 +249,27 @@ exports.sendReminder = function (user, callback) {
 
 exports.sendValidation = function (user, address, callback) {
 
-    if (user && address) {
+    if (!user ||
+        !address) {
 
-        var options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
-        exports.generateTicket(user, address, options, function (err, ticket) {
-
-            if (ticket) {
-
-                var subject = 'Verify your email addess with ' + Config.product.name;
-                var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
-                       'Use this link to verify your email address: \n\n' +
-                       '    ' + Config.host.uri('web') + '/t/' + ticket;
-
-                internals.sendEmail(address, subject, text);
-                callback(null);
-            }
-            else {
-
-                callback(err);
-            }
-        });
+        return callback(Hapi.Error.internal('User has no email address'));
     }
-    else {
 
-        callback(Hapi.Error.internal('User has no email address'));
-    }
+    var options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
+    exports.generateTicket(user, address, options, function (err, ticket) {
+
+        if (err || !ticket) {
+            return callback(err);
+        }
+
+        var subject = 'Verify your email addess with ' + Config.product.name;
+        var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
+               'Use this link to verify your email address: \n\n' +
+               '    ' + Config.host.uri('web') + '/t/' + ticket;
+
+        internals.sendEmail(address, subject, text);
+        return callback(null);
+    });
 };
 
 
@@ -329,75 +277,67 @@ exports.sendValidation = function (user, address, callback) {
 
 exports.sendWelcome = function (user, callback) {
 
-    if (user &&
-        user.emails &&
-        user.emails[0] &&
-        user.emails[0].address) {
+    if (!user ||
+        !user.emails ||
+        !user.emails[0] ||
+        !user.emails[0].address) {
 
-        var options = null;
-        var address = user.emails[0].address;
-        var subject = 'Welcome to ' + Config.product.name;
-        var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
-                   'We are excited to have you!\n\n';
+        return callback(Hapi.Error.internal('User has no email address'));
+    }
 
-        if (user.emails[0].isVerified !== true) {
+    var options = null;
+    var address = user.emails[0].address;
+    var subject = 'Welcome to ' + Config.product.name;
+    var text = 'Hey ' + (user.name || user.username || address) + ',\n\n' +
+               'We are excited to have you!\n\n';
 
-            // Email verification email
+    if (user.emails[0].isVerified !== true) {
 
-            options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
-            exports.generateTicket(user, address, options, function (err, ticket) {
+        // Email verification email
 
-                if (ticket) {
+        options = { action: { type: 'verify' }, expiresInMin: 1440, isSingleUse: true };                           // One day
+        exports.generateTicket(user, address, options, function (err, ticket) {
 
-                    text += 'Use this link to verify your email address: \n\n';
-                    text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
+            if (err || !ticket) {
+                return callback(err);
+            }
 
-                    internals.sendEmail(address, subject, text);
-                    callback(null);
-                }
-                else {
-
-                    callback(err);
-                }
-            });
-        }
-        else if (user.twitter ||
-                 user.facebook ||
-                 user.yahoo) {
-
-            // Plain link
-
-            text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
-            text += '    ' + Config.host.uri('web') + '/\n\n';
+            text += 'Use this link to verify your email address: \n\n';
+            text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
 
             internals.sendEmail(address, subject, text);
-            callback(null);
-        }
-        else {
+            return callback(null);
+        });
+    }
+    else if (user.twitter ||
+             user.facebook ||
+             user.yahoo) {
 
-            // Login link email
+        // Plain link
 
-            options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
-            exports.generateTicket(user, address, options, function (err, ticket) {
+        text += 'Use this link to sign-into ' + Config.product.name + ': \n\n';
+        text += '    ' + Config.host.uri('web') + '/\n\n';
 
-                if (ticket) {
-
-                    text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
-                    text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
-
-                    internals.sendEmail(address, subject, text);
-                    callback(null);
-                }
-                else {
-
-                    callback(err);
-                }
-            });
-        }
+        internals.sendEmail(address, subject, text);
+        return callback(null);
     }
     else {
 
-        callback(Hapi.Error.internal('User has no email address'));
+        // Login link email
+
+        options = { action: { type: 'reminder' }, expiresInMin: 20160 };                      // Two weeks
+        exports.generateTicket(user, address, options, function (err, ticket) {
+
+            if (err || !ticket) {
+                return callback(err);
+            }
+
+            text += 'Since you have not yet linked a Facebook, Twitter, or Yahoo! account, you will need to use this link to sign back into ' + Config.product.name + ': \n\n';
+            text += '    ' + Config.host.uri('web') + '/t/' + ticket + '\n\n';
+
+            internals.sendEmail(address, subject, text);
+            return callback(null);
+        });
     }
 };
 
@@ -406,52 +346,50 @@ exports.sendWelcome = function (user, callback) {
 
 exports.projectInvite = function (users, pids, project, message, inviter) {
 
-    if (inviter &&
-        inviter.emails &&
-        inviter.emails[0] &&
-        inviter.emails[0].address) {
+    if (!inviter ||
+        !inviter.emails ||
+        !inviter.emails[0] ||
+        !inviter.emails[0].address) {
 
-        var subject = null;
-        var link = null;
-        var from = (inviter.name || inviter.username) ? (inviter.name || inviter.username) + ' (' + inviter.emails[0].address + ')'
-                                                      : inviter.emails[0].address;
+        return;
+    }
 
-        var text = from + ' invited you to collaborate on \'' + project.title + '\'' +
-                   (message ? ', and included the following message: ' + message : '.') + '\n\n';
+    var subject = null;
+    var link = null;
+    var from = (inviter.name || inviter.username) ? (inviter.name || inviter.username) + ' (' + inviter.emails[0].address + ')'
+                                                  : inviter.emails[0].address;
 
-        // Existing users
+    var text = from + ' invited you to collaborate on \'' + project.title + '\'' +
+               (message ? ', and included the following message: ' + message : '.') + '\n\n';
 
-        for (var i = 0, il = users.length; i < il; ++i) {
+    // Existing users
 
-            if (users[i].emails &&
-                users[i].emails[0] &&
-                users[i].emails[0].address) {
+    for (var i = 0, il = users.length; i < il; ++i) {
+        if (users[i].emails &&
+            users[i].emails[0] &&
+            users[i].emails[0].address) {
 
-                subject = 'Invitation to participate in ' + project.title;
-                link = 'Use this link to join: \n\n' +
-                       '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
+            subject = 'Invitation to participate in ' + project.title;
+            link = 'Use this link to join: \n\n' +
+                   '    ' + Config.host.uri('web') + '/view/#project=' + project._id;
 
-                internals.sendEmail(users[i].emails[0].address,
-                                    subject,
-                                    'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
-            }
+            internals.sendEmail(users[i].emails[0].address,
+                                subject,
+                                'Hi ' + (users[i].name || users[i].username || users[i].emails[0].address) + ',\n\n' + text + link);
         }
+    }
 
-        // New users
+    // New users
 
-        for (i = 0, il = pids.length; i < il; ++i) {
+    for (i = 0, il = pids.length; i < il; ++i) {
+        var pid = pids[i];            // { pid, display, isPending, email, code, inviter }
+        if (pid.email) {
+            subject = 'Invitation to join ' + Config.product.name + ' and participate in ' + project.title;
+            var invite = 'project:' + project._id + ':' + pid.pid + ':' + pid.code;
+            link = 'Use this link to join: \n\n' +
+                   '    ' + Config.host.uri('web') + '/i/' + invite;
 
-            var pid = pids[i];            // { pid, display, isPending, email, code, inviter }
-
-            if (pid.email) {
-
-                subject = 'Invitation to join ' + Config.product.name + ' and participate in ' + project.title;
-                var invite = 'project:' + project._id + ':' + pid.pid + ':' + pid.code;
-                link = 'Use this link to join: \n\n' +
-                       '    ' + Config.host.uri('web') + '/i/' + invite;
-
-                internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link);
-            }
+            internals.sendEmail(pid.email, subject, 'Hi ' + (pid.display || pid.email) + ',\n\n' + text + link);
         }
     }
 };
@@ -475,7 +413,6 @@ exports.checkAddress = function (email) {
 internals.sendEmail = function (to, subject, text) {
 
     var headers = {
-
         from: (Config.email.fromName || 'Postmaster') + ' <' + (Config.email.replyTo || 'no-reply@localhost') + '>',
         to: to,
         subject: subject,
@@ -483,19 +420,11 @@ internals.sendEmail = function (to, subject, text) {
     };
 
     var message = Email.message.create(headers);
-
     var mailer = Email.server.connect(Config.email.server || {});
     mailer.send(message, function (err, message) {
 
         if (err) {
-
-            Hapi.Log.event('err', 'Email error', {
-
-                to: to,
-                subject: subject,
-                text: text,
-                error: err
-            });
+            Hapi.Log.event('err', 'Email error', { to: to, subject: subject, text: text, error: err });
         }
     });
 };

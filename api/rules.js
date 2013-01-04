@@ -23,20 +23,16 @@ exports.normalize = function (rule) {
     var replaced = rule.replace(ruleRegex, function ($0, $1, $2, $3, $4) {
 
         var rule = { logical: ($1 === '' ? '' : ' ' + $1 + ' '), variable: $2, operator: $3, value: $4 };
-
         if (rule.value === 'empty') {
 
             switch (rule.operator) {
-
                 case '==': statement += rule.logical + '(' + rule.variable + ' == null || ' + rule.variable + ' === "")'; break;
                 case '!=': statement += rule.logical + '(' + rule.variable + ' && ' + rule.variable + ' !== "")'; break;
                 default: return '';
             }
         }
         else {
-
             switch (rule.operator) {
-
                 case 'contains': statement += rule.logical + rule.variable + '.search(/' + rule.value.replace(/^'|'$/g, '') + '/i) >= 0'; break;
                 default: statement += rule.logical + rule.variable + ' ' + rule.operator + ' ' + rule.value; break;
             }
@@ -46,11 +42,9 @@ exports.normalize = function (rule) {
     });
 
     if (replaced === '') {       // Make sure all sections have been matched and cleared
-
         return statement;
     }
     else {
-
         return null;
     }
 };

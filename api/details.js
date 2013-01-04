@@ -8,10 +8,15 @@ var User = require('./user');
 var Stream = require('./stream');
 
 
+// Declare internals
+
+var internals = {};
+
+
 // Task details
 
 exports.get = {
-    
+
     query: {
 
         since: Hapi.types.Number().min(0)
@@ -19,57 +24,49 @@ exports.get = {
 
     handler: function (request) {
 
-        exports.load(request.params.id, request.session.user, false, function (details, err, task, project) {
+        internals.load(request.params.id, request.session.user, false, function (err, details, task, project) {
 
             details = details || { id: request.params.id, thread: [] };
 
-            if (!err) {
+            if (err) {
+                return request.reply(err);
+            }
 
-                // Clear thread from old entries
+            // Clear thread from old entries
 
-                if (request.query.since) {
+            if (request.query.since) {
+                var since = parseInt(request.query.since, 10);
+                if (since &&
+                    since > 0) {
 
-                    var since = parseInt(request.query.since, 10);
-                    if (since &&
-                        since > 0) {
-
-                        var thread = [];
-                        for (var i = 0, il = details.thread.length; i < il; ++i) {
-
-                            if (details.thread[i].created > since) {
-
-                                thread.push(details.thread[i]);
-                            }
+                    var thread = [];
+                    for (var i = 0, il = details.thread.length; i < il; ++i) {
+                        if (details.thread[i].created > since) {
+                            thread.push(details.thread[i]);
                         }
-
-                        details.thread = thread;
                     }
+
+                    details.thread = thread;
                 }
+            }
 
-                // Load user display information
+            // Load user display information
 
-                var userIds = [];
+            var userIds = [];
+            for (i = 0, il = details.thread.length; i < il; ++i) {
+                userIds.push(details.thread[i].user);
+            }
+
+            User.expandIds(userIds, function (users, usersMap) {
+
+                // Assign to each thread item
+
                 for (i = 0, il = details.thread.length; i < il; ++i) {
-
-                    userIds.push(details.thread[i].user);
+                    details.thread[i].user = usersMap[details.thread[i].user] || { id: details.thread[i].user };
                 }
 
-                User.expandIds(userIds, function (users, usersMap) {
-
-                    // Assign to each thread item
-
-                    for (i = 0, il = details.thread.length; i < il; ++i) {
-
-                        details.thread[i].user = usersMap[details.thread[i].user] || { id: details.thread[i].user };
-                    }
-
-                    request.reply(details);
-                });
-            }
-            else {
-
-                request.reply(err);
-            }
+                return request.reply(details);
+            });
         });
     }
 };
@@ -91,109 +88,62 @@ exports.post = {
 
         var now = Date.now();
 
-        exports.load(request.params.id, request.session.user, true, function (details, err, task, project) {
+        var post = function () {
 
-            if (task) {
+            internals.load(request.params.id, request.session.user, true, function (err, details, task, project) {
 
-                if (!err) {
+                if (err || !task) {
+                    return request.reply(err);
+                }
 
-                    var detail = request.payload;
-                    detail.created = now;
-                    detail.user = request.session.user;
+                var detail = request.payload;
+                detail.created = now;
+                detail.user = request.session.user;
 
-                    if (details) {
+                if (details) {
 
-                        // Existing details
+                    // Existing details
 
-                        Db.update('task.details', details._id, { $push: { thread: detail } }, function (err) {
+                    Db.update('task.details', details._id, { $push: { thread: detail } }, function (err) {
 
-                            if (!err) {
+                        if (err) {
+                            return request.reply(err);
+                        }
 
-                                finalize(task, project);
-                            }
-                            else {
-
-                                request.reply(err);
-                            }
-                        });
-                    }
-                    else {
-
-                        // First detail
-
-                        details = { _id: task._id, project: project._id, thread: [] };
-                        details.thread.push(detail);
-
-                        Db.insert('task.details', details, function (err, items) {
-
-                            if (!err) {
-
-                                finalize(task, project);
-                            }
-                            else {
-
-                                request.reply(err);
-                            }
-                        });
-                    }
+                        finalize(task, project);
+                    });
                 }
                 else {
 
-                    request.reply(err);
+                    // First detail
+
+                    details = { _id: task._id, project: project._id, thread: [] };
+                    details.thread.push(detail);
+
+                    Db.insert('task.details', details, function (err, items) {
+
+                        if (err) {
+                            return request.reply(err);
+                        }
+
+                        finalize(task, project);
+                    });
                 }
-            }
-            else {
+            });
+        };
 
-                request.reply(err);
-            }
-        });
-
-        function finalize(task, project) {
+        var finalize = function (task, project) {
 
             if (request.query.last === 'true') {
-
                 Last.setLast(request.session.user, project, task, function (err) { });    // Ignore response
             }
 
             Stream.update({ object: 'details', project: task.project, task: task._id }, request);
-            request.reply({ status: 'ok' });
-        }
+            return request.reply({ status: 'ok' });
+        };
+
+        post();
     }
-};
-
-
-// Load task from database and check for user rights
-
-exports.load = function (taskId, userId, isWritable, callback) {
-
-    Task.load(taskId, userId, isWritable, function (err, task, project) {      // Check ownership
-
-        if (task) {
-
-            Db.get('task.details', taskId, function (err, item) {
-
-                if (item) {
-
-                    callback(item, null, task, project);
-                }
-                else {
-
-                    if (!err) {
-
-                        callback(null, null, task, project);
-                    }
-                    else {
-
-                        callback(null, err, null, null);
-                    }
-                }
-            });
-        }
-        else {
-
-            callback(null, err, null, null);
-        }
-    });
 };
 
 
@@ -203,55 +153,73 @@ exports.expandIds = function (ids, projectId, userId, callback) {
 
     Db.getMany('task.details', ids, function (err, items, notFound) {
 
-        if (!err) {
+        if (err) {
+            return callback([]);
+        }
 
-            Last.load(userId, function (err, last) {
+        Last.load(userId, function (err, last) {
 
-                var records = {};
-                var userIds = [];
-                for (var i = 0, il = items.length; i < il; ++i) {
+            var records = {};
+            var userIds = [];
+            for (var i = 0, il = items.length; i < il; ++i) {
+                var details = items[i];
+                var threadHead = (details.thread && details.thread.length > 0 ? details.thread[details.thread.length - 1] : null);
+                if (threadHead) {
+                    records[details._id] = { modified: threadHead.created, user: threadHead.user };
+                    userIds.push(threadHead.user);
 
-                    var details = items[i];
-                    var threadHead = (details.thread && details.thread.length > 0 ? details.thread[details.thread.length - 1] : null);
-                    if (threadHead) {
+                    if (last &&
+                        last.projects &&
+                        last.projects[projectId] &&
+                        last.projects[projectId].tasks &&
+                        last.projects[projectId].tasks[details._id]) {
 
-                        records[details._id] = { modified: threadHead.created, user: threadHead.user };
-                        userIds.push(threadHead.user);
+                        records[details._id].last = last.projects[projectId].tasks[details._id];
+                    }
+                }
+            }
 
-                        if (last &&
-                            last.projects &&
-                            last.projects[projectId] &&
-                            last.projects[projectId].tasks &&
-                            last.projects[projectId].tasks[details._id]) {
+            // Load user display information
 
-                            records[details._id].last = last.projects[projectId].tasks[details._id];
-                        }
+            User.expandIds(userIds, function (users, usersMap) {
+
+                // Assign to each thread item
+
+                for (var i in records) {
+                    if (records.hasOwnProperty(i)) {
+                        records[i].user = usersMap[records[i].user] || { id: records[i].user };
                     }
                 }
 
-                // Load user display information
-
-                User.expandIds(userIds, function (users, usersMap) {
-
-                    // Assign to each thread item
-
-                    for (var i in records) {
-
-                        if (records.hasOwnProperty(i)) {
-
-                            records[i].user = usersMap[records[i].user] || { id: records[i].user };
-                        }
-                    }
-
-                    callback(records);
-                });
+                return callback(records);
             });
-        }
-        else {
-
-            // Request fails
-
-            callback([]);
-        }
+        });
     });
 };
+
+
+// Load task from database and check for user rights
+
+internals.load = function (taskId, userId, isWritable, callback) {
+
+    Task.load(taskId, userId, isWritable, function (err, task, project) {      // Check ownership
+
+        if (err || !task) {
+            return callback(err);
+        }
+
+        Db.get('task.details', taskId, function (err, item) {
+
+            if (err) {
+                return callback(err);
+            }
+
+            if (!item) {
+                return callback(null, null, task, project);
+            }
+
+            return callback(null, item, task, project);
+        });
+    });
+};
+

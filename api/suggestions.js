@@ -23,24 +23,20 @@ exports.initialize = function () {
     Db.all('suggestion', function (err, results) {
 
         for (var i = 0, il = results.length; i < il; ++i) {
-
             var suggestion = results[i];
             if (suggestion.rule &&
                 suggestion.title) {
 
                 var statement = Rules.normalize(suggestion.rule);
                 if (statement) {
-
                     suggestion.statement = statement;
                     internals.suggestions[suggestion._id] = suggestion;
                 }
                 else {
-
                     Hapi.Log.event('err', 'Failed to load suggestions: ' + suggestion._id);
                 }
             }
             else {
-
                 Hapi.Log.event('err', 'Bad suggestion: missing rule or title');
             }
         }
@@ -51,102 +47,73 @@ exports.initialize = function () {
 // Remove suggestion from project
 
 exports.exclude = {
-    
+
     handler: function (request) {
 
         Project.load(request.params.id, request.session.user, false, function (err, project, member) {
 
-            if (project) {
+            if (err || !project) {
+                return request.reply(err);
+            }
 
-                var suggestion = internals.suggestions[request.params.drop];
-                if (suggestion) {
+            var suggestion = internals.suggestions[request.params.drop];
+            if (!suggestion) {
+                return request.reply(Hapi.Error.notFound());
+            }
 
-                    Db.get('user.exclude', request.session.user, function (err, excludes) {
+            Db.get('user.exclude', request.session.user, function (err, excludes) {
 
-                        if (!err) {
+                if (err) {
+                    return request.reply(err);
+                }
 
-                            if (excludes) {
+                if (excludes) {
 
-                                // Existing excludes
+                    // Existing excludes
 
-                                var changes = { $set: {} };
-                                var now = Date.now();
+                    var changes = { $set: {} };
+                    var now = Date.now();
 
-                                if (excludes.projects) {
-
-                                    if (excludes.projects[project._id]) {
-
-                                        if (excludes.projects[project._id].suggestions) {
-
-                                            changes.$set['projects.' + project._id + '.suggestions.' + request.params.drop] = now;
-                                        }
-                                        else {
-
-                                            changes.$set['projects.' + project._id + '.suggestions'] = {};
-                                            changes.$set['projects.' + project._id + '.suggestions'][request.params.drop] = now;
-                                        }
-                                    }
-                                    else {
-
-                                        changes.$set['projects.' + project._id] = { suggestions: {} };
-                                        changes.$set['projects.' + project._id].suggestions[request.params.drop] = now;
-                                    }
-                                }
-                                else {
-
-                                    changes.$set.projects = {};
-                                    changes.$set.projects[project._id] = { suggestions: {} };
-                                    changes.$set.projects[project._id].suggestions[request.params.drop] = now;
-                                }
-
-                                Db.update('user.exclude', excludes._id, changes, function (err) {
-
-                                    if (!err) {
-
-                                        request.reply({ status: 'ok' });
-                                    }
-                                    else {
-
-                                        request.reply(err);
-                                    }
-                                });
+                    if (excludes.projects) {
+                        if (excludes.projects[project._id]) {
+                            if (excludes.projects[project._id].suggestions) {
+                                changes.$set['projects.' + project._id + '.suggestions.' + request.params.drop] = now;
                             }
                             else {
-
-                                // First exclude
-
-                                excludes = { _id: request.session.user, projects: {} };
-                                excludes.projects[project._id] = { suggestions: {} };
-                                excludes.projects[project._id].suggestions[request.params.drop] = Date.now();
-
-                                Db.insert('user.exclude', excludes, function (err, items) {
-
-                                    if (!err) {
-
-                                        request.reply({ status: 'ok' });
-                                    }
-                                    else {
-
-                                        request.reply(err);
-                                    }
-                                });
+                                changes.$set['projects.' + project._id + '.suggestions'] = {};
+                                changes.$set['projects.' + project._id + '.suggestions'][request.params.drop] = now;
                             }
                         }
                         else {
-
-                            request.reply(err);
+                            changes.$set['projects.' + project._id] = { suggestions: {} };
+                            changes.$set['projects.' + project._id].suggestions[request.params.drop] = now;
                         }
+                    }
+                    else {
+                        changes.$set.projects = {};
+                        changes.$set.projects[project._id] = { suggestions: {} };
+                        changes.$set.projects[project._id].suggestions[request.params.drop] = now;
+                    }
+
+                    Db.update('user.exclude', excludes._id, changes, function (err) {
+
+                        return request.reply(err || { status: 'ok' });
                     });
                 }
                 else {
 
-                    request.reply(Hapi.Error.notFound());
-                }
-            }
-            else {
+                    // First exclude
 
-                request.reply(err);
-            }
+                    excludes = { _id: request.session.user, projects: {} };
+                    excludes.projects[project._id] = { suggestions: {} };
+                    excludes.projects[project._id].suggestions[request.params.drop] = Date.now();
+
+                    Db.insert('user.exclude', excludes, function (err, items) {
+
+                        return request.reply(err || { status: 'ok' });
+                    });
+                }
+            });
         });
     }
 };
@@ -165,9 +132,7 @@ exports.list = function (project, userId, callback) {
         var results = [];
         var excludes = item;
         for (var i in internals.suggestions) {
-
             if (internals.suggestions.hasOwnProperty(i)) {
-
                 var suggestion = internals.suggestions[i];
 
                 var isExcluded = false;
@@ -181,13 +146,9 @@ exports.list = function (project, userId, callback) {
                 }
 
                 if (isExcluded === false) {
-
                     try {
-
                         if (eval(suggestion.statement)) {
-
                             results.push({
-
                                 id: suggestion._id,
                                 title: suggestion.title,
                                 isSponsored: suggestion.isSponsored
@@ -195,7 +156,6 @@ exports.list = function (project, userId, callback) {
                         }
                     }
                     catch (e) {
-
                         // Bad rule
                         Hapi.Log.event('err', 'Bad suggestion rule:' + suggestion._id);
                     }

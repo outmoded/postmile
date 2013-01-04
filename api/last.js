@@ -14,28 +14,25 @@ var internals = {};
 // Last information for project (with tasks)
 
 exports.getProject = {
-    
+
     handler: function (request) {
 
         exports.load(request.session.user, function (err, last) {
 
-            if (last &&
-                last.projects &&
-                last.projects[request.params.id]) {
-
-                var record = { id: last._id, projects: {} };
-                record.projects[request.params.id] = last.projects[request.params.id];
-
-                request.reply(record);
+            if (err) {
+                return request.reply(err);
             }
-            else if (!err) {
 
-                request.reply({ id: request.session.user, projects: {} });
-            }
-            else {
+            if (!last ||
+                !last.projects ||
+                !last.projects[request.params.id]) {
 
-                request.reply(err);
+                return request.reply({ id: request.session.user, projects: {} });
             }
+
+            var record = { id: last._id, projects: {} };
+            record.projects[request.params.id] = last.projects[request.params.id];
+            return request.reply(record);
         });
     }
 };
@@ -44,29 +41,23 @@ exports.getProject = {
 // Set last project timestamp
 
 exports.postProject = {
-    
+
     handler: function (request) {
 
         Project.load(request.params.id, request.session.user, false, function (err, project, member) {
 
-            if (project) {
-
-                exports.setLast(request.session.user, project, null, function (err) {
-
-                    if (!err) {
-
-                        request.reply({ status: 'ok' });
-                    }
-                    else {
-
-                        request.reply(err);
-                    }
-                });
+            if (err || !project) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
-            }
+            exports.setLast(request.session.user, project, null, function (err) {
+
+                if (err) {
+                    return request.reply(err);
+                }
+
+                return request.reply({ status: 'ok' });
+            });
         });
     }
 };
@@ -75,41 +66,35 @@ exports.postProject = {
 // Last information for single task
 
 exports.getTask = {
-    
+
     handler: function (request) {
 
         Task.load(request.params.id, request.session.user, false, function (err, task, project) {
 
-            if (task) {
-
-                exports.load(request.session.user, function (err, last) {
-
-                    if (last &&
-                        last.projects &&
-                        last.projects[task.project] &&
-                        last.projects[task.project].tasks &&
-                        last.projects[task.project].tasks[request.params.id]) {
-
-                        var record = { id: last._id, projects: {} };
-                        record.projects[task.project] = { tasks: {} };
-                        record.projects[task.project].tasks[request.params.id] = last.projects[task.project].tasks[request.params.id];
-
-                        request.reply(record);
-                    }
-                    else if (!err) {
-
-                        request.reply({ id: request.session.user, projects: {} });
-                    }
-                    else {
-
-                        request.reply(err);
-                    }
-                });
+            if (err || !task) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
-            }
+            exports.load(request.session.user, function (err, last) {
+
+                if (err) {
+                    return request.reply(err);
+                }
+
+                if (!last ||
+                    !last.projects ||
+                    !last.projects[task.project] ||
+                    !last.projects[task.project].tasks ||
+                    !last.projects[task.project].tasks[request.params.id]) {
+
+                    return request.reply({ id: request.session.user, projects: {} });
+                }
+
+                var record = { id: last._id, projects: {} };
+                record.projects[task.project] = { tasks: {} };
+                record.projects[task.project].tasks[request.params.id] = last.projects[task.project].tasks[request.params.id];
+                return request.reply(record);
+            });
         });
     }
 };
@@ -118,29 +103,19 @@ exports.getTask = {
 // Set last task timestamp
 
 exports.postTask = {
-    
+
     handler: function (request) {
 
         Task.load(request.params.id, request.session.user, false, function (err, task, project) {
 
-            if (task) {
-
-                exports.setLast(request.session.user, project, task, function (err) {
-
-                    if (!err) {
-
-                        request.reply({ status: 'ok' });
-                    }
-                    else {
-
-                        request.reply(err);
-                    }
-                });
+            if (err || !task) {
+                return request.reply(err);
             }
-            else {
 
-                request.reply(err);
-            }
+            exports.setLast(request.session.user, project, task, function (err) {
+
+                return request.reply(err || { status: 'ok' });
+            });
         });
     }
 };
@@ -152,21 +127,15 @@ exports.load = function (userId, callback) {
 
     Db.get('user.last', userId, function (err, item) {
 
-        if (item) {
-
-            callback(null, item);
+        if (err) {
+            return callback(err);
         }
-        else {
 
-            if (!err) {
-
-                callback(null, null);
-            }
-            else {
-
-                callback(err);
-            }
+        if (!item) {
+            return callback(null, null);
         }
+
+        return callback(null, item);
     });
 };
 
@@ -177,29 +146,21 @@ exports.delProject = function (userId, projectId, callback) {
 
     exports.load(userId, function (err, last) {
 
-        if (last &&
-            last.projects &&
-            last.projects[projectId]) {
+        if (err ||
+            !last ||
+            !last.projects ||
+            !last.projects[projectId]) {
 
-            var changes = { $unset: {} };
-            changes.$unset['projects.' + projectId] = 1;
-
-            Db.update('user.last', last._id, changes, function (err) {
-
-                if (!err) {
-
-                    callback(null);
-                }
-                else {
-
-                    callback(err);
-                }
-            });
+            return callback(err);
         }
-        else if (err) {
 
-            callback(err);
-        }
+        var changes = { $unset: {} };
+        changes.$unset['projects.' + projectId] = 1;
+
+        Db.update('user.last', last._id, changes, function (err) {
+
+            return callback(err);
+        });
     });
 };
 
@@ -212,97 +173,82 @@ exports.setLast = function (userId, project, task, callback) {
 
     exports.load(userId, function (err, last) {
 
-        if (!err) {
+        if (err) {
+            return callback(err);
+        }
 
-            if (last) {
+        if (last) {
 
-                // Existing last record
+            // Existing last record
 
-                var changes = { $set: {} };
+            var changes = { $set: {} };
 
-                if (task === null) {
+            if (task === null) {
 
-                    // Project last: last->projects.{projectId}.last
+                // Project last: last->projects.{projectId}.last
 
-                    if (last.projects) {
-
-                        if (last.projects[project._id]) {
-
-                            changes.$set['projects.' + project._id + '.last'] = now;
-                        }
-                        else {
-
-                            changes.$set['projects.' + project._id] = { tasks: {}, last: now };
-                        }
+                if (last.projects) {
+                    if (last.projects[project._id]) {
+                        changes.$set['projects.' + project._id + '.last'] = now;
                     }
                     else {
-
-                        changes.$set.projects = {};
-                        changes.$set.projects[project._id] = { tasks: {}, last: now };
+                        changes.$set['projects.' + project._id] = { tasks: {}, last: now };
                     }
                 }
                 else {
-
-                    // Task last: last->projects.{projectId}.tasks.{taskId}
-
-                    if (last.projects) {
-
-                        if (last.projects[project._id]) {
-
-                            if (last.projects[project._id].tasks) {
-
-                                changes.$set['projects.' + project._id + '.tasks.' + task._id] = now;
-                            }
-                            else {
-
-                                changes.$set['projects.' + project._id + '.tasks'] = {};
-                                changes.$set['projects.' + project._id + '.tasks'][task._id] = now;
-                            }
-                        }
-                        else {
-
-                            changes.$set['projects.' + project._id] = { tasks: {} };
-                            changes.$set['projects.' + project._id].tasks[task._id] = now;
-                        }
-                    }
-                    else {
-
-                        changes.$set.projects = {};
-                        changes.$set.projects[project._id] = { tasks: {} };
-                        changes.$set.projects[project._id].tasks[task._id] = now;
-                    }
+                    changes.$set.projects = {};
+                    changes.$set.projects[project._id] = { tasks: {}, last: now };
                 }
-
-                Db.update('user.last', last._id, changes, function (err) {
-
-                    callback(err);
-                });
             }
             else {
 
-                // First last timestamp
+                // Task last: last->projects.{projectId}.tasks.{taskId}
 
-                last = { _id: userId, projects: {} };
-                last.projects[project._id] = { tasks: {} };
-
-                if (task === null) {
-
-                    last.projects[project._id].last = now;
+                if (last.projects) {
+                    if (last.projects[project._id]) {
+                        if (last.projects[project._id].tasks) {
+                            changes.$set['projects.' + project._id + '.tasks.' + task._id] = now;
+                        }
+                        else {
+                            changes.$set['projects.' + project._id + '.tasks'] = {};
+                            changes.$set['projects.' + project._id + '.tasks'][task._id] = now;
+                        }
+                    }
+                    else {
+                        changes.$set['projects.' + project._id] = { tasks: {} };
+                        changes.$set['projects.' + project._id].tasks[task._id] = now;
+                    }
                 }
                 else {
-
-                    last.projects[project._id].tasks[task._id] = now;
+                    changes.$set.projects = {};
+                    changes.$set.projects[project._id] = { tasks: {} };
+                    changes.$set.projects[project._id].tasks[task._id] = now;
                 }
-
-                Db.insert('user.last', last, function (err, items) {
-
-                    callback(err);
-                });
             }
+
+            Db.update('user.last', last._id, changes, function (err) {
+
+                return callback(err);
+            });
         }
         else {
 
-            callback(err);
+            // First last timestamp
+
+            last = { _id: userId, projects: {} };
+            last.projects[project._id] = { tasks: {} };
+
+            if (task === null) {
+                last.projects[project._id].last = now;
+            }
+            else {
+                last.projects[project._id].tasks[task._id] = now;
+            }
+
+            Db.insert('user.last', last, function (err, items) {
+
+                return callback(err);
+            });
         }
     });
 };
