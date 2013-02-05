@@ -12,7 +12,6 @@ var Err = require('./error');
 var Log = require('./log');
 var Session = require('./session');
 var Vault = require('./vault');
-var Email = require('./email');
 var Config = require('./config');
 
 
@@ -21,21 +20,12 @@ var Config = require('./config');
 var internals = {};
 
 
-// Send startup email
-
-Email.send(Config.email.admin, 'NOTICE: Web server started', 'Started on ' + Os.hostname());
-
-
 // Listen to uncaught exceptions
 
 process.on('uncaughtException', function (err) {
 
     Log.err('Uncaught exception: ' + err.stack);
-
-    Email.send(Config.email.admin, 'ERROR: Exception on web server', err.stack, '', function (err) {
-
-        process.exit(1);
-    });
+    process.exit(1);
 });
 
 
@@ -156,39 +146,34 @@ internals.preprocessRequest = function (req, res, next) {
         }
     }
 
-    if (isNotWithStupid) {
+    if (!isNotWithStupid) {
+        res.api.view = { template: 'stupid' };
+        return internals.finalizeResponse(req, res);
+    }
 
-        // Load cookie jar
+    // Load cookie jar
 
-        if (req.cookies.jar) {
-            req.api.jar = Utils.decrypt(Vault.jar.aes256Key, req.cookies.jar) || {};
-            delete req.cookies.jar;
-            res.api.clearJar = true;
+    if (req.cookies.jar) {
+        req.api.jar = Utils.decrypt(Vault.jar.aes256Key, req.cookies.jar) || {};
+        delete req.cookies.jar;
+        res.api.clearJar = true;
+    }
+
+    // Load session information
+
+    Session.load(req, res, function (session, profile) {
+
+        req.api.session = session;
+        req.api.profile = profile;
+
+        // Set default view
+
+        if (req.api.profile) {
+            req.api.profile.view = req.api.profile.view || '/view/';
         }
 
-        // Load session information
-
-        Session.load(req, res, function (session, profile) {
-
-            req.api.session = session;
-            req.api.profile = profile;
-
-            // Set default view
-
-            if (req.api.profile) {
-                req.api.profile.view = req.api.profile.view || '/view/';
-            }
-
-            next();
-        });
-    }
-    else {
-
-        // Serve I'm with stupid page
-
-        res.api.view = { template: 'stupid' };
-        internals.finalizeResponse(req, res);
-    }
+        next();
+    });
 };
 
 
