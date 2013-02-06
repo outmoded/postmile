@@ -1,7 +1,7 @@
 // Load modules
 
+var Hapi = require('hapi');
 var QueryString = require('querystring');
-var Err = require('./error');
 var Api = require('./api');
 var Utils = require('./utils');
 var Log = require('./log');
@@ -17,71 +17,68 @@ var internals = {};
 
 // Parse session cookie
 
-exports.load = function (req, res, callback) {
+exports.validate = function (session, callback) {
 
-    if (!req.cookies.session) {
-        return callback(null, null);
-    }
+    var loadProfile = function (override) {
 
-    var session = Utils.decrypt(Vault.session.aes256Key, req.cookies.session);
-    if (!session) {
-        return callback(null, null);
-    }
+        var credentials = override || session;
+        Api.call('GET', '/profile', null, credentials, function (err, code, payload) {
 
-    // Check if expired or invalid
+            if (err ||
+                code !== 200 ||
+                !payload) {
+
+                return callback(Hapi.error.internal('Failed loading profile'));
+            }
+
+            credentials.profile = payload;
+            return callback(null, credentials);
+        });
+    };
 
     if (session.exp &&
         session.exp > Date.now()) {
 
-        return internals.loadProfile(res, session, callback);
+        return loadProfile();
     }
 
-    exports.refresh(req, res, session, function (err, session) {
+    // Check if expired or invalid
+    
+    exports.refresh(null, session, function (err, refreshed) {
 
         if (err) {
-            return callback(null, null);
+            return callback(Hapi.error.internal('Failed refreshing session'));
         }
 
-        return internals.loadProfile(res, session, callback);
+        return loadProfile(refreshed);
     });
 };
 
 
-internals.loadProfile = function (res, session, callback) {
-
-    Api.call('GET', '/profile', null, session, function (err, code, payload) {
-
-        if (err || code !== 200 || !payload) {
-            exports.clear(res);
-            return callback(null, null);
-        }
-
-        return callback(session, payload);
-    });
-};
-
-
-exports.refresh = function (req, res, session, callback) {
+exports.refresh = function (request, session, callback) {
 
     if (!session) {
-        return callback(Err.internal('Session missing rsvp data', session));
+        return callback(Hapi.error.internal('Session missing rsvp data', session));
     }
 
     Api.call('POST', '/oz/reissue', null, session, function (err, code, ticket) {
 
         if (err) {
-            return callback(Err.internal('Unexpected API response', err));
+            return callback(Hapi.error.internal('Unexpected API response', err));
         }
 
         if (code !== 200) {
-            exports.clear(res);
-            return callback(Err.badRequest(ticket.message));
+            if (request) {
+                request.clearSession();
+            }
+
+            return callback(Hapi.error.badRequest(ticket.message));
         }
 
-        exports.set(res, ticket, function (isValid, restrictions) {
+        exports.set(request, ticket, function (isValid, restrictions) {
 
             if (!isValid) {
-                return callback(Err.internal('Invalid response parameters from API server'));
+                return callback(Hapi.error.internal('Invalid response parameters from API server'));
             }
 
             return callback(null, ticket);
@@ -90,16 +87,7 @@ exports.refresh = function (req, res, session, callback) {
 };
 
 
-exports.logout = function (res, next) {
-
-    exports.clear(res);
-    res.api.redirect = '/';
-    res.api.result = 'You are being redirected...';
-    next();
-};
-
-
-exports.set = function (res, ticket, callback) {
+exports.set = function (request, ticket, callback) {
 
     if (!ticket) {
         return callback(false, null);
@@ -108,38 +96,21 @@ exports.set = function (res, ticket, callback) {
     var session = ticket;
     session.restriction = (session.ext.tos < Tos.minimumTOS ? 'tos' : null);
 
-    var nextYear = new Date();
-    nextYear.setFullYear(nextYear.getFullYear() + 1);
-
-    res.api.cookie = {
-        values: ['session=' + Utils.encrypt(Vault.session.aes256Key, session)],
-        attributes: ['Expires=' + nextYear.toUTCString(), 'Path=/']
-    };
-
-    if (Config.host.web.scheme === 'https') {
-        res.api.cookie.attributes.push('Secure');
+    if (request) {
+        request.setSession(session);
     }
 
     return callback(true, session.restriction);
 };
 
 
-exports.clear = function (res) {
-
-    res.api.cookie = {
-        values: ['session='],
-        attributes: ['Expires=Thu, 01 Jan 1970 00:00:00 GMT', 'Path=/']
-    };
-};
-
-
 // Oz authorization endpoint
 
-exports.ask = function (req, res, next) {
+exports.ask = function (request) {
 
     // Lookup client identifier
 
-    if (req.query.client_id) {
+    if (request.query.client_id) {
 
         // Missing client identifier
 
@@ -148,18 +119,16 @@ exports.ask = function (req, res, next) {
             message: 'sorry, the application that sent you here messed something up...'
         };
 
-        res.api.view = { template: 'error', locals: locals };
-        return next();
+        return request.reply.view('error', locals).send();
     }
 
-    Api.clientCall('GET', '/oz/app/' + req.query.client_id, null, function (err, code, client) {
+    Api.clientCall('GET', '/oz/app/' + request.query.client_id, null, function (err, code, client) {
 
         if (err ||
             !client ||
             (code !== 200 && code !== 404)) {
 
-            res.api.error = Err.internal('Unexpected API response', err);
-            return next();
+            return request.reply(Hapi.error.internal('Unexpected API response', err));
         }
 
         if (code === 404) {
@@ -171,43 +140,39 @@ exports.ask = function (req, res, next) {
                 message: 'sorry, we can\'t find the application that sent you here...'
             };
 
-            res.api.view = { template: 'error', locals: locals };
-            return next();
+            return request.reply.view('error', locals).send();
         }
 
         // Application callback
 
         if (client.callback &&
-            req.query.redirect_uri) {
+            request.query.redirect_uri) {
 
-            res.api.error = Err.internal('Client request includes a redirection URI for a pre-configured callback client', client);
-            return next();
+            return request.reply(Hapi.error.internal('Client request includes a redirection URI for a pre-configured callback client', client));
         }
 
         if (!client.callback &&
-            !req.query.redirect_uri) {
+            !request.query.redirect_uri) {
 
-            res.api.error = Err.internal('Client missing callback', client);
-            return next();
+            return request.reply(Hapi.error.internal('Client missing callback', client));
         }
 
-        var redirectionURI = client.callback || req.query.redirect_uri;
+        var redirectionURI = client.callback || request.query.redirect_uri;
         var untrustedClient = !!client.callback;
 
         // Response type
 
-        if (!req.query.response_type ||
-            req.query.response_type !== 'token') {
+        if (!request.query.response_type ||
+            request.query.response_type !== 'token') {
 
-            res.api.redirect = redirectionURI + '?error=invalid_request&error_description=Bad%20response_type%20parameter' + (req.query.state ? '&state=' + encodeURIComponent(req.query.state) : '');
-            return next();
+            return request.reply.redirect(redirectionURI + '?error=invalid_request&error_description=Bad%20response_type%20parameter' + (request.query.state ? '&state=' + encodeURIComponent(request.query.state) : '')).send();
         }
 
         // Implicit grant type
 
         res.api.jar.oz = { client: client, redirection: redirectionURI };
-        if (req.query.state) {
-            res.api.jar.oz.state = req.query.state;
+        if (request.query.state) {
+            res.api.jar.oz.state = request.query.state;
         }
 
         var locals = {
@@ -216,8 +181,7 @@ exports.ask = function (req, res, next) {
             warning: untrustedClient
         };
 
-        res.api.view = { template: 'oz', locals: locals };
-        return next();
+        return request.reply.view('oz', locals).send();
     });
 };
 
@@ -239,8 +203,7 @@ exports.answer = function (req, res, next) {
     Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
 
         if (err || code !== 200) {
-            res.api.error = Err.internal('Unexpected API response', err);
-            return next();
+            return request.reply(Hapi.error.internal('Unexpected API response', err));
         }
 
         if (req.api.jar.oz.state) {
@@ -263,13 +226,13 @@ exports.session = function (req, res, next) {
     Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
 
         if (err || code !== 200) {
-            res.api.error = Err.internal('Failed refresh', err);
+            return request.reply(Hapi.error.internal('Failed refresh', err));
             res.api.isAPI = true;
             return next();
         }
 
         if (ticket.ext.tos < Tos.minimumTOS) {
-            res.api.error = Err.badRequest('Restricted session');
+            return request.reply(Hapi.error.badRequest('Restricted session'));
             res.api.isAPI = true;
             return next();
         }

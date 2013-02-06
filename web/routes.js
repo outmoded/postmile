@@ -12,7 +12,6 @@ var Tos = require('./tos');
 // API Server Endpoints
 
 exports.endpoints = [
-
     { method: 'GET',    path: '/',                          handler: Home.get },
     { method: 'POST',   path: '/',                          handler: Home.get },
 
@@ -20,37 +19,37 @@ exports.endpoints = [
     { method: 'GET',    path: '/logout',                    handler: Login.logout },
     { method: 'GET',    path: '/auth/:network',             handler: Login.auth },
     { method: 'POST',   path: '/auth/:network',             handler: Login.auth },
-    { method: 'POST',   path: '/account/unlink',            handler: Login.unlink,          authentication: 'session' },
+    { method: 'POST',   path: '/account/unlink',            handler: Login.unlink,          config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/t/:token',                  handler: Login.emailToken },
 
-    { method: 'GET',    path: '/account',                   handler: Account.get,           authentication: 'session' },
-    { method: 'GET',    path: '/account/:panel',            handler: Account.get,           authentication: 'session' },
+    { method: 'GET',    path: '/account',                   handler: Account.get,           config: { auth: { mode: 'required' } } },
+    { method: 'GET',    path: '/account/:panel',            handler: Account.get,           config: { auth: { mode: 'required' } } },
     { method: 'POST',   path: '/account/reminder',          handler: Account.reminder,      body: { account: {} } },
-    { method: 'POST',   path: '/account/profile',           handler: Account.profile,       authentication: 'session' },
-    { method: 'POST',   path: '/account/emails',            handler: Account.emails,        authentication: 'session', body: { address: {}, action: {} } },
+    { method: 'POST',   path: '/account/profile',           handler: Account.profile,       config: { auth: { mode: 'required' } } },
+    { method: 'POST',   path: '/account/emails',            handler: Account.emails,        config: { auth: { mode: 'required' } }, body: { address: {}, action: {} } },
 
-    { method: 'GET',    path: '/tos',                       handler: Tos.get,               authentication: 'session' },
-    { method: 'POST',   path: '/tos',                       handler: Tos.post,              authentication: 'session' },
+    { method: 'GET',    path: '/tos',                       handler: Tos.get,               config: { auth: { mode: 'required' } } },
+    { method: 'POST',   path: '/tos',                       handler: Tos.post,              config: { auth: { mode: 'required' } } },
 
     { method: 'GET',    path: '/signup/register',           handler: Signup.form },
     { method: 'POST',   path: '/signup/register',           handler: Signup.register },
     { method: 'GET',    path: '/i/:id',                     handler: Signup.i },
     { method: 'GET',    path: '/signup/invite',             handler: Signup.invite },
-    { method: 'POST',   path: '/signup/invite/claim',       handler: Signup.claim,          authentication: 'session' },
+    { method: 'POST',   path: '/signup/invite/claim',       handler: Signup.claim,          config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/signup/invite/other',       handler: Signup.other },
     { method: 'POST',   path: '/signup/invite/register',    handler: Signup.inviteRegister },
 
-    { method: 'GET',    path: '/welcome',                   handler: Misc.welcome,          authentication: 'session' },
+    { method: 'GET',    path: '/welcome',                   handler: Misc.welcome,          config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/about',                     handler: Misc.about },
     { method: 'GET',    path: '/developer',                 handler: Misc.developer },
-    { method: 'GET',    path: '/developer/console',         handler: Misc.console,          authentication: 'session' },
+    { method: 'GET',    path: '/developer/console',         handler: Misc.console,          config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/imwithstupid',              handler: Misc.stupid },
     { method: 'GET',    path: '/feedback',                  handler: Misc.feedback },
     { method: 'POST',   path: '/feedback',                  handler: Misc.feedback },
 
-    { method: 'GET',    path: '/oz/authorize',              handler: Session.ask,           authentication: 'session' },
-    { method: 'POST',   path: '/oz/authorize',              handler: Session.answer,        authentication: 'session' },
-    { method: 'GET',    path: '/oz/session',                handler: Session.session,         authentication: 'session' },
+    { method: 'GET',    path: '/oz/authorize',              handler: Session.ask,           config: { auth: { mode: 'required' } } },
+    { method: 'POST',   path: '/oz/authorize',              handler: Session.answer,        config: { auth: { mode: 'required' } } },
+    { method: 'GET',    path: '/oz/session',                handler: Session.session,       config: { auth: { mode: 'required' } } },
 
     { method: 'GET',    path: '/socket.io.js',              handler: Misc.socketio },
     { method: 'GET',    path: '/config.js',                 handler: Misc.config }

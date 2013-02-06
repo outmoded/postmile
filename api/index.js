@@ -19,6 +19,7 @@ var internals = {};
 // Catch uncaught exceptions
 
 process.on('uncaughtException', function (err) {
+
     Hapi.Utils.abort('Uncaught exception: ' + err.stack);
 });
 
@@ -67,11 +68,12 @@ var configuration = {
         tos: 20110623
     },
     debug: true,
-    monitor: true
+    monitor: true,
+    cors: true
 };
 
 var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
-server.addRoutes(Routes.endpoints);
+server.route(Routes.endpoints);
 
 Db.initialize(function (err) {
 

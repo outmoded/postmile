@@ -1,8 +1,8 @@
 // Load modules
 
+var Hapi = require('hapi');
 var Api = require('./api');
 var Login = require('./login');
-var Err = require('./error');
 var Session = require('./session');
 
 
@@ -191,7 +191,7 @@ exports.other = function (req, res, next) {
 
     // Log out
 
-    Session.clear(res);
+    request.clearSession();
 
     // Try again
 

@@ -3,32 +3,7 @@
 var Validator = require('validator');
 var Crypto = require('crypto');
 var Base64 = require('./base64');
-var Log = require('./log');
-
-
-// Clone object or array
-
-exports.clone = function (obj) {
-
-    if (!obj) {
-        return null;
-    }
-
-    var newObj = (obj instanceof Array) ? [] : {};
-
-    for (var i in obj) {
-        if (obj.hasOwnProperty(i)) {
-            if (obj[i] && typeof obj[i] === 'object') {
-                newObj[i] = exports.clone(obj[i]);
-            }
-            else {
-                newObj[i] = obj[i];
-            }
-        }
-    }
-
-    return newObj;
-};
+var Hapi = require('hapi');
 
 
 // Validate email address
@@ -92,7 +67,7 @@ exports.decrypt = function (key, value) {
         envelope = JSON.parse(dec);
     }
     catch (e) {
-        Log.err('Invalid encrypted envelope: ' + JSON.stringify(e));
+        Hapi.log.err('Invalid encrypted envelope: ' + JSON.stringify(e));
     }
 
     return envelope ? envelope.v : null;

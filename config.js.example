@@ -29,19 +29,6 @@ exports.host = {
 };
 
 
-// Process Configuration
-
-exports.process = {
-    web: {
-        // runAs: 'www-data',
-        // tls: {
-        //     key: 'cert/postmile.net.key',
-        //     cert: 'cert/postmile.net.crt'
-        // }
-    }
-};
-
-
 // Database Configuration
 
 exports.database = {

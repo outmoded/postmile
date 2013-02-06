@@ -1,8 +1,7 @@
 // Load modules
 
+var Hapi = require('hapi');
 var Email = require('emailjs');
-var Err = require('./error');
-var Log = require('./log');
 var Config = require('./config');
 
 
@@ -28,10 +27,10 @@ exports.send = function (to, subject, text, html, callback) {
 
         if (err) {
             if (!callback) {
-                return Log.err('Email error: ' + JSON.stringify(err));
+                return Hapi.log.err('Email error: ' + JSON.stringify(err));
             }
 
-            return callback(Err.internal('Failed sending email: ' + JSON.stringify(err)));
+            return callback(Hapi.error.internal('Failed sending email: ' + JSON.stringify(err)));
         }
 
         if (callback) {

@@ -1,7 +1,7 @@
 // Load modules
 
+var Hapi = require('hapi');
 var Api = require('./api');
-var Err = require('./error');
 var Config = require('./config');
 
 
@@ -44,13 +44,13 @@ exports.reminder = function (req, res, next) {
     Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (err, code, payload) {
 
         if (err) {
-            res.api.error = Err.internal('Unexpected API response', err);
+            return request.reply(Hapi.error.internal('Unexpected API response', err));
             res.api.isAPI = true;
             return next();
         }
 
         if (code !== 200) {
-            res.api.error = (code === 404 ? Err.notFound() : (code === 400 ? Err.badRequest() : Err.internal('Unexpected API response: ' + payload)));
+            return request.reply((code === 404 ? Hapi.error.notFound() : (code === 400 ? Hapi.error.badRequest() : Hapi.error.internal('Unexpected API response: ' + payload))));
             res.api.isAPI = true;
             return next();
         }

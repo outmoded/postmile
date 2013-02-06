@@ -5,9 +5,9 @@ var Os = require('os');
 var OAuth = require('oauth');
 var Https = require('https');
 var QueryString = require('querystring');
+var Hapi = require('hapi');
 var Utils = require('./utils');
 var Api = require('./api');
-var Err = require('./error');
 var Session = require('./session');
 var Vault = require('./vault');
 var Tos = require('./tos');
@@ -38,7 +38,7 @@ var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2
 exports.login = function (req, res, next) {
 
     if (!req.api.profile) {
-        res.api.view = { template: 'login', hasMobile: true, locals: { logo: false, env: { next: (req.query.next ? encodeURIComponent(req.query.next) : '') } } };
+        res.api.view = { template: 'login', hasMobile: true, locals: { logo: false, env: { next: (request.query.next ? encodeURIComponent(request.query.next) : '') } } };
         return next();
     }
 
@@ -46,11 +46,11 @@ exports.login = function (req, res, next) {
         !req.api.session.ext.tos ||
         req.api.session.ext.tos < Tos.minimumTOS) {
 
-        res.api.redirect = '/tos' + (req.query.next && req.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(req.query.next) : '');
+        res.api.redirect = '/tos' + (request.query.next && request.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(request.query.next) : '');
         return next();
     }
 
-    res.api.redirect = req.query.next || req.api.profile.view;
+    res.api.redirect = request.query.next || req.api.profile.view;
     return next();
 };
 
@@ -59,7 +59,10 @@ exports.login = function (req, res, next) {
 
 exports.logout = function (req, res, next) {
 
-    Session.logout(res, next);
+    request.clearSession();
+    res.api.redirect = '/';
+    res.api.result = 'You are being redirected...';
+    next();
 };
 
 
@@ -71,15 +74,14 @@ exports.auth = function (req, res, next) {
 
         // Preserve parameters for OAuth authorization callback
 
-        if (req.query.x_next &&
-            req.query.x_next.charAt(0) === '/') {        // Prevent being used an open redirector
+        if (request.query.x_next &&
+            request.query.x_next.charAt(0) === '/') {        // Prevent being used an open redirector
 
-            res.api.jar.auth = { next: req.query.x_next };
+            res.api.jar.auth = { next: request.query.x_next };
         }
 
         if (['twitter', 'facebook', 'yahoo'].indexOf(req.params.network) === -1) {
-            res.api.error = Err.internal('Unknown third party network authentication', req.params.network);
-            return next();
+            return request.reply(Hapi.error.internal('Unknown third party network authentication', req.params.network));
         }
 
         switch (req.params.network) {
@@ -94,12 +96,11 @@ exports.auth = function (req, res, next) {
 
         // Sign-in Initialization
 
-        if (!req.query.oauth_token) {
+        if (!request.query.oauth_token) {
             return twitterClient.getOAuthRequestToken(function (err, token, secret, authorizeUri, params) {
 
                 if (err) {
-                    res.api.error = Err.internal('Failed to obtain a Twitter request token', err);
-                    return next();
+                    return request.reply(Hapi.error.internal('Failed to obtain a Twitter request token', err));
                 }
 
                 res.api.jar.twitter = { token: token, secret: secret };
@@ -111,32 +112,27 @@ exports.auth = function (req, res, next) {
 
         // Authorization callback
 
-        if (!req.query.oauth_verifier) {
-            res.api.error = Err.internal('Missing verifier parameter in Twitter authorization response');
-            return next();
+        if (!request.query.oauth_verifier) {
+            return request.reply(Hapi.error.internal('Missing verifier parameter in Twitter authorization response'));
         }
 
         if (!req.api.jar.twitter) {
-            res.api.error = Err.internal('Missing Twitter request token cookie');
-            return next();
+            return request.reply(Hapi.error.internal('Missing Twitter request token cookie'));
         }
 
         var credentials = req.api.jar.twitter;
-        if (req.query.oauth_token !== credentials.token) {
-            res.api.error = Err.internal('Twitter authorized request token mismatch');
-            return next();
+        if (request.query.oauth_token !== credentials.token) {
+            return request.reply(Hapi.error.internal('Twitter authorized request token mismatch'));
         }
 
-        twitterClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
+        twitterClient.getOAuthAccessToken(credentials.token, credentials.secret, request.query.oauth_verifier, function (err, token, secret, params) {
 
             if (err) {
-                res.api.error = Err.internal('Failed to obtain a Twitter access token', err);
-                return next();
+                return request.reply(Hapi.error.internal('Failed to obtain a Twitter access token', err));
             }
 
             if (!params.user_id) {
-                res.api.error = Err.internal('Invalid Twitter access token response', err);
-                return next();
+                return request.reply(Hapi.error.internal('Invalid Twitter access token response', err));
             }
 
             var account = {
@@ -174,7 +170,7 @@ exports.auth = function (req, res, next) {
 
         // Sign-in Initialization
 
-        if (!req.query.code) {
+        if (!request.query.code) {
             var request = {
                 protocol: 'https:',
                 host: 'graph.facebook.com',
@@ -201,20 +197,18 @@ exports.auth = function (req, res, next) {
         if (!req.api.jar.facebook ||
             !req.api.jar.facebook.state) {
 
-            res.api.error = Err.internal('Missing Facebook state cookie');
-            return next();
+            return request.reply(Hapi.error.internal('Missing Facebook state cookie'));
         }
 
-        if (req.api.jar.facebook.state !== req.query.state) {
-            res.api.error = Err.internal('Facebook incorrect state parameter');
-            return next();
+        if (req.api.jar.facebook.state !== request.query.state) {
+            return request.reply(Hapi.error.internal('Facebook incorrect state parameter'));
         }
 
         var query = {
             client_id: Vault.facebook.clientId,
             client_secret: Vault.facebook.clientSecret,
             grant_type: 'authorization_code',
-            code: req.query.code,
+            code: request.query.code,
             redirect_uri: Config.host.uri('web') + '/auth/facebook'
         };
 
@@ -222,22 +216,19 @@ exports.auth = function (req, res, next) {
         facebookRequest('POST', '/oauth/access_token', body, function (err, data) {
 
             if (!data) {
-                res.api.error = err;
-                return next();
+                return request.reply(err);
             }
 
             facebookRequest('GET', '/me?' + QueryString.stringify({ oauth_token: data.access_token }), null, function (err, data) {
 
                 if (err) {
-                    res.api.error = err;
-                    return next();
+                    return request.reply(err);
                 }
 
                 if (!data ||
                     !data.id) {
 
-                    res.api.error = Err.internal('Invalid Facebook profile response', err);
-                    return next();
+                    return request.reply(Hapi.error.internal('Invalid Facebook profile response', err));
                 }
 
                 var account = {
@@ -265,7 +256,7 @@ exports.auth = function (req, res, next) {
         var hreq = Https.request(options, function (hres) {
 
             if (!hres) {
-                return callback(Err.internal('Failed sending Facebook token request'));
+                return callback(Hapi.error.internal('Failed sending Facebook token request'));
             }
 
             var response = '';
@@ -290,11 +281,11 @@ exports.auth = function (req, res, next) {
                 }
 
                 if (error) {
-                    return callback(Err.internal(error));
+                    return callback(Hapi.error.internal(error));
                 }
 
                 if (hres.statusCode !== 200) {
-                    return callback(Err.internal('Facebook returned OAuth error on token request', data));
+                    return callback(Hapi.error.internal('Facebook returned OAuth error on token request', data));
                 }
 
                 return callback(null, data);
@@ -303,7 +294,7 @@ exports.auth = function (req, res, next) {
 
         hreq.on('error', function (err) {
 
-            callback(Err.internal('HTTP socket error', err));
+            callback(Hapi.error.internal('HTTP socket error', err));
         });
 
         if (body !== null) {
@@ -318,12 +309,11 @@ exports.auth = function (req, res, next) {
 
         // Sign-in Initialization
 
-        if (!req.query.oauth_token) {
+        if (!request.query.oauth_token) {
             yahooClient.getOAuthRequestToken(function (err, token, secret, authorizeUri, params) {
 
                 if (err) {
-                    res.api.error = Err.internal('Failed to obtain a Yahoo! request token', err);
-                    return next();
+                    return request.reply(Hapi.error.internal('Failed to obtain a Yahoo! request token', err));
                 }
 
                 res.api.jar.yahoo = { token: token, secret: secret };
@@ -335,35 +325,30 @@ exports.auth = function (req, res, next) {
 
         // Authorization callback
 
-        if (!req.query.oauth_verifier) {
-            res.api.error = Err.internal('Missing verifier parameter in Yahoo authorization response');
-            return next();
+        if (!request.query.oauth_verifier) {
+            return request.reply(Hapi.error.internal('Missing verifier parameter in Yahoo authorization response'));
         }
 
         if (!req.api.jar.yahoo) {
-            res.api.error = Err.internal('Missing Yahoo request token cookie');
-            return next();
+            return request.reply(Hapi.error.internal('Missing Yahoo request token cookie'));
         }
 
         credentials = req.api.jar.yahoo;
 
-        if (req.query.oauth_token !== credentials.token) {
-            res.api.error = Err.internal('Yahoo authorized request token mismatch');
-            return next();
+        if (request.query.oauth_token !== credentials.token) {
+            return request.reply(Hapi.error.internal('Yahoo authorized request token mismatch'));
         }
 
-        yahooClient.getOAuthAccessToken(credentials.token, credentials.secret, req.query.oauth_verifier, function (err, token, secret, params) {
+        yahooClient.getOAuthAccessToken(credentials.token, credentials.secret, request.query.oauth_verifier, function (err, token, secret, params) {
 
             if (err) {
-                res.api.error = Err.internal('Failed to obtain a Yahoo access token', err);
-                return next();
+                return request.reply(Hapi.error.internal('Failed to obtain a Yahoo access token', err));
             }
 
             if (!params ||
                 !params.xoauth_yahoo_guid) {
 
-                res.api.error = Err.internal('Invalid Yahoo access token response', params);
-                return next();
+                return request.reply(Hapi.error.internal('Invalid Yahoo access token response', params));
             }
 
             var account = {
@@ -456,12 +441,11 @@ exports.loginCall = function (type, id, res, next, destination, account) {
     Api.clientCall('POST', '/oz/login', payload, function (err, code, payload) {
 
         if (err) {
-            res.api.error = Err.internal('Unexpected API response', err);
-            return next();
+            return request.reply(Hapi.error.internal('Unexpected API response', err));
         }
 
         if (code !== 200) {
-            Session.clear(res);
+            request.clearSession();
 
             // Bad email invite
 
@@ -490,8 +474,7 @@ exports.loginCall = function (type, id, res, next, destination, account) {
         Api.clientCall('POST', '/oz/rsvp', { rsvp: payload.rsvp }, function (err, code, ticket) {
 
             if (err) {
-                res.api.error = Err.internal('Unexpected API response', err);
-                return next();
+                return request.reply(Hapi.error.internal('Unexpected API response', err));
             }
 
             if (code !== 200) {
@@ -502,11 +485,10 @@ exports.loginCall = function (type, id, res, next, destination, account) {
                 return next();
             }
 
-            Session.set(res, ticket, function (isValid, restriction) {
+            Session.set(request, ticket, function (isValid, restriction) {
 
                 if (!isValid) {
-                    res.api.error = Err.internal('Invalid response parameters from API server');
-                    return next();
+                    return request.reply(Hapi.error.internal('Invalid response parameters from API server'));
                 }
 
                 if (payload.ext &&
@@ -514,15 +496,11 @@ exports.loginCall = function (type, id, res, next, destination, account) {
                     payload.ext.action.type) {
 
                     switch (payload.ext.action.type) {
-
                         case 'reminder':
-
                             res.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
                             destination = '/account/linked';
                             break;
-
                         case 'verify':
-
                             res.api.jar.message = 'Email address verified';
                             destination = '/account/emails';
                             break;
