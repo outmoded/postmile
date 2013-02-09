@@ -39,7 +39,7 @@ exports.form = function (request) {
             }
         };
 
-        return request.reply.view('register', locals);
+        return request.reply.view('register', locals).send();
     });
 };
 
@@ -112,7 +112,7 @@ exports.i = function (request) {
             return request.reply.redirect('/signup/invite').send();
         }
 
-        return request.reply.view('invite-invalid');
+        return request.reply.view('invite-invalid').send();
     });
 };
 
@@ -125,7 +125,7 @@ exports.invite = function (request) {
         !request.state.jar.invite.code ||
         !request.state.jar.invite.about) {
 
-        return request.reply.view('invite-invalid');
+        return request.reply.view('invite-invalid').send();
     }
 
     request.api.jar.invite = request.state.jar.invite;
@@ -136,11 +136,13 @@ exports.invite = function (request) {
         code: request.state.jar.invite.code
     };
 
-    if (request.session.profile) {
-        return request.reply.view('invite-in', locals);
+    if (request.session &&
+        request.session.profile) {
+
+        return request.reply.view('invite-in', locals).send();
     }
 
-    return request.reply.view('invite-out', locals);
+    return request.reply.view('invite-out', locals).send();
 };
 
 
@@ -151,7 +153,7 @@ exports.claim = function (request) {
     if (!request.state.jar.invite ||
         !request.state.jar.invite.code) {
 
-        return request.reply.view('invite-invalid');
+        return request.reply.view('invite-invalid').send();
     }
 
     Api.call('POST', '/invite/' + request.state.jar.invite.code + '/claim', '', request.session, function (err, code, payload) {
@@ -164,7 +166,7 @@ exports.claim = function (request) {
             return request.reply.redirect(request.session.profile.view + '#project=' + payload.project).send();
         }
 
-        return request.reply.view('invite-invalid');
+        return request.reply.view('invite-invalid').send();
     });
 };
 
@@ -195,7 +197,7 @@ exports.inviteRegister = function (request) {
         !request.state.jar.invite.code ||
         !request.state.jar.invite.about) {
 
-        return request.reply.view('invite-invalid');
+        return request.reply.view('invite-invalid').send();
     }
 
     var registration = {};
@@ -205,7 +207,7 @@ exports.inviteRegister = function (request) {
         if (err ||
             code !== 200) {
 
-            return request.reply.view('invite-invalid');
+            return request.reply.view('invite-invalid').send();
         }
 
         // Login new user

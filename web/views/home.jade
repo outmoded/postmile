@@ -1,45 +1,48 @@
-#two-columns
-  .left
-    a(href: '/')
-      h1 #{product.name}
+extends layout
 
-  .right
-    h2 Collaborate with friends &amp; family to get stuff done.
+block content
+  #two-columns
+    .left
+      a(href: '/')
+        h1 #{product.name}
 
-    p.icons
-      span.bold.large Sign in with 
-      - if (auth.facebook)
-        a.icon.facebook(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : '')) Facebook
-      - if (auth.twitter)
-        a.icon.twitter(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : '')) Twitter
-      - if (auth.yahoo)
-        a.icon.yahoo(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : '')) Yahoo!
+    .right
+      h2 Collaborate with friends &amp; family to get stuff done.
 
-      a(href: 'javascript: openOverlay("reminder");') Need help signing in?
+      p.icons
+        span.bold.large Sign in with 
+        - if (auth.facebook)
+          a.icon.facebook(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : '')) Facebook
+        - if (auth.twitter)
+          a.icon.twitter(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : '')) Twitter
+        - if (auth.yahoo)
+          a.icon.yahoo(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : '')) Yahoo!
 
-    p Follow us on 
-      a.blue(href='#') Facebook 
-      | and 
-      a.blue(href='#') Twitter 
-      | to stay up to date on #{product.name} 
-      br
-      | and find out when you can start using #{product.name} to get stuff done
+        a(href: 'javascript: openOverlay("reminder");') Need help signing in?
 
-    p Got an invitation code? 
-      a(href: '/login') Sign in to register
-
-  .clearfix
-
-  #reminder.modal
-    a.close(href: 'javascript: closeOverlay();') x
-    h1 Help is on the way!
-    #reminder-main
-      .text Enter your email address or your #{product.name} username.
+      p Follow us on 
+        a.blue(href='#') Facebook 
+        | and 
+        a.blue(href='#') Twitter 
+        | to stay up to date on #{product.name} 
         br
-        |We'll send you an email with a link you can use to sign back in.
-      #reminder-form
-        button.blue-button(onclick: 'reminder();') Send Request
-        input#lookup-account(type: 'text', onkeyup: 'enterCall(event, reminder);', placeholder: 'enter email address or username')
-      #reminder-status.error &nbsp;
-    #reminder-post.text Check your email for a message from #{product.name} and follow the instructions to sign-in.
+        | and find out when you can start using #{product.name} to get stuff done
+
+      p Got an invitation code? 
+        a(href: '/login') Sign in to register
+
+    .clearfix
+
+    #reminder.modal
+      a.close(href: 'javascript: closeOverlay();') x
+      h1 Help is on the way!
+      #reminder-main
+        .text Enter your email address or your #{product.name} username.
+          br
+          |We'll send you an email with a link you can use to sign back in.
+        #reminder-form
+          button.blue-button(onclick: 'reminder();') Send Request
+          input#lookup-account(type: 'text', onkeyup: 'enterCall(event, reminder);', placeholder: 'enter email address or username')
+        #reminder-status.error &nbsp;
+      #reminder-post.text Check your email for a message from #{product.name} and follow the instructions to sign-in.
 

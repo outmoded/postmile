@@ -18,7 +18,7 @@ exports.get = function (request) {
         !request.session.ext.tos ||
         request.session.ext.tos < exports.minimumTOS) {
 
-        return request.reply.view('tos', { env: { next: request.query.next || '' } });
+        return request.reply.view('tos', { env: { next: request.query.next || '' } }).send();
     }
 
     return request.reply.redirect((request.query.next && request.query.next.charAt(0) === '/' ? request.query.next : request.session.profile.view)).send();

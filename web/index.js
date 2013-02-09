@@ -1,10 +1,8 @@
 // Load modules
 
 var Hapi = require('hapi');
-var Boom = require('boom');
 var Semver = require('semver');
 var Fs = require('fs');
-var UserAgent = require('user-agent')
 var Login = require('./login');
 var Session = require('./session');
 var Vault = require('./vault');
@@ -32,6 +30,11 @@ exports.create = function () {
     // Create server
 
     var config = {
+        state: {
+            cookies: {
+                clearInvalid: true
+            }
+        },
         views: {
             path: __dirname + '/views',
             engine: {
@@ -39,7 +42,8 @@ exports.create = function () {
                 extension: 'jade'
             },
             compileOptions: {
-                colons: true
+                colons: true,
+                pretty: true
             }
         },
         auth: {
@@ -59,13 +63,16 @@ exports.create = function () {
                     mode: 'none'
                 }
             }
+        },
+        debug: {
+            websocketPort: 3001
         }
     };
 
-    if (Config.process.web.tls) {
+    if (Config.host.web.tls) {
         config.tls = {
-            key: Fs.readFileSync(Config.process.web.tls.key),
-            cert: Fs.readFileSync(Config.process.web.tls.cert)
+            key: Fs.readFileSync(Config.host.web.tls.key),
+            cert: Fs.readFileSync(Config.host.web.tls.cert)
         };
     }
 
@@ -78,11 +85,11 @@ exports.create = function () {
 
     // Plugins
 
-    server.plugin().require('hapi-jar', { permissions: { ext: true }, plugin: { options: { password: Vault.password.jar }, isSingleUse: true } }, function (err) {
+    server.plugin().require('./node_modules/hapi-jar', { permissions: { ext: true }, plugin: { options: { password: Vault.jar.password }, isSingleUse: true } }, function (err) {
 
-        server.plugin().require('crumb', { permissions: { ext: true } }, function (err) {
+        server.plugin().require('./node_modules/crumb', { permissions: { ext: true } }, function (err) {
 
-            server.plugin().require('scooter', { permissions: { ext: true } }, function (err) {
+            server.plugin().require('./node_modules/scooter', { permissions: { ext: true } }, function (err) {
 
                 server.ext('onPostHandler', internals.onPostHandler);
 
@@ -111,10 +118,10 @@ internals.onPostHandler = function (request, next) {
 
     // Return error page
 
-    if (request.response instanceof Boom) {
+    if (request.response instanceof Hapi.Boom) {
         var error = request.response;
         var context = {
-            profile: request.session.profile,
+            profile: request.session && request.session.profile,
             error: error.message,
             code: error.response.code === 404 ? 404 : 500,
             message: (error.response.code === 404 ? 'the page you were looking for was not found' : 'something went wrong...'),
@@ -136,7 +143,7 @@ internals.onPostHandler = function (request, next) {
         var context = request.response.view.context;
         context.env = context.env || {};
         context.host = Config.host;
-        context.profile = request.session.profile;
+        context.profile = request.session && request.session.profile;
         context.product = Config.product;
         context.auth = {
             facebook: !!Vault.facebook.clientId,
@@ -147,7 +154,7 @@ internals.onPostHandler = function (request, next) {
 
         // Set mobile environment
 
-        if (request.plugin.scooter.os.family === 'iOS' &&
+        if (request.plugins.scooter.os.family === 'iOS' &&
             request.route.app.hasMobile) {
 
             context.layout = 'mobile';

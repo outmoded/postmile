@@ -1,6 +1,6 @@
 // Load modules
 
-var Hapi = require('./hapi');
+var Hapi = require('hapi');
 var Email = require('./email');
 var Config = require('./config');
 
@@ -17,7 +17,7 @@ exports.welcome = function (request) {
 
 exports.about = function (request) {
 
-    return request.reply.view('about');
+    return request.reply.view('about').send();
 };
 
 
@@ -25,7 +25,7 @@ exports.about = function (request) {
 
 exports.developer = function (request) {
 
-    return request.reply.view('developer', { theme: 'developer' });
+    return request.reply.view('developer', { theme: 'developer' }).send();
 };
 
 
@@ -33,7 +33,7 @@ exports.developer = function (request) {
 
 exports.console = function (request) {
 
-    return request.reply.view('console');
+    return request.reply.view('console').send();
 };
 
 
@@ -51,13 +51,13 @@ exports.stupid = function (request) {
 exports.feedback = function (request) {
 
     if (req.method === 'GET') {
-        return request.reply.view('feedback');
+        return request.reply.view('feedback').send();
     }
     else {
         var feedback = 'From: ' + (request.payload.username ? request.payload.username : request.payload.name + ' <' + request.payload.email + '>') + '\n\n' + request.payload.message;
         Email.send(Config.email.feedback, 'Posmile site feedback', feedback);
 
-        return request.reply.view('feedback', { env: { message: 'Your feedback has been received!' } });
+        return request.reply.view('feedback', { env: { message: 'Your feedback has been received!' } }).send();
     }
 };
 

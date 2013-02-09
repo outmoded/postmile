@@ -2,7 +2,9 @@
 
 exports.get = function (request) {
 
-    if (request.session.profile) {
+    if (request.session &&
+        request.session.profile) {
+
         return request.reply.redirect(request.session.profile.view).send();
     }
     else {
@@ -13,7 +15,7 @@ exports.get = function (request) {
             }
         };
 
-        return request.reply.view('home', locals);
+        return request.reply.view('home', locals).send();
     }
 };
 

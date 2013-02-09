@@ -21,7 +21,7 @@ exports.get = function (request) {
             }
         };
 
-        return request.reply.view('account-' + request.params.panel, locals);
+        return request.reply.view('account-' + request.params.panel, locals).send();
     }
     else {
         if (request.state.jar.message) {

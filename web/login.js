@@ -37,8 +37,10 @@ var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2
 
 exports.login = function (request) {
 
-    if (!request.session.profile) {
-        return request.reply.view('login', { logo: false, env: { next: (request.query.next ? encodeURIComponent(request.query.next) : '') } });
+    if (!request.session ||
+        !request.session.profile) {
+
+        return request.reply.view('login', { logo: false, env: { next: (request.query.next ? encodeURIComponent(request.query.next) : '') } }).send();
     }
 
     if (request.session.restriction === 'tos' ||
@@ -134,7 +136,9 @@ exports.auth = function (request) {
                 username: params.screen_name || ''
             };
 
-            if (request.session.profile) {
+            if (request.session &&
+                request.session.profile) {
+
                 return finalizedLogin(account);
             }
 
@@ -345,7 +349,9 @@ exports.auth = function (request) {
                 id: params.xoauth_yahoo_guid
             };
 
-            if (request.session.profile) {
+            if (request.session &&
+                request.session.profile) {
+
                 return finalizedLogin(account);
             }
 
@@ -370,7 +376,8 @@ exports.auth = function (request) {
 
     var finalizedLogin = function (account) {
 
-        if (request.session.profile) {
+        if (request.session &&
+            request.session.profile) {
 
             // Link
 
