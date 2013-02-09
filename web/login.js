@@ -35,40 +35,35 @@ var yahooClient = new OAuth.OAuth('https://oauth03.member.mud.yahoo.com/oauth/v2
 
 // Login page
 
-exports.login = function (req, res, next) {
+exports.login = function (request) {
 
-    if (!req.api.profile) {
-        res.api.view = { template: 'login', hasMobile: true, locals: { logo: false, env: { next: (request.query.next ? encodeURIComponent(request.query.next) : '') } } };
-        return next();
+    if (!request.session.profile) {
+        return request.reply.view('login', { logo: false, env: { next: (request.query.next ? encodeURIComponent(request.query.next) : '') } });
     }
 
-    if (req.api.session.restriction === 'tos' ||
-        !req.api.session.ext.tos ||
-        req.api.session.ext.tos < Tos.minimumTOS) {
+    if (request.session.restriction === 'tos' ||
+        !request.session.ext.tos ||
+        request.session.ext.tos < Tos.minimumTOS) {
 
-        res.api.redirect = '/tos' + (request.query.next && request.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(request.query.next) : '');
-        return next();
+        return request.reply.redirect('/tos' + (request.query.next && request.query.next.charAt(0) === '/' ? '?next=' + encodeURIComponent(request.query.next) : '')).send();
     }
 
-    res.api.redirect = request.query.next || req.api.profile.view;
-    return next();
+    return request.reply.redirect(request.query.next || request.session.profile.view).send();
 };
 
 
 // Logout
 
-exports.logout = function (req, res, next) {
+exports.logout = function (request) {
 
     request.clearSession();
-    res.api.redirect = '/';
-    res.api.result = 'You are being redirected...';
-    next();
+    return request.reply.redirect('/').send();
 };
 
 
 // Third party authentication (OAuth 1.0/2.0 callback URI)
 
-exports.auth = function (req, res, next) {
+exports.auth = function (request) {
 
     var entry = function () {
 
@@ -77,14 +72,14 @@ exports.auth = function (req, res, next) {
         if (request.query.x_next &&
             request.query.x_next.charAt(0) === '/') {        // Prevent being used an open redirector
 
-            res.api.jar.auth = { next: request.query.x_next };
+            request.api.jar.auth = { next: request.query.x_next };
         }
 
-        if (['twitter', 'facebook', 'yahoo'].indexOf(req.params.network) === -1) {
-            return request.reply(Hapi.error.internal('Unknown third party network authentication', req.params.network));
+        if (['twitter', 'facebook', 'yahoo'].indexOf(request.params.network) === -1) {
+            return request.reply(Hapi.error.internal('Unknown third party network authentication', request.params.network));
         }
 
-        switch (req.params.network) {
+        switch (request.params.network) {
 
             case 'twitter': twitter(); break;
             case 'facebook': facebook(); break;
@@ -103,10 +98,8 @@ exports.auth = function (req, res, next) {
                     return request.reply(Hapi.error.internal('Failed to obtain a Twitter request token', err));
                 }
 
-                res.api.jar.twitter = { token: token, secret: secret };
-                res.api.redirect = 'https://api.twitter.com/oauth/authenticate?oauth_token=' + token;
-                res.api.result = 'You are being redirected to Twitter to sign-in...';
-                return next();
+                request.api.jar.twitter = { token: token, secret: secret };
+                return request.reply.redirect('https://api.twitter.com/oauth/authenticate?oauth_token=' + token).send();
             });
         }
 
@@ -116,11 +109,11 @@ exports.auth = function (req, res, next) {
             return request.reply(Hapi.error.internal('Missing verifier parameter in Twitter authorization response'));
         }
 
-        if (!req.api.jar.twitter) {
+        if (!request.state.jar.twitter) {
             return request.reply(Hapi.error.internal('Missing Twitter request token cookie'));
         }
 
-        var credentials = req.api.jar.twitter;
+        var credentials = request.state.jar.twitter;
         if (request.query.oauth_token !== credentials.token) {
             return request.reply(Hapi.error.internal('Twitter authorized request token mismatch'));
         }
@@ -141,7 +134,7 @@ exports.auth = function (req, res, next) {
                 username: params.screen_name || ''
             };
 
-            if (req.api.profile) {
+            if (request.session.profile) {
                 return finalizedLogin(account);
             }
 
@@ -181,26 +174,24 @@ exports.auth = function (req, res, next) {
                     scope: 'email',
                     redirect_uri: Config.host.uri('web') + '/auth/facebook',
                     state: Utils.getRandomString(22),
-                    display: req.api.agent.os === 'iPhone' ? 'touch' : 'page'
+                    display: request.plugins.scooter.os.family === 'iOS' ? 'touch' : 'page'
                 }
             };
 
-            res.api.jar.facebook = { state: request.query.state };
-            res.api.redirect = Url.format(request);
-            res.api.result = 'You are being redirected to Facebook to sign-in...';
-            return next();
+            request.api.jar.facebook = { state: request.query.state };
+            return request.reply.redirect(Url.format(request)).send();
         }
 
 
         // Authorization callback
 
-        if (!req.api.jar.facebook ||
-            !req.api.jar.facebook.state) {
+        if (!request.state.jar.facebook ||
+            !request.state.jar.facebook.state) {
 
             return request.reply(Hapi.error.internal('Missing Facebook state cookie'));
         }
 
-        if (req.api.jar.facebook.state !== request.query.state) {
+        if (request.state.jar.facebook.state !== request.query.state) {
             return request.reply(Hapi.error.internal('Facebook incorrect state parameter'));
         }
 
@@ -316,10 +307,8 @@ exports.auth = function (req, res, next) {
                     return request.reply(Hapi.error.internal('Failed to obtain a Yahoo! request token', err));
                 }
 
-                res.api.jar.yahoo = { token: token, secret: secret };
-                res.api.redirect = 'https://api.login.yahoo.com/oauth/v2/request_auth?oauth_token=' + token;
-                res.api.result = 'You are being redirected to Yahoo! to sign-in...';
-                return next();
+                request.api.jar.yahoo = { token: token, secret: secret };
+                return request.reply.redirect('https://api.login.yahoo.com/oauth/v2/request_auth?oauth_token=' + token).send();
             });
         }
 
@@ -329,11 +318,11 @@ exports.auth = function (req, res, next) {
             return request.reply(Hapi.error.internal('Missing verifier parameter in Yahoo authorization response'));
         }
 
-        if (!req.api.jar.yahoo) {
+        if (!request.state.jar.yahoo) {
             return request.reply(Hapi.error.internal('Missing Yahoo request token cookie'));
         }
 
-        credentials = req.api.jar.yahoo;
+        credentials = request.state.jar.yahoo;
 
         if (request.query.oauth_token !== credentials.token) {
             return request.reply(Hapi.error.internal('Yahoo authorized request token mismatch'));
@@ -356,7 +345,7 @@ exports.auth = function (req, res, next) {
                 id: params.xoauth_yahoo_guid
             };
 
-            if (req.api.profile) {
+            if (request.session.profile) {
                 return finalizedLogin(account);
             }
 
@@ -381,21 +370,20 @@ exports.auth = function (req, res, next) {
 
     var finalizedLogin = function (account) {
 
-        if (req.api.profile) {
+        if (request.session.profile) {
 
             // Link
 
-            Api.clientCall('POST', '/user/' + req.api.profile.id + '/link/' + account.network, { id: account.id }, function (err, code, payload) {
+            Api.clientCall('POST', '/user/' + request.session.profile.id + '/link/' + account.network, { id: account.id }, function (err, code, payload) {
 
-                res.api.redirect = '/account/linked';
-                next();
+                return request.reply.redirect('/account/linked').send();
             });
         }
         else {
 
             // Login
 
-            var destination = req.api.jar.auth ? req.api.jar.auth.next : null;
+            var destination = request.state.jar.auth ? request.state.jar.auth.next : null;
             exports.loginCall(account.network, account.id, res, next, destination, account);
         }
     };
@@ -406,26 +394,24 @@ exports.auth = function (req, res, next) {
 
 // Unlink account
 
-exports.unlink = function (req, res, next) {
+exports.unlink = function (request) {
 
-    if (['twitter', 'facebook', 'yahoo'].indexOf(req.body.network) === -1) {
-        res.api.redirect = '/account/linked';
-        return next();
+    if (['twitter', 'facebook', 'yahoo'].indexOf(request.payload.network) === -1) {
+        return request.reply.redirect('/account/linked').send();
     }
 
-    Api.clientCall('DELETE', '/user/' + req.api.profile.id + '/link/' + req.body.network, '', function (err, code, payload) {
+    Api.clientCall('DELETE', '/user/' + request.session.profile.id + '/link/' + request.payload.network, '', function (err, code, payload) {
 
-        res.api.redirect = '/account/linked';
-        return next();
+        return request.reply.redirect('/account/linked').send();
     });
 };
 
 
 // Email token login
 
-exports.emailToken = function (req, res, next) {
+exports.emailToken = function (request) {
 
-    exports.loginCall('email', req.params.token, res, next, null, null);
+    exports.loginCall('email', request.params.token, res, next, null, null);
 };
 
 
@@ -450,23 +436,20 @@ exports.loginCall = function (type, id, res, next, destination, account) {
             // Bad email invite
 
             if (type === 'email') {
-                res.api.jar.message = payload.message;
-                res.api.redirect = '/';
-                return next();
+                request.api.jar.message = payload.message;
+                return request.reply.redirect('/').send();
             }
 
             // Sign-up
 
             if (account) {
-                res.api.jar.signup = account;
-                res.api.redirect = '/signup/register';
-                return next();
+                request.api.jar.signup = account;
+                return request.reply.redirect('/signup/register').send();
             }
 
             // Failed to login or register
 
-            res.api.redirect = '/';
-            return next();
+            return request.reply.redirect('/').send();
         }
 
         // Registered user
@@ -481,8 +464,7 @@ exports.loginCall = function (type, id, res, next, destination, account) {
 
                 // Failed to login or register
 
-                res.api.redirect = '/';
-                return next();
+                return request.reply.redirect('/').send();
             }
 
             Session.set(request, ticket, function (isValid, restriction) {
@@ -497,11 +479,11 @@ exports.loginCall = function (type, id, res, next, destination, account) {
 
                     switch (payload.ext.action.type) {
                         case 'reminder':
-                            res.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
+                            request.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
                             destination = '/account/linked';
                             break;
                         case 'verify':
-                            res.api.jar.message = 'Email address verified';
+                            request.api.jar.message = 'Email address verified';
                             destination = '/account/emails';
                             break;
                     }
@@ -510,13 +492,10 @@ exports.loginCall = function (type, id, res, next, destination, account) {
                 if (restriction === 'tos' &&
                     (!destination || destination.indexOf('/account') !== 0)) {
 
-                    res.api.redirect = '/tos' + (destination ? '?next=' + encodeURIComponent(destination) : '');
-                }
-                else {
-                    res.api.redirect = destination || '/';
+                    return request.reply.redirect('/tos' + (destination ? '?next=' + encodeURIComponent(destination) : '')).send();
                 }
 
-                return next();
+                return request.reply.redirect(destination || '/').send();
             });
         });
     });

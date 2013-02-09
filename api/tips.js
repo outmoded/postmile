@@ -31,11 +31,11 @@ exports.initialize = function () {
                     internals.tips[tip._id] = tip;
                 }
                 else {
-                    Hapi.Log.event('err', 'Failed to load tips: ' + tip._id);
+                    Hapi.logevent('err', 'Failed to load tips: ' + tip._id);
                 }
             }
             else {
-                Hapi.Log.event('err', 'Bad tip: missing rule or text');
+                Hapi.logevent('err', 'Bad tip: missing rule or text');
             }
         }
     });
@@ -58,7 +58,7 @@ exports.list = function (project, callback) {
                 }
             }
             catch (e) {
-                Hapi.Log.event('err', 'Bad tip rule:' + tip._id);
+                Hapi.logevent('err', 'Bad tip rule:' + tip._id);
             }
         }
     }

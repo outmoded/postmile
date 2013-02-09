@@ -12,33 +12,30 @@ exports.currentTOS = '20110623';
 
 // TOS page
 
-exports.get = function (req, res, next) {
+exports.get = function (request) {
 
-    if (req.api.session.restriction === 'tos' ||
-        !req.api.session.ext.tos ||
-        req.api.session.ext.tos < exports.minimumTOS) {
+    if (request.session.restriction === 'tos' ||
+        !request.session.ext.tos ||
+        request.session.ext.tos < exports.minimumTOS) {
 
-        res.api.view = { template: 'tos', locals: { env: { next: request.query.next || '' } } };
-        return next();
+        return request.reply.view('tos', { env: { next: request.query.next || '' } });
     }
 
-    res.api.redirect = (request.query.next && request.query.next.charAt(0) === '/' ? request.query.next : req.api.profile.view);
-    next();
+    return request.reply.redirect((request.query.next && request.query.next.charAt(0) === '/' ? request.query.next : request.session.profile.view)).send();
 };
 
 
 // Accept TOS
 
-exports.post = function (req, res, next) {
+exports.post = function (request) {
 
-    Api.clientCall('POST', '/user/' + req.api.profile.id + '/tos/' + exports.currentTOS, '', function (err, code, payload) {
+    Api.clientCall('POST', '/user/' + request.session.profile.id + '/tos/' + exports.currentTOS, '', function (err, code, payload) {
 
         // Refresh token
 
-        Session.refresh(req, res, req.api.session, function (err, session) {
+        Session.refresh(req, res, request.session, function (err, session) {
 
-            res.api.redirect = '/tos' + (req.body.next ? '?next=' + encodeURIComponent(req.body.next) : '');
-            next();
+            return request.reply.redirect('/tos' + (request.payload.next ? '?next=' + encodeURIComponent(request.payload.next) : '')).send();
         });
     });
 };

@@ -5,16 +5,20 @@
   "author": "Eran Hammer-Lahav <eran@hammer-lahav.net>",
   "private": true,
   "dependencies": {
-    "express": "2.x.x",
+    "hapi": "0.14.x",
+    "hapi-jar": "0.0.x",
+    "crumb": "0.0.x",
+    "scooter": "0.0.x",
     "emailjs": "0.x.x",
     "jade": "0.17.x",
     "oz": "0.0.x",
     "oauth": "0.9.x",
     "semver": "1.x.x",
-    "user-agent": "1.x.x",
     "validator": "0.x.x",
     "opts": "1.x.x",
     "request": "2.11.x"
   },
-  "engines": { "node": "0.8.x" }
+  "engines": {
+    "node": "0.8.x"
+  }
 }

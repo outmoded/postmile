@@ -33,11 +33,11 @@ exports.initialize = function () {
                     internals.suggestions[suggestion._id] = suggestion;
                 }
                 else {
-                    Hapi.Log.event('err', 'Failed to load suggestions: ' + suggestion._id);
+                    Hapi.logevent('err', 'Failed to load suggestions: ' + suggestion._id);
                 }
             }
             else {
-                Hapi.Log.event('err', 'Bad suggestion: missing rule or title');
+                Hapi.logevent('err', 'Bad suggestion: missing rule or title');
             }
         }
     });
@@ -157,7 +157,7 @@ exports.list = function (project, userId, callback) {
                     }
                     catch (e) {
                         // Bad rule
-                        Hapi.Log.event('err', 'Bad suggestion rule:' + suggestion._id);
+                        Hapi.logevent('err', 'Bad suggestion rule:' + suggestion._id);
                     }
                 }
             }

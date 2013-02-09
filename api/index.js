@@ -26,15 +26,17 @@ process.on('uncaughtException', function (err) {
 
 // Post handler extension middleware
 
-internals.formatPayload = function (payload) {
+internals.onPostHandler = function (request, next) {
 
-    if (typeof payload !== 'object' ||
-        payload instanceof Array) {
+    if (!request.response.varieties.obj ||
+        request.response.raw instanceof Array) {
 
-        return payload;
+        return next();
     }
 
     // Sanitize database fields
+
+    var payload = request.response.raw;
 
     if (payload._id) {
         payload.id = payload._id;
@@ -49,16 +51,14 @@ internals.formatPayload = function (payload) {
         }
     }
 
-    return payload;
+    request.response.update();
+    return next();
 };
 
 
 // Create server
 
 var configuration = {
-    format: {
-        payload: internals.formatPayload
-    },
     auth: {
         scheme: 'oz',
         encryptionPassword: Vault.ozTicket.password,
@@ -73,12 +73,13 @@ var configuration = {
 };
 
 var server = new Hapi.Server(Config.host.api.domain, Config.host.api.port, configuration);
+server.ext('onPostHandler', internals.onPostHandler);
 server.route(Routes.endpoints);
 
 Db.initialize(function (err) {
 
     if (err) {
-        Hapi.Log.event('err', err);
+        Hapi.logevent('err', err);
         process.exit(1);
     }
 

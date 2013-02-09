@@ -1,14 +1,14 @@
 // Jar encryption key
 
 exports.jar = {
-    aes256Key: ''
+    password: ''
 };
 
 
 // Session token encryption key
 
 exports.session = {
-    aes256Key: ''
+    password: ''
 };
 
 

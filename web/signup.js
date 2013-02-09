@@ -8,85 +8,81 @@ var Session = require('./session');
 
 // Registration
 
-exports.form = function (req, res, next) {
+exports.form = function (request) {
 
-    if (!req.api.jar.signup) {
-        res.api.redirect = '/';
-        return next();
+    if (!request.state.jar.signup) {
+        return request.reply.redirect('/').send();
     }
 
-    res.api.jar.signup = req.api.jar.signup;
+    request.api.jar.signup = request.state.jar.signup;
 
     // Check if invitation required
 
     Api.call('GET', '/invite/public', '', function (err, code, payload) {
 
         if (code === 200) {
-            res.api.jar.signup.invite = 'public';
+            request.api.jar.signup.invite = 'public';
         }
         else {
-            res.api.jar.signup.invite = (res.api.jar.signup.invite == 'public' ? '' : res.api.jar.signup.invite);
+            request.api.jar.signup.invite = (request.api.jar.signup.invite == 'public' ? '' : request.api.jar.signup.invite);
         }
 
         var locals = {
             logo: false,
-            network: req.api.jar.signup.network,
+            network: request.state.jar.signup.network,
             env: {
-                invite: (res.api.jar.signup.invite || ''),
-                name: (res.api.jar.signup.name || ''),
-                email: (res.api.jar.signup.email || ''),
-                username: (res.api.jar.signup.username || ''),
-                message: (res.api.jar.message || '')
+                invite: (request.api.jar.signup.invite || ''),
+                name: (request.api.jar.signup.name || ''),
+                email: (request.api.jar.signup.email || ''),
+                username: (request.api.jar.signup.username || ''),
+                message: (request.api.jar.message || '')
             }
         };
 
-        res.api.view = { template: 'register', locals: locals };
-        return next();
+        return request.reply.view('register', locals);
     });
 };
 
 
-exports.register = function (req, res, next) {
+exports.register = function (request) {
 
-    var signup = req.api.jar.signup;
+    var signup = request.state.jar.signup;
     if (!signup ||
         !signup.network ||
         !signup.id) {
 
-        res.api.redirect = '/';
-        return next();
+        return request.reply.redirect('/').send();
     }
 
     var registration = { network: [signup.network, signup.id] };
 
-    if (req.body.username) {
-        registration.username = req.body.username;
+    if (request.payload.username) {
+        registration.username = request.payload.username;
     }
 
-    if (req.body.email) {
-        registration.email = req.body.email;
+    if (request.payload.email) {
+        registration.email = request.payload.email;
     }
 
-    if (req.body.name) {
-        registration.name = req.body.name;
+    if (request.payload.name) {
+        registration.name = request.payload.name;
     }
 
-    Api.clientCall('PUT', '/user' + (req.body.invite ? '?invite=' + encodeURIComponent(req.body.invite) : ''), registration, function (err, code, payload) {
+    Api.clientCall('PUT', '/user' + (request.payload.invite ? '?invite=' + encodeURIComponent(request.payload.invite) : ''), registration, function (err, code, payload) {
 
         if (err ||
             code !== 200) {
 
             // Try again
 
-            res.api.jar.signup = req.api.jar.signup;
-            res.api.jar.signup.invite = req.body.invite;
-            res.api.jar.signup.name = req.body.name;
-            res.api.jar.signup.username = req.body.username;
-            res.api.jar.signup.email = req.body.email;
-            res.api.jar.message = (payload && payload.message ? payload.message : (err && err.message ? err.message : 'Service unavailable'));
+            request.api.jar.signup = request.state.jar.signup;
+            request.api.jar.signup.invite = request.payload.invite;
+            request.api.jar.signup.name = request.payload.name;
+            request.api.jar.signup.username = request.payload.username;
+            request.api.jar.signup.email = request.payload.email;
+            request.api.jar.message = (payload && payload.message ? payload.message : (err && err.message ? err.message : 'Service unavailable'));
 
-            res.api.redirect = '/signup/register';
-            return next();
+            return request.reply.redirect('/signup/register').send();
         }
 
         // Login new user
@@ -98,11 +94,11 @@ exports.register = function (req, res, next) {
 
 // Project invitation entry point
 
-exports.i = function (req, res, next) {
+exports.i = function (request) {
 
     // Fetch invitation details
 
-    Api.call('GET', '/invite/' + req.params.id, '', function (err, code, payload) {
+    Api.call('GET', '/invite/' + request.params.id, '', function (err, code, payload) {
 
         if (!err &&
             code === 200 &&
@@ -112,120 +108,109 @@ exports.i = function (req, res, next) {
 
             // Save information
 
-            res.api.jar.invite = { code: req.params.id, about: payload };
-            res.api.redirect = '/signup/invite';
-            return next();
+            request.api.jar.invite = { code: request.params.id, about: payload };
+            return request.reply.redirect('/signup/invite').send();
         }
 
-        res.api.view = { template: 'invite-invalid' };
-        next();
+        return request.reply.view('invite-invalid');
     });
 };
 
 
 // Project invitation
 
-exports.invite = function (req, res, next) {
+exports.invite = function (request) {
 
-    if (!req.api.jar.invite ||
-        !req.api.jar.invite.code ||
-        !req.api.jar.invite.about) {
+    if (!request.state.jar.invite ||
+        !request.state.jar.invite.code ||
+        !request.state.jar.invite.about) {
 
-        res.api.view = { template: 'invite-invalid' };
-        return next();
+        return request.reply.view('invite-invalid');
     }
 
-    res.api.jar.invite = req.api.jar.invite;
+    request.api.jar.invite = request.state.jar.invite;
 
     var locals = {
-        title: req.api.jar.invite.about.title,
-        inviter: req.api.jar.invite.about.inviter,
-        code: req.api.jar.invite.code
+        title: request.state.jar.invite.about.title,
+        inviter: request.state.jar.invite.about.inviter,
+        code: request.state.jar.invite.code
     };
 
-    if (req.api.profile) {
-        res.api.view = { template: 'invite-in', locals: locals };
-        return next();
+    if (request.session.profile) {
+        return request.reply.view('invite-in', locals);
     }
 
-    res.api.view = { template: 'invite-out', locals: locals };
-    return next();
+    return request.reply.view('invite-out', locals);
 };
 
 
 // Claim project invitation by current user
 
-exports.claim = function (req, res, next) {
+exports.claim = function (request) {
 
-    if (!req.api.jar.invite ||
-        !req.api.jar.invite.code) {
+    if (!request.state.jar.invite ||
+        !request.state.jar.invite.code) {
 
-        res.api.view = { template: 'invite-invalid' };
-        return next();
+        return request.reply.view('invite-invalid');
     }
 
-    Api.call('POST', '/invite/' + req.api.jar.invite.code + '/claim', '', req.api.session, function (err, code, payload) {
+    Api.call('POST', '/invite/' + request.state.jar.invite.code + '/claim', '', request.session, function (err, code, payload) {
 
         if (!err &&
             code === 200 &&
             payload &&
             payload.project) {
 
-            res.api.redirect = req.api.profile.view + '#project=' + payload.project;
-            return next();
+            return request.reply.redirect(request.session.profile.view + '#project=' + payload.project).send();
         }
 
-        res.api.view = { template: 'invite-invalid' };
-        return next();
+        return request.reply.view('invite-invalid');
     });
 };
 
 
-// Log out and use invite with another account
+// Logout and use invite with another account
 
-exports.other = function (req, res, next) {
+exports.other = function (request) {
 
     // Maintain state
 
-    res.api.jar.invite = req.api.jar.invite;
+    request.api.jar.invite = request.state.jar.invite;
 
-    // Log out
+    // Logout
 
     request.clearSession();
 
     // Try again
 
-    res.api.redirect = '/signup/invite';
-    return next();
+    return request.reply.redirect('/signup/invite').send();
 };
 
 
 // Create account from project invite
 
-exports.inviteRegister = function (req, res, next) {
+exports.inviteRegister = function (request) {
 
-    if (!req.api.jar.invite ||
-        !req.api.jar.invite.code ||
-        !req.api.jar.invite.about) {
+    if (!request.state.jar.invite ||
+        !request.state.jar.invite.code ||
+        !request.state.jar.invite.about) {
 
-        res.api.view = { template: 'invite-invalid' };
-        return next();
+        return request.reply.view('invite-invalid');
     }
 
     var registration = {};
 
-    Api.clientCall('PUT', '/user?invite=' + encodeURIComponent(req.api.jar.invite.code), registration, function (err, code, payload) {
+    Api.clientCall('PUT', '/user?invite=' + encodeURIComponent(request.state.jar.invite.code), registration, function (err, code, payload) {
 
         if (err ||
             code !== 200) {
 
-            res.api.view = { template: 'invite-invalid' };
-            return next();
+            return request.reply.view('invite-invalid');
         }
 
         // Login new user
 
-        Login.loginCall('id', payload.id, res, next, '/view/' + (req.api.jar.invite.about.project ? '#project=' + req.api.jar.invite.about.project : ''));
+        Login.loginCall('id', payload.id, res, next, '/view/' + (request.state.jar.invite.about.project ? '#project=' + request.state.jar.invite.about.project : ''));
     });
 };
 

@@ -13,11 +13,11 @@ Db.initialize(true, function (err) {
 
         // Database connection failed
 
-        Hapi.Log.event('err', err);
+        Hapi.logevent('err', err);
         process.exit(1);
     }
 
-    Hapi.Log.event('info', 'Database initialized');
+    Hapi.logevent('info', 'Database initialized');
 
     // Create required clients
 
@@ -36,7 +36,7 @@ Db.initialize(true, function (err) {
     Db.insert('client', clients, function (err, items) {
 
         if (err) {
-            Hapi.Log.event('err', err);
+            Hapi.logevent('err', err);
             process.exit(1);
         }
 
@@ -45,14 +45,14 @@ Db.initialize(true, function (err) {
         Db.insert('invite', { code: 'public' }, function (err, items) {
 
             if (err) {
-                Hapi.Log.event('err', err);
+                Hapi.logevent('err', err);
                 process.exit(1);
             }
 
-            Hapi.Log.event('info', 'Initial dataset created successfully');
-            Hapi.Log.event('info', '>>>>> WEB client id: ' + clients[0]._id);
-            Hapi.Log.event('info', '>>>>> WEB client secret: ' + clients[0].secret);
-            Hapi.Log.event('info', '>>>>> VIEW client id: ' + clients[1]._id);
+            Hapi.logevent('info', 'Initial dataset created successfully');
+            Hapi.logevent('info', '>>>>> WEB client id: ' + clients[0]._id);
+            Hapi.logevent('info', '>>>>> WEB client secret: ' + clients[0].secret);
+            Hapi.logevent('info', '>>>>> VIEW client id: ' + clients[1]._id);
             process.exit(0);
         });
     });

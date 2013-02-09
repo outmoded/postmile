@@ -424,7 +424,7 @@ internals.sendEmail = function (to, subject, text) {
     mailer.send(message, function (err, message) {
 
         if (err) {
-            Hapi.Log.event('err', 'Email error', { to: to, subject: subject, text: text, error: err });
+            Hapi.logevent('err', 'Email error', { to: to, subject: subject, text: text, error: err });
         }
     });
 };

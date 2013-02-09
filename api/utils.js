@@ -72,7 +72,6 @@ exports.decrypt = function (key, value) {
         envelope = JSON.parse(dec);
     }
     catch (e) {
-        Log.event('err', 'Invalid encrypted envelope: ' + dec + ' / Exception: ' + JSON.stringify(e));
     }
 
     return envelope ? envelope.v : null;

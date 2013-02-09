@@ -7,114 +7,109 @@ var Config = require('./config');
 
 // Account page
 
-exports.get = function (req, res, next) {
+exports.get = function (request) {
 
-    if (req.params.panel &&
-        (req.params.panel === 'profile' ||
-         req.params.panel === 'linked' ||
-         req.params.panel === 'emails')) {
+    if (request.params.panel &&
+        ['profile', 'linked', 'emails'].indexOf(request.params.panel) !== -1) {
 
         var locals = {
             env: {
-                username: req.api.profile.username,
-                currentUsername: req.api.profile.username,
-                name: req.api.profile.name,
-                message: req.api.jar.message || ''
+                username: request.session.profile.username,
+                currentUsername: request.session.profile.username,
+                name: request.session.profile.name,
+                message: request.state.jar.message || ''
             }
         };
 
-        res.api.view = { template: 'account-' + req.params.panel, locals: locals };
-        next();
+        return request.reply.view('account-' + request.params.panel, locals);
     }
     else {
-        if (req.api.jar.message) {
-            res.api.jar.message = req.api.jar.message;
+        if (request.state.jar.message) {
+            request.api.jar.message = request.state.jar.message;
         }
 
-        res.api.redirect = '/account/profile';
-        next();
+        return request.reply.redirect('/account/profile').send();
     }
 };
 
 
 // Account reminder using email or username
 
-exports.reminder = function (req, res, next) {
+exports.reminder = function (request) {
 
-    Api.clientCall('POST', '/user/reminder', { account: req.body.account }, function (err, code, payload) {
+    Api.clientCall('POST', '/user/reminder', { account: request.payload.account }, function (err, code, payload) {
 
         if (err) {
             return request.reply(Hapi.error.internal('Unexpected API response', err));
-            res.api.isAPI = true;
-            return next();
+        }
+
+        if (code === 404) {
+            return request.reply(Hapi.error.notFound());
+        }
+
+        if (code === 400) {
+            return request.reply(Hapi.error.badRequest());
         }
 
         if (code !== 200) {
-            return request.reply((code === 404 ? Hapi.error.notFound() : (code === 400 ? Hapi.error.badRequest() : Hapi.error.internal('Unexpected API response: ' + payload))));
-            res.api.isAPI = true;
-            return next();
+            return request.reply(Hapi.error.internal('Unexpected API response: ' + payload));
         }
 
-        res.api.result = payload;
-        return next();
+        request.reply(payload);
     });
 };
 
 
 // Update account profile
 
-exports.profile = function (req, res, next) {
+exports.profile = function (request) {
 
     var body = {};
 
-    if (req.body.username !== req.api.profile.username) {
-        body.username = req.body.username;
+    if (request.payload.username !== request.session.profile.username) {
+        body.username = request.payload.username;
     }
 
-    if (req.body.name &&
-        req.body.name !== req.api.profile.name) {
+    if (request.payload.name &&
+        request.payload.name !== request.session.profile.name) {
 
-        body.name = req.body.name;
+        body.name = request.payload.name;
     }
 
     if (!Object.keys(body).length) {
-        res.api.redirect = '/account/profile';
-        return next();
+        return request.reply.redirect('/account/profile').send();
     }
 
-    Api.call('POST', '/profile', body, req.api.session, function (err, code, payload) {
+    Api.call('POST', '/profile', body, request.session, function (err, code, payload) {
 
         if (err || code !== 200) {
-            res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+            request.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
         }
 
-        res.api.redirect = '/account/profile';
-        next();
+        return request.reply.redirect('/account/profile').send();
     });
 };
 
 
 // Update account profile
 
-exports.emails = function (req, res, next) {
+exports.emails = function (request) {
 
-    if (['add', 'remove', 'primary', 'verify'].indexOf(req.body.action) === -1) {
-        res.api.jar.message = 'Failed saving changes. Bad request';
-        res.api.redirect = '/account/emails';
-        return next();
+    if (['add', 'remove', 'primary', 'verify'].indexOf(request.payload.action) === -1) {
+        request.api.jar.message = 'Failed saving changes. Bad request';
+        return request.reply.redirect('/account/emails').send();
     }
 
-    Api.call('POST', '/profile/email', req.body, req.api.session, function (err, code, payload) {
+    Api.call('POST', '/profile/email', request.payload, request.session, function (err, code, payload) {
 
         if (err || code !== 200) {
-            res.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+            request.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
         }
-        else if (req.body.action === 'verify') {
-            res.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
+        else if (request.payload.action === 'verify') {
+            request.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
         }
 
-        res.api.redirect = '/account/emails';
-        next();
+        return request.reply.redirect('/account/emails').send();
     });
 };
 

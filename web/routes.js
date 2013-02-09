@@ -15,7 +15,7 @@ exports.endpoints = [
     { method: 'GET',    path: '/',                          handler: Home.get },
     { method: 'POST',   path: '/',                          handler: Home.get },
 
-    { method: 'GET',    path: '/login',                     handler: Login.login },
+    { method: 'GET',    path: '/login',                     handler: Login.login,           config: { app: { hasMobile: true } } },
     { method: 'GET',    path: '/logout',                    handler: Login.logout },
     { method: 'GET',    path: '/auth/:network',             handler: Login.auth },
     { method: 'POST',   path: '/auth/:network',             handler: Login.auth },
@@ -24,7 +24,7 @@ exports.endpoints = [
 
     { method: 'GET',    path: '/account',                   handler: Account.get,           config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/account/:panel',            handler: Account.get,           config: { auth: { mode: 'required' } } },
-    { method: 'POST',   path: '/account/reminder',          handler: Account.reminder,      body: { account: {} } },
+    { method: 'POST',   path: '/account/reminder',          handler: Account.reminder,      config: { app: { isApi: true } }, body: { account: {} } },
     { method: 'POST',   path: '/account/profile',           handler: Account.profile,       config: { auth: { mode: 'required' } } },
     { method: 'POST',   path: '/account/emails',            handler: Account.emails,        config: { auth: { mode: 'required' } }, body: { address: {}, action: {} } },
 
@@ -49,10 +49,10 @@ exports.endpoints = [
 
     { method: 'GET',    path: '/oz/authorize',              handler: Session.ask,           config: { auth: { mode: 'required' } } },
     { method: 'POST',   path: '/oz/authorize',              handler: Session.answer,        config: { auth: { mode: 'required' } } },
-    { method: 'GET',    path: '/oz/session',                handler: Session.session,       config: { auth: { mode: 'required' } } },
+    { method: 'GET',    path: '/oz/session',                handler: Session.session,       config: { auth: { mode: 'required' } }, app: { isApi: true } },
 
     { method: 'GET',    path: '/socket.io.js',              handler: Misc.socketio },
-    { method: 'GET',    path: '/config.js',                 handler: Misc.config }
+    { method: 'GET',    path: '/config.js',                 handler: Misc.config,           config: { app: { isApi: true } } }
 ];
 
 

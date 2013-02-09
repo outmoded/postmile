@@ -4,7 +4,6 @@ var Hapi = require('hapi');
 var QueryString = require('querystring');
 var Api = require('./api');
 var Utils = require('./utils');
-var Log = require('./log');
 var Vault = require('./vault');
 var Tos = require('./tos');
 var Config = require('./config');
@@ -32,6 +31,8 @@ exports.validate = function (session, callback) {
             }
 
             credentials.profile = payload;
+            credentials.profile.view = credentials.profile.view || '/view/';        // Set default view
+
             return callback(null, credentials);
         });
     };
@@ -170,9 +171,9 @@ exports.ask = function (request) {
 
         // Implicit grant type
 
-        res.api.jar.oz = { client: client, redirection: redirectionURI };
+        request.api.jar.oz = { client: client, redirection: redirectionURI };
         if (request.query.state) {
-            res.api.jar.oz.state = request.query.state;
+            request.api.jar.oz.state = request.query.state;
         }
 
         var locals = {
@@ -186,60 +187,52 @@ exports.ask = function (request) {
 };
 
 
-exports.answer = function (req, res, next) {
+exports.answer = function (request) {
 
-    if (!req.api.jar.oz ||
-        !req.api.jar.oz.client) {
+    if (!request.state.jar.oz ||
+        !request.state.jar.oz.client) {
 
-        res.api.redirect = '/';
-        return next();
+        return request.reply.redirect('/').send();
     }
 
     var options = {
-        issueTo: req.api.jar.oz.client.id,
+        issueTo: request.state.jar.oz.client.id,
         scope: []
     };
 
-    Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
+    Api.call('POST', '/oz/reissue', options, request.session, function (err, code, ticket) {
 
         if (err || code !== 200) {
             return request.reply(Hapi.error.internal('Unexpected API response', err));
         }
 
-        if (req.api.jar.oz.state) {
-            ticket.state = req.api.jar.oz.state;
+        if (request.state.jar.oz.state) {
+            ticket.state = request.state.jar.oz.state;
         }
 
-        res.api.redirect = req.api.jar.oz.redirection + '#' + QueryString.stringify(ticket);
-        return next();
+        return request.reply.redirect(request.state.jar.oz.redirection + '#' + QueryString.stringify(ticket)).send();
     });
 };
 
 
-exports.session = function (req, res, next) {
+exports.session = function (request) {
 
     var options = {
         issueTo: Vault.postmileAPI.viewClientId,
         scope: []
     };
 
-    Api.call('POST', '/oz/reissue', options, req.api.session, function (err, code, ticket) {
+    Api.call('POST', '/oz/reissue', options, request.session, function (err, code, ticket) {
 
         if (err || code !== 200) {
             return request.reply(Hapi.error.internal('Failed refresh', err));
-            res.api.isAPI = true;
-            return next();
         }
 
         if (ticket.ext.tos < Tos.minimumTOS) {
             return request.reply(Hapi.error.badRequest('Restricted session'));
-            res.api.isAPI = true;
-            return next();
         }
         
-        res.api.result = ticket;
-        res.api.isAPI = true;
-        return next();
+        request.reply(ticket);
     });
 };
 

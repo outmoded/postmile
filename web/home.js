@@ -1,21 +1,19 @@
 // Get home page
 
-exports.get = function (req, res, next) {
+exports.get = function (request) {
 
-    if (req.api.profile) {
-        res.api.redirect = req.api.profile.view;
-        next();
+    if (request.session.profile) {
+        return request.reply.redirect(request.session.profile.view).send();
     }
     else {
         var locals = {
             logo: false,
             env: {
-                message: req.api.jar.message || ''
+                message: request.state.jar.message || ''
             }
         };
 
-        res.api.view = { template: 'home', locals: locals };
-        next();
+        return request.reply.view('home', locals);
     }
 };
 

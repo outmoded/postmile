@@ -7,90 +7,76 @@ var Config = require('./config');
 
 // Welcome page
 
-exports.welcome = function (req, res, next) {
+exports.welcome = function (request) {
 
-    res.api.redirect = req.api.profile.view;
-    next();
+    return request.reply.redirect(request.session.profile.view).send();
 };
 
 
 // About page
 
-exports.about = function (req, res, next) {
+exports.about = function (request) {
 
-    res.api.view = { template: 'about' };
-    next();
+    return request.reply.view('about');
 };
 
 
 // Developer page
 
-exports.developer = function (req, res, next) {
+exports.developer = function (request) {
 
-    res.api.view = { template: 'developer', locals: { theme: 'developer' } };
-    next();
+    return request.reply.view('developer', { theme: 'developer' });
 };
 
 
 // Developer Console
 
-exports.console = function (req, res, next) {
+exports.console = function (request) {
 
-    res.api.view = { template: 'console' };
-    next();
+    return request.reply.view('console');
 };
 
 
 // Set I'm with stupid cookie
 
-exports.stupid = function (req, res, next) {
+exports.stupid = function (request) {
 
-    res.api.cookie = {
-        values: ['imwithstupid=true'],
-        attributes: ['Path=/']
-    };
-
-    res.api.redirect = '/';
-    next();
+    request.state('imwithstupid', 'true', { path: '/' });
+    return request.reply.redirect('/').send();
 };
 
 
 // Feedback page
 
-exports.feedback = function (req, res, next) {
+exports.feedback = function (request) {
 
     if (req.method === 'GET') {
-        res.api.view = { template: 'feedback' };
-        next();
+        return request.reply.view('feedback');
     }
     else {
-        var feedback = 'From: ' + (req.body.username ? req.body.username : req.body.name + ' <' + req.body.email + '>') + '\n\n' + req.body.message;
+        var feedback = 'From: ' + (request.payload.username ? request.payload.username : request.payload.name + ' <' + request.payload.email + '>') + '\n\n' + request.payload.message;
         Email.send(Config.email.feedback, 'Posmile site feedback', feedback);
 
-        res.api.view = { template: 'feedback', locals: { env: { message: 'Your feedback has been received!'}} };
-        next();
+        return request.reply.view('feedback', { env: { message: 'Your feedback has been received!' } });
     }
 };
 
 
 // Client configuration script
 
-exports.config = function (req, res, next) {
+exports.config = function (request) {
 
     var config = Hapi.utils.clone(Config.host);
     config.web.uri = Config.host.uri('web');
     config.api.uri = Config.host.uri('api');
 
-    res.api.result = 'var postmile = ' + JSON.stringify(config) + ';';
-    res.api.isAPI = true;
-    next();
+    request.reply('var postmile = ' + JSON.stringify(config) + ';');
 };
 
 
 // Socket.IO Script Proxy
 
-exports.socketio = function (req, res, next) {
+exports.socketio = function (request) {
 
-    res.api.redirect = Config.host.uri('api') + '/socket.io/socket.io.js';
-    next();
+    return request.reply.redirect(Config.host.uri('api') + '/socket.io/socket.io.js').send();
 };
