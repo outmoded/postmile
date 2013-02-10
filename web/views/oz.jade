@@ -1,27 +1,30 @@
-#two-columns
-  .left
-    ul.login-nav
-      li.active
-        a(href: '/about') Authorize Access
+extends layout
 
-    a#bottom.blue(href: '/') &larr; Back to #{product.name}
+block content
+  #two-columns
+    .left
+      ul.login-nav
+        li.active
+          a(href: '/about') Authorize Access
 
-  .right
-    h3 Application Authorization Request
+      a#bottom.blue(href: '/') &larr; Back to #{product.name}
 
-    #text-box
-      - if (warning)
-        #warning
+    .right
+      h3 Application Authorization Request
 
-      p An application is asking for your permission to access your #{product.name} account. If you approve, it will have full access to your lists, items, and other information stored on the site.
+      #text-box
+        - if (warning)
+          #warning
 
-      - if (warning)
-        p.warning This application is untrusted and cannot be verified - do not authorize access unless you are sure you know what you are doing!
+        p An application is asking for your permission to access your #{product.name} account. If you approve, it will have full access to your lists, items, and other information stored on the site.
 
-      form(method: 'post', action: '/oz/authorize')
-        input(type: 'hidden', name: 'crumb', value: crumb)
-        button.blue-button Authorize
+        - if (warning)
+          p.warning This application is untrusted and cannot be verified - do not authorize access unless you are sure you know what you are doing!
 
-      button.blue-button(onclick: 'window.location = "/";') Cancel
+        form(method: 'post', action: '/oz/authorize')
+          input(type: 'hidden', name: 'crumb', value: crumb)
+          button.blue-button Authorize
 
-  .clearfix
+        button.blue-button(onclick: 'window.location = "/";') Cancel
+
+    .clearfix

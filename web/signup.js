@@ -14,28 +14,28 @@ exports.form = function (request) {
         return request.reply.redirect('/').send();
     }
 
-    request.api.jar.signup = request.state.jar.signup;
+    request.plugins.jar.signup = request.state.jar.signup;
 
     // Check if invitation required
 
     Api.call('GET', '/invite/public', '', function (err, code, payload) {
 
         if (code === 200) {
-            request.api.jar.signup.invite = 'public';
+            request.plugins.jar.signup.invite = 'public';
         }
         else {
-            request.api.jar.signup.invite = (request.api.jar.signup.invite == 'public' ? '' : request.api.jar.signup.invite);
+            request.plugins.jar.signup.invite = (request.plugins.jar.signup.invite == 'public' ? '' : request.plugins.jar.signup.invite);
         }
 
         var locals = {
             logo: false,
             network: request.state.jar.signup.network,
             env: {
-                invite: (request.api.jar.signup.invite || ''),
-                name: (request.api.jar.signup.name || ''),
-                email: (request.api.jar.signup.email || ''),
-                username: (request.api.jar.signup.username || ''),
-                message: (request.api.jar.message || '')
+                invite: (request.plugins.jar.signup.invite || ''),
+                name: (request.plugins.jar.signup.name || ''),
+                email: (request.plugins.jar.signup.email || ''),
+                username: (request.plugins.jar.signup.username || ''),
+                message: (request.plugins.jar.message || '')
             }
         };
 
@@ -75,19 +75,19 @@ exports.register = function (request) {
 
             // Try again
 
-            request.api.jar.signup = request.state.jar.signup;
-            request.api.jar.signup.invite = request.payload.invite;
-            request.api.jar.signup.name = request.payload.name;
-            request.api.jar.signup.username = request.payload.username;
-            request.api.jar.signup.email = request.payload.email;
-            request.api.jar.message = (payload && payload.message ? payload.message : (err && err.message ? err.message : 'Service unavailable'));
+            request.plugins.jar.signup = request.state.jar.signup;
+            request.plugins.jar.signup.invite = request.payload.invite;
+            request.plugins.jar.signup.name = request.payload.name;
+            request.plugins.jar.signup.username = request.payload.username;
+            request.plugins.jar.signup.email = request.payload.email;
+            request.plugins.jar.message = (payload && payload.message ? payload.message : (err && err.message ? err.message : 'Service unavailable'));
 
             return request.reply.redirect('/signup/register').send();
         }
 
         // Login new user
 
-        Login.loginCall(signup.network, signup.id, res, next, '/welcome');
+        Login.loginCall(signup.network, signup.id, request, '/welcome');
     });
 };
 
@@ -108,7 +108,7 @@ exports.i = function (request) {
 
             // Save information
 
-            request.api.jar.invite = { code: request.params.id, about: payload };
+            request.plugins.jar.invite = { code: request.params.id, about: payload };
             return request.reply.redirect('/signup/invite').send();
         }
 
@@ -128,7 +128,7 @@ exports.invite = function (request) {
         return request.reply.view('invite-invalid').send();
     }
 
-    request.api.jar.invite = request.state.jar.invite;
+    request.plugins.jar.invite = request.state.jar.invite;
 
     var locals = {
         title: request.state.jar.invite.about.title,
@@ -177,7 +177,7 @@ exports.other = function (request) {
 
     // Maintain state
 
-    request.api.jar.invite = request.state.jar.invite;
+    request.plugins.jar.invite = request.state.jar.invite;
 
     // Logout
 
@@ -212,7 +212,7 @@ exports.inviteRegister = function (request) {
 
         // Login new user
 
-        Login.loginCall('id', payload.id, res, next, '/view/' + (request.state.jar.invite.about.project ? '#project=' + request.state.jar.invite.about.project : ''));
+        Login.loginCall('id', payload.id, request, '/view/' + (request.state.jar.invite.about.project ? '#project=' + request.state.jar.invite.about.project : ''));
     });
 };
 

@@ -1,24 +1,27 @@
-#two-columns
-  .left
-    ul.login-nav
-      li.active
-        a(href: '/about') About
-      li
-        a(href: '/privacy') Privacy
-      li
-        a(href: '/terms') Terms
-      li
-        a(href: '/feedback') Feedback
+extends layout
 
-    a#bottom.blue(href: '/') &larr; Back to #{product.name}
+block content
+  #two-columns
+    .left
+      ul.login-nav
+        li.active
+          a(href: '/about') About
+        li
+          a(href: '/privacy') Privacy
+        li
+          a(href: '/terms') Terms
+        li
+          a(href: '/feedback') Feedback
 
-  .right
-    h3 About #{product.name}
+      a#bottom.blue(href: '/') &larr; Back to #{product.name}
 
-    #text-box
-      p #{product.name} is an experiment.
-      p There is a lot we don't know about how to make our daily lives more productive and organized, and how to collaborate better. What we do know is that the wide range of tools and services available to us are, generally speaking, not very helpful. Everything is either too limited or too complicated. Usually too complicated.
-      p #{product.name} is a collaborative list making tool with a strong focus on life events and collaboration between friends and family. Planning a party, a move, getting ready for a new baby, planning a trip, organizing a junior soccer league, or preparing for a marathon, are some of the efforts we hope #{product.name} to be useful for.
-      p Our goal with #{product.name} is to provide a simple and useful tool, and we hope you will find it helpful. But we are also here to learn and observe. We know what doesn't work, but figuring out what does requires experimentation. We hope you join us.
+    .right
+      h3 About #{product.name}
 
-  .clearfix
+      #text-box
+        p #{product.name} is an experiment.
+        p There is a lot we don't know about how to make our daily lives more productive and organized, and how to collaborate better. What we do know is that the wide range of tools and services available to us are, generally speaking, not very helpful. Everything is either too limited or too complicated. Usually too complicated.
+        p #{product.name} is a collaborative list making tool with a strong focus on life events and collaboration between friends and family. Planning a party, a move, getting ready for a new baby, planning a trip, organizing a junior soccer league, or preparing for a marathon, are some of the efforts we hope #{product.name} to be useful for.
+        p Our goal with #{product.name} is to provide a simple and useful tool, and we hope you will find it helpful. But we are also here to learn and observe. We know what doesn't work, but figuring out what does requires experimentation. We hope you join us.
+
+    .clearfix

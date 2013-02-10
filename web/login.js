@@ -74,7 +74,7 @@ exports.auth = function (request) {
         if (request.query.x_next &&
             request.query.x_next.charAt(0) === '/') {        // Prevent being used an open redirector
 
-            request.api.jar.auth = { next: request.query.x_next };
+            request.plugins.jar.auth = { next: request.query.x_next };
         }
 
         if (['twitter', 'facebook', 'yahoo'].indexOf(request.params.network) === -1) {
@@ -100,7 +100,7 @@ exports.auth = function (request) {
                     return request.reply(Hapi.error.internal('Failed to obtain a Twitter request token', err));
                 }
 
-                request.api.jar.twitter = { token: token, secret: secret };
+                request.plugins.jar.twitter = { token: token, secret: secret };
                 return request.reply.redirect('https://api.twitter.com/oauth/authenticate?oauth_token=' + token).send();
             });
         }
@@ -182,7 +182,7 @@ exports.auth = function (request) {
                 }
             };
 
-            request.api.jar.facebook = { state: request.query.state };
+            request.plugins.jar.facebook = { state: request.query.state };
             return request.reply.redirect(Url.format(request)).send();
         }
 
@@ -311,7 +311,7 @@ exports.auth = function (request) {
                     return request.reply(Hapi.error.internal('Failed to obtain a Yahoo! request token', err));
                 }
 
-                request.api.jar.yahoo = { token: token, secret: secret };
+                request.plugins.jar.yahoo = { token: token, secret: secret };
                 return request.reply.redirect('https://api.login.yahoo.com/oauth/v2/request_auth?oauth_token=' + token).send();
             });
         }
@@ -391,7 +391,7 @@ exports.auth = function (request) {
             // Login
 
             var destination = request.state.jar.auth ? request.state.jar.auth.next : null;
-            exports.loginCall(account.network, account.id, res, next, destination, account);
+            exports.loginCall(account.network, account.id, request, destination, account);
         }
     };
 
@@ -418,13 +418,13 @@ exports.unlink = function (request) {
 
 exports.emailToken = function (request) {
 
-    exports.loginCall('email', request.params.token, res, next, null, null);
+    exports.loginCall('email', request.params.token, request, null, null);
 };
 
 
 // Login common function
 
-exports.loginCall = function (type, id, res, next, destination, account) {
+exports.loginCall = function (type, id, request, destination, account) {
 
     var payload = {
         type: type,
@@ -443,14 +443,14 @@ exports.loginCall = function (type, id, res, next, destination, account) {
             // Bad email invite
 
             if (type === 'email') {
-                request.api.jar.message = payload.message;
+                request.plugins.jar.message = payload.message;
                 return request.reply.redirect('/').send();
             }
 
             // Sign-up
 
             if (account) {
-                request.api.jar.signup = account;
+                request.plugins.jar.signup = account;
                 return request.reply.redirect('/signup/register').send();
             }
 
@@ -486,11 +486,11 @@ exports.loginCall = function (type, id, res, next, destination, account) {
 
                     switch (payload.ext.action.type) {
                         case 'reminder':
-                            request.api.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
+                            request.plugins.jar.message = 'You made it in! Now link your account to Facebook, Twitter, or Yahoo! to make sign-in easier next time.';
                             destination = '/account/linked';
                             break;
                         case 'verify':
-                            request.api.jar.message = 'Email address verified';
+                            request.plugins.jar.message = 'Email address verified';
                             destination = '/account/emails';
                             break;
                     }

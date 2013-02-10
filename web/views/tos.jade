@@ -1,19 +1,22 @@
-#two-columns
-  .left
-    ul.login-nav
-      li.active
-        a(href: '/tos') Terms of Service
+extends layout
 
-    a#bottom.blue(href: '/logout') &larr; Leave #{product.name}
+block content
+  #two-columns
+    .left
+      ul.login-nav
+        li.active
+          a(href: '/tos') Terms of Service
 
-  .right
-    h3 Experimental Service Terms and Conditions
+      a#bottom.blue(href: '/logout') &larr; Leave #{product.name}
 
-    #text-box
-      ul
-        li This is a beta service, released without any warranties, and may be discontinued at any time. As an in-development product, data loss is possible.
+    .right
+      h3 Experimental Service Terms and Conditions
 
-    form(action: '/tos', method: 'post')
-      input(type: 'hidden', name: 'crumb', value: crumb)
-      input(type: 'hidden', name: 'next', value: env.next)
-      button.blue-button I Accept
+      #text-box
+        ul
+          li This is a beta service, released without any warranties, and may be discontinued at any time. As an in-development product, data loss is possible.
+
+      form(action: '/tos', method: 'post')
+        input(type: 'hidden', name: 'crumb', value: crumb)
+        input(type: 'hidden', name: 'next', value: env.next)
+        button.blue-button I Accept

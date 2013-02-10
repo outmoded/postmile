@@ -50,7 +50,7 @@ exports.stupid = function (request) {
 
 exports.feedback = function (request) {
 
-    if (req.method === 'GET') {
+    if (request.method === 'get') {
         return request.reply.view('feedback').send();
     }
     else {

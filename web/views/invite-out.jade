@@ -1,24 +1,27 @@
-#two-columns
-  .left
-    ul.login-nav
-      li.active
-        a(href: '/tos') #{product.name} Invitation
+extends layout
 
-    a#bottom.blue(href: '/') &larr; Back to #{product.name}
+block content
+  #two-columns
+    .left
+      ul.login-nav
+        li.active
+          a(href: '/tos') #{product.name} Invitation
 
-  .right
-    h3 You've Been Invited to Participate in a #{product.name} List
+      a#bottom.blue(href: '/') &larr; Back to #{product.name}
 
-    #text-box #{inviter} invited you to collaborate on '#{title}'. If you already have a #{product.name} account, please sign in:
+    .right
+      h3 You've Been Invited to Participate in a #{product.name} List
 
-      form(method: 'get', action: '/login')
-        input(name: 'next', type: 'hidden', value: '/i/' + code)
-        button.blue-button Sign In
-        .clearfix
+      #text-box #{inviter} invited you to collaborate on '#{title}'. If you already have a #{product.name} account, please sign in:
 
-      | Otherwise, sign-up for a new account:
+        form(method: 'get', action: '/login')
+          input(name: 'next', type: 'hidden', value: '/i/' + code)
+          button.blue-button Sign In
+          .clearfix
 
-      form(method: 'post', action: '/signup/invite/register')
-        button.blue-button Sign Up for a New Account
+        | Otherwise, sign-up for a new account:
 
-  .clearfix
+        form(method: 'post', action: '/signup/invite/register')
+          button.blue-button Sign Up for a New Account
+
+    .clearfix

@@ -1,15 +1,18 @@
-#two-columns
-  .left
-    ul.login-nav
-      li.active
-        a(href: '/tos') #{product.name} Invitation
+extends layout
 
-    a#bottom.blue(href: '/') &larr; Back to #{product.name}
+block content
+  #two-columns
+    .left
+      ul.login-nav
+        li.active
+          a(href: '/tos') #{product.name} Invitation
 
-  .right
-    h3 Invitation Error
+      a#bottom.blue(href: '/') &larr; Back to #{product.name}
 
-    #text-box We're sorry but the invitation you received is no longer valid. It may have been cancelled, expired, or already used. There is also a small chance something just went wrong.
+    .right
+      h3 Invitation Error
 
-  .clearfix
+      #text-box We're sorry but the invitation you received is no longer valid. It may have been cancelled, expired, or already used. There is also a small chance something just went wrong.
+
+    .clearfix
 

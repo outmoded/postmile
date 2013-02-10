@@ -33,7 +33,7 @@ exports.post = function (request) {
 
         // Refresh token
 
-        Session.refresh(req, res, request.session, function (err, session) {
+        Session.refresh(request, request.session, function (err, session) {
 
             return request.reply.redirect('/tos' + (request.payload.next ? '?next=' + encodeURIComponent(request.payload.next) : '')).send();
         });

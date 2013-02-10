@@ -25,7 +25,7 @@ exports.get = function (request) {
     }
     else {
         if (request.state.jar.message) {
-            request.api.jar.message = request.state.jar.message;
+            request.plugins.jar.message = request.state.jar.message;
         }
 
         return request.reply.redirect('/account/profile').send();
@@ -83,7 +83,7 @@ exports.profile = function (request) {
     Api.call('POST', '/profile', body, request.session, function (err, code, payload) {
 
         if (err || code !== 200) {
-            request.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+            request.plugins.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
         }
 
         return request.reply.redirect('/account/profile').send();
@@ -96,17 +96,17 @@ exports.profile = function (request) {
 exports.emails = function (request) {
 
     if (['add', 'remove', 'primary', 'verify'].indexOf(request.payload.action) === -1) {
-        request.api.jar.message = 'Failed saving changes. Bad request';
+        request.plugins.jar.message = 'Failed saving changes. Bad request';
         return request.reply.redirect('/account/emails').send();
     }
 
     Api.call('POST', '/profile/email', request.payload, request.session, function (err, code, payload) {
 
         if (err || code !== 200) {
-            request.api.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
+            request.plugins.jar.message = 'Failed saving changes. ' + (code === 400 ? payload.message : 'Service unavailable');
         }
         else if (request.payload.action === 'verify') {
-            request.api.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
+            request.plugins.jar.message = 'Verification email sent. Please check your inbox (or spam folder) for an email from ' + Config.product.name + ' and follow the instructions.';
         }
 
         return request.reply.redirect('/account/emails').send();

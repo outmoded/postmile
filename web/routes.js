@@ -17,13 +17,13 @@ exports.endpoints = [
 
     { method: 'GET',    path: '/login',                     handler: Login.login,           config: { app: { hasMobile: true } } },
     { method: 'GET',    path: '/logout',                    handler: Login.logout },
-    { method: 'GET',    path: '/auth/:network',             handler: Login.auth },
-    { method: 'POST',   path: '/auth/:network',             handler: Login.auth },
+    { method: 'GET',    path: '/auth/{network}',            handler: Login.auth },
+    { method: 'POST',   path: '/auth/{network}',            handler: Login.auth },
     { method: 'POST',   path: '/account/unlink',            handler: Login.unlink,          config: { auth: { mode: 'required' } } },
-    { method: 'GET',    path: '/t/:token',                  handler: Login.emailToken },
+    { method: 'GET',    path: '/t/{token}',                 handler: Login.emailToken },
 
     { method: 'GET',    path: '/account',                   handler: Account.get,           config: { auth: { mode: 'required' } } },
-    { method: 'GET',    path: '/account/:panel',            handler: Account.get,           config: { auth: { mode: 'required' } } },
+    { method: 'GET',    path: '/account/{panel}',           handler: Account.get,           config: { auth: { mode: 'required' } } },
     { method: 'POST',   path: '/account/reminder',          handler: Account.reminder,      config: { app: { isApi: true } }, body: { account: {} } },
     { method: 'POST',   path: '/account/profile',           handler: Account.profile,       config: { auth: { mode: 'required' } } },
     { method: 'POST',   path: '/account/emails',            handler: Account.emails,        config: { auth: { mode: 'required' } }, body: { address: {}, action: {} } },
@@ -33,7 +33,7 @@ exports.endpoints = [
 
     { method: 'GET',    path: '/signup/register',           handler: Signup.form },
     { method: 'POST',   path: '/signup/register',           handler: Signup.register },
-    { method: 'GET',    path: '/i/:id',                     handler: Signup.i },
+    { method: 'GET',    path: '/i/{id}',                    handler: Signup.i },
     { method: 'GET',    path: '/signup/invite',             handler: Signup.invite },
     { method: 'POST',   path: '/signup/invite/claim',       handler: Signup.claim,          config: { auth: { mode: 'required' } } },
     { method: 'GET',    path: '/signup/invite/other',       handler: Signup.other },

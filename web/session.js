@@ -171,9 +171,9 @@ exports.ask = function (request) {
 
         // Implicit grant type
 
-        request.api.jar.oz = { client: client, redirection: redirectionURI };
+        request.plugins.jar.oz = { client: client, redirection: redirectionURI };
         if (request.query.state) {
-            request.api.jar.oz.state = request.query.state;
+            request.plugins.jar.oz.state = request.query.state;
         }
 
         var locals = {

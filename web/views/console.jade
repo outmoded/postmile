@@ -1,139 +1,142 @@
-script(src: '/scripts/oz.js')
-script(src: host.uri('api') + '/socket.io/socket.io.js')
-script
-    var credentials;
+extends layout
 
-    function htmlEscape(string) {
+block content
+  script(src: '/scripts/oz.js')
+  script(src: host.uri('api') + '/socket.io/socket.io.js')
+  script
+      var credentials;
+
+      function htmlEscape(string) {
     
-        return string.replace(/&/g,'&amp;').replace(/>/g,'&gt;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-    }
+          return string.replace(/&/g,'&amp;').replace(/>/g,'&gt;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+      }
 
-    function fetchToken() {
+      function fetchToken() {
 
-        var request = new XMLHttpRequest();
-        request.onreadystatechange = function () {
+          var request = new XMLHttpRequest();
+          request.onreadystatechange = function () {
 
-            if (request.readyState === 4) {
+              if (request.readyState === 4) {
 
-                if (request.status === 200) {
+                  if (request.status === 200) {
 
-                    try {
+                      try {
 
-                        credentials = JSON.parse(request.responseText);
-                    }
-                    catch (e) { }
-                }
+                          credentials = JSON.parse(request.responseText);
+                      }
+                      catch (e) { }
+                  }
 
-                if (credentials) {
+                  if (credentials) {
 
-                    // Socket.io
+                      // Socket.io
 
-                    var socket = io.connect('#{host.uri("api")}');
+                      var socket = io.connect('#{host.uri("api")}');
 
-                    socket.on('connect', function () {
+                      socket.on('connect', function () {
 
-                        document.getElementById('session').innerHTML = 'authenticating...';
-                    });
+                          document.getElementById('session').innerHTML = 'authenticating...';
+                      });
 
-                    socket.on('message', function (message) {
+                      socket.on('message', function (message) {
 
-                        if (message.type == 'connect') {
+                          if (message.type == 'connect') {
 
-                            document.getElementById('session').innerHTML = htmlEscape(message.session);
-                            socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
-                        }
-                        else if (message.type == 'initialize') {
+                              document.getElementById('session').innerHTML = htmlEscape(message.session);
+                              socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
+                          }
+                          else if (message.type == 'initialize') {
 
-                            document.getElementById('session').style.color = (message.status == 'ok' ? 'green' : 'red');
+                              document.getElementById('session').style.color = (message.status == 'ok' ? 'green' : 'red');
 
-                            if (message.error) {
+                              if (message.error) {
 
-                                document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message.error, null, 4)) + '<br />';
-                                resizeListBox();
-                            }
-                        }
-                        else {
+                                  document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message.error, null, 4)) + '<br />';
+                                  resizeListBox();
+                              }
+                          }
+                          else {
 
-                            document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message, null, 4)) + '<br />';
-                            resizeListBox();
-                        }
-                    });
+                              document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message, null, 4)) + '<br />';
+                              resizeListBox();
+                          }
+                      });
 
-                    document.getElementById('session').innerHTML = 'connecting...';
-                }
-                else {
+                      document.getElementById('session').innerHTML = 'connecting...';
+                  }
+                  else {
 
-                    window.location = '/login?next=%2Fdeveloper%2Fconsole';
-                    return;
-                }
-            }
-        };
+                      window.location = '/login?next=%2Fdeveloper%2Fconsole';
+                      return;
+                  }
+              }
+          };
 
-        request.open('GET', '#{host.uri('web')}/oz/session');
-        request.send();
-    }
+          request.open('GET', '#{host.uri('web')}/oz/session');
+          request.send();
+      }
 
-    function sendRequest() {
+      function sendRequest() {
 
-        var request = new XMLHttpRequest();
+          var request = new XMLHttpRequest();
 
-        request.onreadystatechange = function() {
+          request.onreadystatechange = function() {
 
-            if (request.readyState == 4) {
+              if (request.readyState == 4) {
 
-                document.getElementById('response').innerHTML = htmlEscape(JSON.stringify(JSON.parse(request.responseText), null, 4));
-                resizeListBox();
-            }
-        };
+                  document.getElementById('response').innerHTML = htmlEscape(JSON.stringify(JSON.parse(request.responseText), null, 4));
+                  resizeListBox();
+              }
+          };
 
-        // Prepare authorization attributes
+          // Prepare authorization attributes
 
-        var uri = document.getElementById('uri').value;
-        var method = document.getElementById('httpMethod').value;
-        var content = document.getElementById('content').value;
+          var uri = document.getElementById('uri').value;
+          var method = document.getElementById('httpMethod').value;
+          var content = document.getElementById('content').value;
 
-        // Calculate Signature
+          // Calculate Signature
 
-        var authorization = Oz.request.generateHeader({ method: method, uri: uri }, credentials);
+          var authorization = Oz.request.generateHeader({ method: method, uri: uri }, credentials);
 
-        // Send request
+          // Send request
 
-        request.open(method, uri);
-        request.setRequestHeader('Authorization', authorization);
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.send(content);
-        document.getElementById('response').innerHTML = 'Waiting...';
-    }
+          request.open(method, uri);
+          request.setRequestHeader('Authorization', authorization);
+          request.setRequestHeader('Content-Type', 'application/json');
+          request.send(content);
+          document.getElementById('response').innerHTML = 'Waiting...';
+      }
 
-#test-form
-  label URI: 
-    input#uri(size: '90', type: 'text', value: host.uri('api') + '/projects')
-  select#httpMethod
-    option(selected: 'selected') GET
-    option POST
-    option PUT
-    option DELETE
-    option HEAD
-  button.blue-button.right(onclick: 'sendRequest();') Execute
-  br
-  label Payload: 
-    input#content(size: '100', type: 'text')
+  #test-form
+    label URI: 
+      input#uri(size: '90', type: 'text', value: host.uri('api') + '/projects')
+    select#httpMethod
+      option(selected: 'selected') GET
+      option POST
+      option PUT
+      option DELETE
+      option HEAD
+    button.blue-button.right(onclick: 'sendRequest();') Execute
+    br
+    label Payload: 
+      input#content(size: '100', type: 'text')
+    .clearfix
+
+  #text-box
+
+    p
+    | Result:
+    p
+      pre
+        #response
+    p
+    | Stream:
+    span#session
+    pre
+      #stream
+
   .clearfix
 
-#text-box
-
-  p
-  | Result:
-  p
-    pre
-      #response
-  p
-  | Stream:
-  span#session
-  pre
-    #stream
-
-.clearfix
-
-script
-  fetchToken();
+  script
+    fetchToken();

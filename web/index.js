@@ -60,7 +60,7 @@ exports.create = function () {
         router: {
             routeDefaults: {
                 auth: {
-                    mode: 'none'
+                    mode: 'try'
                 }
             }
         },
@@ -108,12 +108,6 @@ internals.onPostHandler = function (request, next) {
 
     if (request.route.app.isAPI) {
         return next();
-    }
-
-    // Return not found page
-
-    if (request.route.method === 'notfound') {
-        internals.errorPage(Hapi.error.notFound().code, req, res, 'No such path or method');
     }
 
     // Return error page
