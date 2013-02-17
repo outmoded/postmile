@@ -1,0 +1,20 @@
+// Email token
+
+exports.emailToken = {
+    aes256Key: ''
+};
+
+
+// Oz token
+
+exports.ozTicket = {
+    password: ''
+};
+
+
+// Database credentials
+
+exports.database = {
+    username: '',
+    password: ''
+};

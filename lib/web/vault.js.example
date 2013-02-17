@@ -1,0 +1,46 @@
+// Jar encryption key
+
+exports.jar = {
+    password: ''
+};
+
+
+// Session token encryption key
+
+exports.session = {
+    password: ''
+};
+
+
+// Postmile API
+
+exports.postmileAPI = {
+    clientId: '',
+    clientSecret: '',
+    viewClientId: ''
+};
+
+
+// Twitter
+
+exports.twitter = {
+    clientId: '',
+    clientSecret: ''
+};
+
+
+// Facebook
+
+exports.facebook = {
+    clientId: '',
+    clientSecret: '',
+};
+
+
+// Yahoo!
+
+exports.yahoo = {
+    clientId: '',
+    clientSecret: ''
+};
+

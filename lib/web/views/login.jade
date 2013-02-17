@@ -1,0 +1,57 @@
+extends layout
+
+block content
+  - if (isMobile)
+    ul.social-connects
+      - if (auth.facebook)
+        li
+          a.facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : '')) Sign In With Facebook
+      - if (auth.twitter)
+        li
+          a.twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : '')) Sign In With Twitter
+      - if (auth.yahoo)
+        li
+          a.yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : '')) Sign In With Yahoo!
+  - else
+    #two-columns
+      .left
+        a(href: '/')
+          h1 #{product.name}
+
+      .right
+        h2 Sign in using one of your linked accounts
+
+        ul.social-connects
+          - if (auth.facebook)
+            li.facebook-connect
+              a#login-facebook.connect(href: '/auth/facebook' + (env.next ? '?x_next=' + env.next : ''))
+                span.text-position Sign In With Facebook
+          - if (auth.twitter)
+            li.twitter-connect
+              a#login-twitter.connect(href: '/auth/twitter' + (env.next ? '?x_next=' + env.next : ''))
+                span.text-position Sign In With Twitter
+          - if (auth.yahoo)
+            li.yahoo-connect
+              a#login-yahoo.connect(href: '/auth/yahoo' + (env.next ? '?x_next=' + env.next : ''))
+                span.text-position Sign In With Yahoo!
+        .clearfix
+
+        p
+          a(href: 'javascript: openOverlay("reminder");') Need help signing in?
+
+      .clearfix
+
+      #reminder.modal
+        a.close(href: 'javascript: closeOverlay();') x
+        h1 Help is on the way!
+        #reminder-main
+          .text Enter your email address or your #{product.name} username.
+            br
+            |We'll send you an email with a link you can use to sign back in.
+          #reminder-form
+            button.blue-button(onclick: 'reminder();') Send Request
+            input#lookup-account(type: 'text', onkeyup: 'enterCall(event, reminder);', placeholder: 'enter email address or username')
+          #reminder-status.error &nbsp;
+        #reminder-post.text Check your email for a message from #{product.name} and follow the instructions to sign-in.
+
+
