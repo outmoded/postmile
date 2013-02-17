@@ -1,0 +1,53 @@
+extends layout
+
+block content
+  #two-columns
+    .left
+      a(href: '/')
+        h1 #{product.name}
+
+    .right
+      h2 Welcome to #{product.name}!
+
+      form#register-form(method: 'post', action: '/signup/register')
+
+        - if (env.invite !== 'public')
+          label Invitation Code
+            input#code(name: 'invite', type: 'text', value: env.invite, placeholder: 'the invitation code you received')
+          .clearfix
+        - else
+          input#code(name: 'invite', type: 'hidden', value: 'public')
+
+        label Name
+          input#name(name: 'name', type: 'text', value: env.name, placeholder: 'your full name')
+        .clearfix
+
+        label Email
+          input#email(name: 'email', type: 'text', value: env.email, placeholder: 'your email address')
+        .clearfix
+
+        label Username
+          input#username(name: 'username', type: 'text', onkeyup: 'onUsernameKey(event);', value: (env.username || ''), autocomplete: 'off', placeholder: 'pick a username')
+          #username-loading Loading
+          br
+          #username-status &nbsp;
+        .clearfix
+
+      button.blue-button(onclick: 'register();') Sign Up
+      #register-status
+
+    .clearfix
+
+  - if (env.invite !== 'public')
+    #error
+      #eunknown
+      h2 we can't find you on the list...
+
+      .message We're still testing things out and will open for business soon. If you have an invitation code,  
+        a(href: 'javascript: hideRegisterIntro();') go ahead
+        |.
+      
+      .clearfix
+    script
+      document.getElementById("two-columns").style.display = "none";script  if (document.getElementById('username').value) onUsernameKey();
+
