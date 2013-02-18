@@ -8,22 +8,23 @@ The following is based on a shared machine.
 ```bash
 $ git clone git://github.com/hueniverse/postmile.git
 $ cd postmile
+$ npm update
+$ cd lib
 $ cp config.js.example config.js
 ```
 
-Edit postmile/config.js with your preferences and configuration.
+Edit postmile/lib/config.js with your preferences and configuration.
 
 ```bash
 $ cd api
 $ cp vault.js.example vault.js
 ```
 
-Edit postmile/api/vault.js and set the values of the 'aes256Key' and 'passowrd' variables to different random secrets sufficiently long (e.g. 40 characters).
+Edit postmile/lib/api/vault.js and set the values of the 'aes256Key' and 'passowrd' variables to different random secrets sufficiently long (e.g. 40 characters).
 
 If your MongoDB requires authentication, set the values of the database 'username' and 'password' (otherwise leave empty).
 
 ```bash
-$ npm update
 $ node install
 
 110827/005720.948, info, Database initialized
@@ -37,7 +38,6 @@ Copy the WEB client id and secret, and VIEW client id, and save them for later.
 
 ```bash
 $ cd ../web
-$ npm update
 $ cp vault.js.example vault.js
 ```
 
@@ -52,7 +52,7 @@ For example, if you configured your web server to run on '127.0.0.1', port '8000
 callback URI is http://127.0.0.1:8000/auth/twitter.
 
 ```bash
-$ cd ..
+$ cd ../..
 ```
 
 Make sure to protect your vault.js files. If an attacker gets hold of them, you're screwed.
@@ -64,14 +64,14 @@ pretty open for attacks). To configure TLS, set the 'process.web.tls' variable i
 To start both servers at the same time in the same process (combined log output):
 
 ```bash
-$ node postmile
+$ node .
 ```
 
 To start each server individually:
 
 ```bash
-$ node api/index &
-$ node web/index &
+$ node lib/api/index &
+$ node lib/web/index &
 ```
 
 Now point your browser at the web server address and start using Postmile. Register with invite code 'public'.

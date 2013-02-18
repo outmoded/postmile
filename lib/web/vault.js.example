@@ -1,6 +1,6 @@
 // Jar encryption key
 
-exports.jar = {
+exports.yar = {
     password: ''
 };
 

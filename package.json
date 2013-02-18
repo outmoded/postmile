@@ -16,23 +16,22 @@
     "collaboration"
   ],
   "engines": {
-    "node": ">=0.8.0"
+    "node": "0.8.x"
   },
   "dependencies": {
     "hapi": "0.14.x",
-    "hapi-jar": "0.0.x",
+    "yar": "0.0.x",
     "crumb": "0.0.x",
     "scooter": "0.0.x",
     "emailjs": "0.x.x",
-    "jade": "0.17.x",
+    "jade": "0.28.x",
     "oz": "0.1.x",
     "oauth": "0.9.x",
-    "semver": "1.x.x",
-    "validator": "0.x.x",
-    "opts": "1.x.x",
     "request": "2.11.x",
     "mongodb": "0.9.x",
-    "socket.io": "0.8.x"
+    "socket.io": "0.8.x",
+    "cryptiles": "0.1.x",
+    "tv": "0.0.x"
   },
   "devDependencies": {
   },
