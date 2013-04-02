@@ -1,4 +1,4 @@
-﻿Postmile is a collaborative list making tool built using JS, Node.js, and MongoDB.
+Postmile is a collaborative list making tool built using JS, Node.js, and MongoDB.
 
 # Installation
 
@@ -27,11 +27,11 @@ If your MongoDB requires authentication, set the values of the database 'usernam
 ```bash
 $ node install
 
-110827/005720.948, info, Database initialized
-110827/005720.952, info, Initial dataset created successfully
-110827/005720.952, info, >>>>> WEB client id: <id>
-110827/005720.952, info, >>>>> WEB client secret: <secret>
-110827/005720.952, info, >>>>> VIEW client id: <id>
+Database initialized
+Initial dataset created successfully
+>>>>> WEB client id: <id>
+>>>>> WEB client secret: <secret>
+>>>>> VIEW client id: <id>
 ```
 
 Copy the WEB client id and secret, and VIEW client id, and save them for later.
@@ -41,7 +41,7 @@ $ cd ../web
 $ cp vault.js.example vault.js
 ```
 
-Edit postmile/web/vault.js and set the values of the 'aes256Key' variables to different random secrets sufficiently long (e.g. 40 characters).
+Edit postmile/web/vault.js and set the values of the 'password' variables to different random secrets sufficiently long (e.g. 40 characters).
 
 Set the values of the postmileAPI 'clientId' and 'clientSecret' variables to the WEB client id and secret saved earlier.
 Set the value of the 'viewClientId' variable to the VIEW client id saved earlier.

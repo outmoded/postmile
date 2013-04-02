@@ -1,7 +1,7 @@
 {
   "name": "postmile",
   "description": "Collaborative list making server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
   "contributors": [
     "Lance Welsh <lance@lwelsh.com>"
@@ -19,10 +19,11 @@
     "node": "0.8.x"
   },
   "dependencies": {
-    "hapi": "0.14.x",
-    "yar": "0.0.x",
-    "crumb": "0.0.x",
-    "scooter": "0.0.x",
+    "hapi": "0.16.x",
+    "yar": "0.2.x",
+    "crumb": "0.2.x",
+    "scooter": "0.2.x",
+    "good": "0.2.x",
     "emailjs": "0.x.x",
     "jade": "0.28.x",
     "oz": "0.1.x",
@@ -31,7 +32,7 @@
     "mongodb": "0.9.x",
     "socket.io": "0.8.x",
     "cryptiles": "0.1.x",
-    "tv": "0.0.x"
+    "tv": "0.2.x"
   },
   "devDependencies": {
   },
