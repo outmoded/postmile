@@ -20,7 +20,7 @@ $ cd api
 $ cp vault.js.example vault.js
 ```
 
-Edit postmile/lib/api/vault.js and set the values of the 'aes256Key' and 'passowrd' variables to different random secrets sufficiently long (e.g. 40 characters).
+Edit postmile/lib/api/vault.js and set the values of the 'aes256Key' and 'password' variables to different random secrets sufficiently long (e.g. 40 characters).
 
 If your MongoDB requires authentication, set the values of the database 'username' and 'password' (otherwise leave empty).
 
