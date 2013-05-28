@@ -14,10 +14,16 @@ exports.session = {
 
 // Postmile API
 
-exports.postmileAPI = {
-    clientId: '',
-    clientSecret: '',
-    viewClientId: ''
+exports.apiClient = {
+    id: '',
+    key: '',
+    algorithm: 'hmac256'
+};
+
+exports.viewClient = {
+    id: '',
+    key: '',
+    algorithm: 'hmac256'
 };
 
 
