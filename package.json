@@ -19,20 +19,20 @@
     "node": "0.10.x"
   },
   "dependencies": {
-    "hapi": "1.4.x",
+    "hapi": "1.8.x",
     "yar": "0.3.x",
     "crumb": "0.3.x",
     "scooter": "0.3.x",
     "good": "0.5.x",
-    "emailjs": "0.x.x",
-    "jade": "0.28.x",
+    "emailjs": "0.3.x",
+    "jade": "0.33.x",
     "oz": "0.3.x",
     "oauth": "0.9.x",
-    "request": "2.11.x",
-    "mongodb": "0.9.x",
-    "socket.io": "0.8.x",
+    "request": "2.22.x",
+    "mongodb": "1.3.x",
+    "socket.io": "0.9.x",
     "cryptiles": "0.2.x",
-    "tv": "0.3.x",
+    "tv": "0.4.x",
     "scarecrow": "0.0.x"
   },
   "devDependencies": {

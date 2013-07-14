@@ -17,13 +17,13 @@ exports.session = {
 exports.apiClient = {
     id: '',
     key: '',
-    algorithm: 'hmac256'
+    algorithm: 'sha256'
 };
 
 exports.viewClient = {
     id: '',
     key: '',
-    algorithm: 'hmac256'
+    algorithm: 'sha256'
 };
 
 
