@@ -17,11 +17,8 @@ block content
           request.onreadystatechange = function () {
 
               if (request.readyState === 4) {
-
                   if (request.status === 200) {
-
                       try {
-
                           credentials = JSON.parse(request.responseText);
                       }
                       catch (e) { }
@@ -32,7 +29,6 @@ block content
                       // Socket.io
 
                       var socket = io.connect('#{host.uri("api")}');
-
                       socket.on('connect', function () {
 
                           document.getElementById('session').innerHTML = 'authenticating...';
@@ -41,22 +37,17 @@ block content
                       socket.on('message', function (message) {
 
                           if (message.type == 'connect') {
-
                               document.getElementById('session').innerHTML = htmlEscape(message.session);
                               socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
                           }
                           else if (message.type == 'initialize') {
-
                               document.getElementById('session').style.color = (message.status == 'ok' ? 'green' : 'red');
-
                               if (message.error) {
-
                                   document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message.error, null, 4)) + '<br />';
                                   resizeListBox();
                               }
                           }
                           else {
-
                               document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message, null, 4)) + '<br />';
                               resizeListBox();
                           }
@@ -65,7 +56,6 @@ block content
                       document.getElementById('session').innerHTML = 'connecting...';
                   }
                   else {
-
                       window.location = '/login?next=%2Fdeveloper%2Fconsole';
                       return;
                   }
@@ -79,11 +69,9 @@ block content
       function sendRequest() {
 
           var request = new XMLHttpRequest();
-
-          request.onreadystatechange = function() {
+          request.onreadystatechange = function () {
 
               if (request.readyState == 4) {
-
                   document.getElementById('response').innerHTML = htmlEscape(JSON.stringify(JSON.parse(request.responseText), null, 4));
                   resizeListBox();
               }
@@ -97,7 +85,7 @@ block content
 
           // Calculate Signature
 
-          var authorization = Oz.request.generateHeader({ method: method, uri: uri }, credentials);
+          var authorization = Oz.request.generateHeader(uri, method, credentials).field;
 
           // Send request
 
