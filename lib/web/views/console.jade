@@ -2,16 +2,16 @@ extends layout
 
 block content
   script
-    var api = { host: "#{host.api.domain}", port: #{host.api.port}, uri: "#{host.uri("api")}" };
-    var web = { host: "#{host.web.domain}", port: #{host.web.port}, uri: "#{host.uri("web")}" };
+    var api = { host: "#{server.api.host}", port: #{server.api.port}, uri: "#{server.api.uri}" };
+    var web = { host: "#{server.web.host}", port: #{server.web.port}, uri: "#{server.web.uri}" };
 
   script(src: '/scripts/hawk.js')
   script(src: '/scripts/console.js')
-  script(src: host.uri('api') + '/socket.io/socket.io.js')
+  script(src: server.api.uri + '/socket.io/socket.io.js')
 
   #test-form
     label URI: 
-      input#uri(size: '90', type: 'text', value: host.uri('api') + '/projects')
+      input#uri(size: '90', type: 'text', value: server.api.uri + '/projects')
     select#httpMethod
       option(selected: 'selected') GET
       option POST

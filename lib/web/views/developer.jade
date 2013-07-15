@@ -144,7 +144,7 @@ block content
 
             pre
               | GET /projects HTTP/1.1
-              | Host: #{host.authority('api')}
+              | Host: #{server.api.host}:#{server.api.port}
               | Authorization: MAC id="c577a77d8ef1",
               |                    nonce="32123:NqBXXpvO",
               |                    mac="0pWn5izWGqLZEggfeKVrVoegQ3o="
@@ -182,14 +182,14 @@ block content
 
               pre
                 | PUT /project HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
 
               .text The server responds with:
 
               pre
                 | HTTP/1.1 201 Created
                 | Date: Sun, 06 Feb 2011 20:43:31 GMT
-                | Location: #{host.uri('api')}/project/eff4d99750
+                | Location: #{server.api.uri}/project/eff4d99750
                 | 
                 | { "status": "ok",
                 |   "id": "f4d9975080" }
@@ -316,7 +316,7 @@ block content
 
               pre
                 | POST /profile HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "name": "John Doe",
                 |   "username": "john.doe" }
@@ -332,7 +332,7 @@ block content
 
               pre
                 | POST /profile/email HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "address": "john.doe1@example.com",
                 |   "action": "add" }
@@ -421,7 +421,7 @@ block content
 
               pre
                 | PUT /project HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "title": "New Project" }
 
@@ -430,7 +430,7 @@ block content
               pre
                 | HTTP/1.1 201 Created
                 | Date: Sun, 06 Feb 2011 20:43:31 GMT
-                | Location: #{host.uri('api')}/project/eff4d99750
+                | Location: #{server.api.uri}/project/eff4d99750
                 | 
                 | { "status": "ok",
                 |   "id": "eff4d99750" }
@@ -483,7 +483,7 @@ block content
 
               pre
                 | POST /project/55cf687663 HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "place": "San Francisco, CA" }
 
@@ -498,7 +498,7 @@ block content
 
               pre
                 | POST /project/55cf687663?position=0 HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
 
               .text Notes:
                 ul
@@ -559,7 +559,7 @@ block content
 
               pre
                 | POST /project/55cf687663/participants?message=Hi HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "participants": ["steve@example.com", "c2727e7b75"],
                 |   "names": ["Clown"] }
@@ -616,7 +616,7 @@ block content
 
               pre
                 | DELETE /project/55cf687663/participants HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "participants": ["pid:4deff4e9eb", "c2727e7b75", "pid:dh38hd8hs8"] }
 
@@ -720,7 +720,7 @@ block content
 
               pre
                 | PUT /project/55cf687663/task HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "title": "Setup tables" }
 
@@ -729,7 +729,7 @@ block content
               pre
                 | HTTP/1.1 201 Created
                 | Date: Sun, 06 Feb 2011 20:43:31 GMT
-                | Location: #{host.uri('api')}/task/29d400ffc5
+                | Location: #{server.api.uri}/task/29d400ffc5
                 | 
                 | { "status": "ok",
                 |   "id": "29d400ffc5" }
@@ -748,14 +748,14 @@ block content
 
               pre
                 | PUT /project/55cf687663/task?suggestion=ce8002f6d HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
 
               .text Response:
             
               pre
                 | HTTP/1.1 201 Created
                 | Date: Sun, 06 Feb 2011 20:43:31 GMT
-                | Location: #{host.uri('api')}/task/29d40101b3
+                | Location: #{server.api.uri}/task/29d40101b3
                 | 
                 | { "status": "ok",
                 |   "id": "29d40101b3" }
@@ -794,7 +794,7 @@ block content
 
               pre
                 | POST /task/2e4ed30d96 HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "title": "Buy Big Cake" }
 
@@ -813,7 +813,7 @@ block content
 
               pre
                 | POST /task/2e4ed30d96?position=0 HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
 
               .text Notes:
                 ul
@@ -878,7 +878,7 @@ block content
 
               pre
                 | POST /task/2e4ed30d96/detail HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "type": "text",
                 |   "content": "This is very interesting" }
@@ -920,7 +920,7 @@ block content
 
               pre
                 | POST /storage/key HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "value":"example_value" }
 
@@ -947,7 +947,7 @@ block content
 
               pre
                 | POST /batch HTTP/1.1
-                | Host: #{host.authority('api')}
+                | Host: #{server.api.host}:#{server.api.port}
                 | 
                 | { "get": [ "/profile",
                 |            "/storage/activeproject",
@@ -1010,12 +1010,12 @@ block content
           .text To connect, include the socket.io script:
 
           pre
-            | <script src="#{host.uri('api')}/socket.io/socket.io.js"></script>
+            | <script src="#{server.api.uri}/socket.io/socket.io.js"></script>
 
           .text and initialize the connection:
 
           pre
-            | var socket = new io.Socket('#{host.authority('api')}', { port: 80, rememberTransport: false });
+            | var socket = new io.Socket('#{server.api.host}:#{server.api.port}', { port: 80, rememberTransport: false });
             | 
             | socket.on('message', function (message) {
             |     if (message.type == 'connect') {

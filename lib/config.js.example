@@ -7,26 +7,19 @@ exports.product = {
 
 // Server Configuration
 
-exports.host = {
+exports.server = {
     web: {
-        domain: 'localhost',
-        port: 8000,
-        scheme: 'http'
+        host: 'localhost',
+        port: 8000
     },
     api: {
-        domain: 'localhost',
-        port: 8001,
-        scheme: 'http'
-    },
-    uri: function (type) {
-        var set = (type === 'web' ? exports.host.web : exports.host.api);
-        return set.scheme + '://' + set.domain + (set.port ? ':' + set.port : '');
-    },
-    authority: function (type) {
-        var set = (type === 'web' ? exports.host.web : exports.host.api);
-        return set.domain + (set.port ? ':' + set.port : '');
+        host: 'localhost',
+        port: 8001
     }
 };
+
+exports.server.web.uri = (exports.server.web.tls ? 'https://' : 'http://') + exports.server.web.host + ':' + exports.server.web.port;
+exports.server.api.uri = (exports.server.api.tls ? 'https://' : 'http://') + exports.server.api.host + ':' + exports.server.api.port;
 
 
 // Database Configuration
