@@ -1,7 +1,7 @@
 extends layout
 
 block content
-  script(src: '/scripts/oz.js')
+  script(src: '/scripts/hawk.js')
   script(src: host.uri('api') + '/socket.io/socket.io.js')
   script
       var credentials;
@@ -24,41 +24,39 @@ block content
                       catch (e) { }
                   }
 
-                  if (credentials) {
-
-                      // Socket.io
-
-                      var socket = io.connect('#{host.uri("api")}');
-                      socket.on('connect', function () {
-
-                          document.getElementById('session').innerHTML = 'authenticating...';
-                      });
-
-                      socket.on('message', function (message) {
-
-                          if (message.type == 'connect') {
-                              document.getElementById('session').innerHTML = htmlEscape(message.session);
-                              socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
-                          }
-                          else if (message.type == 'initialize') {
-                              document.getElementById('session').style.color = (message.status == 'ok' ? 'green' : 'red');
-                              if (message.error) {
-                                  document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message.error, null, 4)) + '<br />';
-                                  resizeListBox();
-                              }
-                          }
-                          else {
-                              document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message, null, 4)) + '<br />';
-                              resizeListBox();
-                          }
-                      });
-
-                      document.getElementById('session').innerHTML = 'connecting...';
-                  }
-                  else {
+                  if (!credentials) {
                       window.location = '/login?next=%2Fdeveloper%2Fconsole';
                       return;
                   }
+                  /*
+                  // Socket.io
+
+                  var socket = io.connect('#{host.uri("api")}');
+                  socket.on('connect', function () {
+
+                      document.getElementById('session').innerHTML = 'authenticating...';
+                  });
+
+                  socket.on('message', function (message) {
+
+                      if (message.type == 'connect') {
+                          document.getElementById('session').innerHTML = htmlEscape(message.session);
+                          socket.json.send({ type: 'initialize', id: credentials.id, mac: Oz.macMessage(message.session, credentials) });
+                      }
+                      else if (message.type == 'initialize') {
+                          document.getElementById('session').style.color = (message.status == 'ok' ? 'green' : 'red');
+                          if (message.error) {
+                              document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message.error, null, 4)) + '<br />';
+                              resizeListBox();
+                          }
+                      }
+                      else {
+                          document.getElementById('stream').innerHTML += htmlEscape(JSON.stringify(message, null, 4)) + '<br />';
+                          resizeListBox();
+                      }
+                  });
+
+                  document.getElementById('session').innerHTML = 'connecting...';*/
               }
           };
 
@@ -85,7 +83,7 @@ block content
 
           // Calculate Signature
 
-          var authorization = Oz.request.generateHeader(uri, method, credentials).field;
+          var authorization = hawk.client.header(uri, method, { credentials: credentials, app: credentials.app, dlg: credentials.dlg }).field;
 
           // Send request
 
