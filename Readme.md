@@ -29,12 +29,13 @@ $ node install
 
 Database initialized
 Initial dataset created successfully
->>>>> WEB client id: <id>
->>>>> WEB client secret: <secret>
+>>>>> API client id: <id>
+>>>>> API client key: <key>
 >>>>> VIEW client id: <id>
+>>>>> VIEW client key: (leave empty)
 ```
 
-Copy the WEB client id and secret, and VIEW client id, and save them for later.
+Copy the API client id and key, and VIEW client id, and save them for later.
 
 ```bash
 $ cd ../web
