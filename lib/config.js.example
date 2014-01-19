@@ -1,49 +1,49 @@
-// Product Configuration
-
-exports.product = {
-    name: 'Postmile'
-};
-
-
-// Server Configuration
-
-exports.server = {
-    web: {
-        host: 'monterey.hueniverse.net',
-        port: 8000
+module.exports = {
+    product: {
+        name: 'Postmile'
     },
-    api: {
-        host: 'monterey.hueniverse.net',
-        port: 8001
-    }
-};
-
-exports.server.web.uri = (exports.server.web.tls ? 'https://' : 'http://') + exports.server.web.host + ':' + exports.server.web.port;
-exports.server.api.uri = (exports.server.api.tls ? 'https://' : 'http://') + exports.server.api.host + ':' + exports.server.api.port;
-
-
-// Database Configuration
-
-exports.database = {
-    host: '127.0.0.1',
-    port: 27017,
-    db: 'postmile'
-};
-
-
-// Email Configuration
-
-exports.email = {
-    fromName: 'Postmile',
-    replyTo: 'no-reply@hammer.io',
-    admin: 'eran@hammer.io',
-    feedback: 'eran@hammer.io',
     server: {
-//      port: 25,
-//      user: '',
-//      password: '',
-//      host: 'localhost',
-//      ssl: false
+        web: {
+            host: 'monterey.hueniverse.net',
+            port: 8000
+        },
+        api: {
+            host: 'monterey.hueniverse.net',
+            port: 8001
+        }
+    },
+    database: {
+        host: '127.0.0.1',
+        port: 27017,
+        db: 'postmile',
+        username: '',
+        password: ''
+    },
+    email: {
+        fromName: 'Postmile',
+        replyTo: 'no-reply@hammer.io',
+        admin: 'eran@hammer.io',
+        feedback: 'eran@hammer.io',
+        server: {
+    //      port: 25,
+    //      user: '',
+    //      password: '',
+    //      host: 'localhost',
+    //      ssl: false
+        }
+    },
+    login: {
+        twitter: {
+            clientId: '',
+            clientSecret: ''
+        },
+        facebook: {
+            clientId: '',
+            clientSecret: '',
+        },
+        yahoo: {
+            clientId: '',
+            clientSecret: ''
+        }
     }
 };
-
