@@ -79,7 +79,7 @@ Now point your browser at the web server address and start using Postmile. Regis
 
 # Credits
 
-[Eran Hammer-Lahav](http://hueniverse.com) - Concept and server-side components
+[Eran Hammer](http://hueniverse.com) - Concept and server-side components
 
 [Lance Welsh](https://github.com/lpw) - 'view' web client
 
