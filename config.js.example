@@ -4,11 +4,11 @@ module.exports = {
     },
     server: {
         web: {
-            host: 'monterey.hueniverse.net',
+            host: 'locahost',
             port: 8000
         },
         api: {
-            host: 'monterey.hueniverse.net',
+            host: 'localhost',
             port: 8001
         }
     },
@@ -21,9 +21,9 @@ module.exports = {
     },
     email: {
         fromName: 'Postmile',
-        replyTo: 'no-reply@hammer.io',
-        admin: 'eran@hammer.io',
-        feedback: 'eran@hammer.io',
+        replyTo: 'no-reply@localhost',
+        admin: 'eran@localhost',
+        feedback: 'eran@localhost',
         server: {
     //      port: 25,
     //      user: '',

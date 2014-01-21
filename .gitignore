@@ -1,3 +1,5 @@
+config.js
+vault.json
 .idea
 *.iml
 npm-debug.log

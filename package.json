@@ -22,7 +22,10 @@
     "postmile-api": "1.x.x",
     "postmile-web": "1.x.x",
     "hapi": "2.x.x",
-    "hoek": "1.x.x"
+    "hoek": "1.x.x",
+    "async": "0.2.x",
+    "mongodb": "0.9.x",
+    "cryptiles": "2.x.x"
   },
   "devDependencies": {
   },
