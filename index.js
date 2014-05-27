@@ -18,7 +18,7 @@ Config.server.api.uri = (Config.server.api.tls ? 'https://' : 'http://') + Confi
 // Start API Server
 
 var api = new Hapi.Server(Config.server.api.host, Config.server.api.port, { cors: true });
-api.pack.require('./node_modules/postmile-api', { config: Config, vault: Vault }, function (err) {
+api.pack.register({ plugin: './node_modules/postmile-api', options: { config: Config, vault: Vault } }, function (err) {
 
     Hoek.assert(!err, 'Failed loading API:', err);
     api.start(function () {
@@ -41,7 +41,7 @@ api.pack.require('./node_modules/postmile-api', { config: Config, vault: Vault }
         }
 
         var web = new Hapi.Server(Config.server.web.port, Config.server.web.host, config);
-        web.pack.require('./node_modules/postmile-web', { config: Config, vault: Vault }, function (err) {
+        web.pack.register({ plugin: './node_modules/postmile-web', options: { config: Config, vault: Vault }}, function (err) {
 
             Hoek.assert(!err, 'Failed loading API:', err);
             web.start();
