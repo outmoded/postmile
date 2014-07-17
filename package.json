@@ -19,9 +19,9 @@
     "node": ">=0.10.22"
   },
   "dependencies": {
-    "postmile-api": "1.x.x",
-    "postmile-web": "1.x.x",
-    "hapi": "6.x.x",
+    "postmile-api": "^1.1.x",
+    "postmile-web": "^1.1.x",
+    "hapi": "^6.2.x",
     "hoek": "2.x.x",
     "async": "0.9.x",
     "mongodb": "0.9.x",
