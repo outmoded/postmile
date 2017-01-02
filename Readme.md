@@ -1,4 +1,5 @@
 Postmile is a collaborative list making tool built using hapi.js, Node.js, and MongoDB.
+The app is unstable at the moment, please beware that it may not currently work. [Issue #55](https://github.com/hueniverse/postmile/issues/55)
 
 # Installation
 
